@@ -1,0 +1,45 @@
+import { AI_COVER_IMAGES } from "@/constants/aiCoverImages";
+
+/** 可添加到班级的实验包（演示数据） */
+export interface LabPackageOption {
+  id: string;
+  title: string;
+  cover: string;
+  /**
+   * 与 AI 实验室大厅 `/ai-lab/grade/:gradeId` 一致：0～5 对应一年级（上）～六年级（上）。
+   * 用于进入同一路由下的实验列表（演示数据各年级条目结构相同）。
+   */
+  gradeRouteIndex: number;
+  /**
+   * 详情页主标题：当实验包学段与大厅六个年级标签不完全一致时（如初中），用于覆盖页眉中的年级名。
+   */
+  detailTitle?: string;
+}
+
+export const LAB_PACKAGE_OPTIONS: LabPackageOption[] = [
+  {
+    id: "pkg-g8-up",
+    title: "八年级（上）",
+    cover: AI_COVER_IMAGES[4]!,
+    gradeRouteIndex: 5,
+    detailTitle: "八年级（上）",
+  },
+  {
+    id: "pkg-demo-g2",
+    title: "中小学人工智能实验（二年级上）",
+    cover: AI_COVER_IMAGES[2]!,
+    gradeRouteIndex: 1,
+  },
+  {
+    id: "pkg-g3-up",
+    title: "三年级（上）",
+    cover: AI_COVER_IMAGES[0]!,
+    gradeRouteIndex: 2,
+  },
+  {
+    id: "pkg-g5-up",
+    title: "五年级（上）",
+    cover: AI_COVER_IMAGES[6]!,
+    gradeRouteIndex: 4,
+  },
+];

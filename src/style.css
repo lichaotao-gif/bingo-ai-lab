@@ -1,0 +1,27 @@
+@import "../design-tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* 一屏高度：整页不随内容增高，由内部区域滚动（类 PC 客户端） */
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    letter-spacing: var(--tracking-ui);
+    color: var(--color-text);
+    background-color: var(--color-page);
+  }
+
+  #app {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+}

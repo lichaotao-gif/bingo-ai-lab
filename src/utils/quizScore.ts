@@ -1,0 +1,166 @@
+import type { QuizQuestion } from "@/data/experimentQuizzes";
+import type { QuizAnswerDetail } from "@/types/quizReport";
+
+function typeLabel(t: QuizQuestion["type"]): string {
+  const m: Record<QuizQuestion["type"], string> = {
+    single: "单选题",
+    multi: "多选题",
+    truefalse: "判断题",
+    fill: "填空题",
+    short: "简答题",
+  };
+  return m[t];
+}
+
+function fmtUser(q: QuizQuestion, raw: unknown): string {
+  if (raw === undefined || raw === null) {
+    return "（未作答）";
+  }
+  if (q.type === "single") {
+    return typeof raw === "number" ? q.options[raw] ?? String(raw) : String(raw);
+  }
+  if (q.type === "multi") {
+    if (!Array.isArray(raw) || raw.length === 0) {
+      return "（未选择）";
+    }
+    return (raw as number[])
+      .slice()
+      .sort((a, b) => a - b)
+      .map((i) => q.options[i])
+      .filter(Boolean)
+      .join("、");
+  }
+  if (q.type === "truefalse") {
+    if (typeof raw !== "boolean") {
+      return String(raw);
+    }
+    return raw ? "正确" : "错误";
+  }
+  if (q.type === "fill" || q.type === "short") {
+    return String(raw).trim() || "（未填写）";
+  }
+  return String(raw);
+}
+
+function fmtCorrect(q: QuizQuestion): string {
+  if (q.type === "single") {
+    return q.options[q.correctIndex] ?? "";
+  }
+  if (q.type === "multi") {
+    return q.correctIndices
+      .slice()
+      .sort((a, b) => a - b)
+      .map((i) => q.options[i])
+      .join("、");
+  }
+  if (q.type === "truefalse") {
+    return q.correct ? "正确" : "错误";
+  }
+  if (q.type === "fill") {
+    return q.acceptable.join(" 或 ");
+  }
+  if (q.type === "short") {
+    return `需包含要点词：${q.keywords.slice(0, 4).join("、")}等`;
+  }
+  return "";
+}
+
+function isCorrect(
+  q: QuizQuestion,
+  raw: unknown,
+): { ok: boolean; earned: number } {
+  if (q.type === "single") {
+    const ok = typeof raw === "number" && raw === q.correctIndex;
+    return { ok, earned: ok ? q.points : 0 };
+  }
+  if (q.type === "multi") {
+    const sel = Array.isArray(raw)
+      ? [...(raw as number[])].sort((a, b) => a - b)
+      : [];
+    const exp = [...q.correctIndices].sort((a, b) => a - b);
+    const ok =
+      sel.length === exp.length && sel.every((v, i) => v === exp[i]);
+    return { ok, earned: ok ? q.points : 0 };
+  }
+  if (q.type === "truefalse") {
+    const ok = typeof raw === "boolean" && raw === q.correct;
+    return { ok, earned: ok ? q.points : 0 };
+  }
+  if (q.type === "fill") {
+    const s = String(raw ?? "")
+      .trim()
+      .toLowerCase();
+    const ok = q.acceptable.some((a) => a.toLowerCase() === s);
+    return { ok, earned: ok ? q.points : 0 };
+  }
+  if (q.type === "short") {
+    const s = String(raw ?? "").trim();
+    if (!s) {
+      return { ok: false, earned: 0 };
+    }
+    const ok = q.keywords.some((k) => s.includes(k));
+    return { ok, earned: ok ? q.points : 0 };
+  }
+  return { ok: false, earned: 0 };
+}
+
+export function gradeQuiz(
+  questions: QuizQuestion[],
+  answers: Record<string, unknown>,
+): { details: QuizAnswerDetail[]; totalScore: number; maxScore: number } {
+  let totalScore = 0;
+  let maxScore = 0;
+  const details: QuizAnswerDetail[] = [];
+
+  for (const q of questions) {
+    maxScore += q.points;
+    const raw = answers[q.id];
+    const { ok, earned } = isCorrect(q, raw);
+    totalScore += earned;
+    details.push({
+      questionId: q.id,
+      prompt: q.prompt,
+      typeLabel: typeLabel(q.type),
+      userAnswer: fmtUser(q, raw),
+      correctAnswer: fmtCorrect(q),
+      isCorrect: ok,
+      earnedPoints: earned,
+      maxPoints: q.points,
+    });
+  }
+
+  return { details, totalScore, maxScore };
+}
+
+export function buildAiComment(
+  experimentTitle: string,
+  total: number,
+  max: number,
+): { aiComment: string; knowledgeLearned: string[] } {
+  const pct = max > 0 ? Math.round((total / max) * 100) : 0;
+  let aiComment: string;
+  if (pct >= 90) {
+    aiComment = `你在「${experimentTitle}」配套测验中表现优秀（${pct}%），概念清晰、要点把握准确。建议继续保持实验记录习惯，并尝试在拓展题中联系生活应用。`;
+  } else if (pct >= 70) {
+    aiComment = `你在「${experimentTitle}」测验中达到良好水平（${pct}%），整体理解到位。可针对错题回顾实验步骤与相关概念，巩固薄弱环节。`;
+  } else if (pct >= 50) {
+    aiComment = `你在「${experimentTitle}」测验中已掌握部分要点（${pct}%）。建议重温实验说明与课堂小结，多做同类题型训练。`;
+  } else {
+    aiComment = `本次「${experimentTitle}」测验得分偏低（${pct}%），不必气馁。请结合实验演示与教材，从基础概念逐项梳理，可向教师提问澄清疑点。`;
+  }
+
+  const knowledgeLearned =
+    pct >= 70
+      ? [
+          "已较好掌握实验目标与基本操作流程",
+          "能区分常见概念（如输入/输出、观察与结论）",
+          "建议在下一实验中主动记录异常现象并尝试解释",
+        ]
+      : [
+          "建议重点巩固实验核心概念与关键术语",
+          "完成教师指定的复习题",
+          "在实验报告中用简短语句复述「观察—推理—结论」链条",
+        ];
+
+  return { aiComment, knowledgeLearned };
+}
