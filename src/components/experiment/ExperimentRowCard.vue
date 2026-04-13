@@ -18,7 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const coverSrc = ref(props.item.cover);
-const coverFallback = `${(import.meta.env.BASE_URL || "/").replace(/\/?$/, "/")}covers/ai-01.svg`;
+const coverFallback = `${(import.meta.env.BASE_URL || "/").replace(/\/?$/, "/")}covers/photo-01.jpg`;
 
 watch(
   () => props.item.cover,

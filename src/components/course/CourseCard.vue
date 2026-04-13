@@ -12,7 +12,7 @@ const emit = defineEmits<{
 }>();
 
 const displaySrc = ref(props.imageSrc);
-const fallbackCover = `${(import.meta.env.BASE_URL || "/").replace(/\/?$/, "/")}covers/ai-01.svg`;
+const fallbackCover = `${(import.meta.env.BASE_URL || "/").replace(/\/?$/, "/")}covers/photo-01.jpg`;
 
 watch(
   () => props.imageSrc,

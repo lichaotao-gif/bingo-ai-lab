@@ -16,7 +16,7 @@ const grades = [
   "六年级（上）",
 ];
 
-/** 六个年级各用一张不同的 AI 主题封面（与 ai-01～06 一一对应） */
+/** 六个年级各用一张不同的封面图（photo-01～06） */
 const courses = computed(() =>
   grades.map((title, i) => ({
     title,
