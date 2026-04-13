@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="g8" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#g8)"/>
+  <!-- PCB ?? -->
+  <g fill="none" stroke="#22d3ee" stroke-width="2.5" opacity="0.9">
+    <path d="M100 120 H200 V200 H320 V140 H480 V260 H620 V180 H700"/>
+    <path d="M100 280 H240 V340 H400 V300 H560 V380 H700"/>
+    <path d="M160 200 H160 V320 H300 V260 H440 V340 H580 V300 H700"/>
+  </g>
+  <g fill="#22d3ee">
+    <rect x="190" y="192" width="16" height="16" rx="2"/><rect x="312" y="132" width="16" height="16" rx="2"/>
+    <rect x="472" y="252" width="16" height="16" rx="2"/><rect x="612" y="172" width="16" height="16" rx="2"/>
+    <circle cx="400" cy="300" r="14" fill="#67e8f9"/><circle cx="560" cy="340" r="10"/>
+  </g>
+  <text x="400" y="420" text-anchor="middle" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="20" font-weight="600">Embedded AI</text>
+</svg>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import html2canvas from "html2canvas";
-import QRCode from "qrcode";
 import type { QuizQuestion } from "@/data/experimentQuizzes";
 import { getQuizForExperiment } from "@/data/experimentQuizzes";
 import {
@@ -261,25 +260,9 @@ const submittedLocal = computed(() => {
   });
 });
 
-const resultScorePercent = computed(() => {
-  const r = report.value;
-  if (!r || r.maxScore <= 0) {
-    return 0;
-  }
-  return Math.min(100, Math.round((r.totalScore / r.maxScore) * 100));
-});
-
 /** 用于截图分享的卡片（仅含顶部信息条） */
 const shareCardRef = ref<HTMLElement | null>(null);
-const qrShareOpen = ref(false);
-const qrDataUrl = ref("");
 const shareSaving = ref(false);
-
-function quizReportsPageUrl(): string {
-  const base = import.meta.env.BASE_URL || "/";
-  const path = base.endsWith("/") ? base.slice(0, -1) : base;
-  return `${window.location.origin}${path}/quiz-reports`;
-}
 
 async function saveShareImage() {
   const r = report.value;
@@ -311,48 +294,6 @@ async function saveShareImage() {
     window.alert("生成图片失败，请稍后重试或检查网络。");
   } finally {
     shareSaving.value = false;
-  }
-}
-
-async function openQrShare() {
-  const r = report.value;
-  if (!r) {
-    return;
-  }
-  const lines = [
-    "缤果AI实验室 · 测验结果",
-    `学员：${r.studentName}`,
-    `${r.experimentTitle}（${r.gradeLabel}）`,
-    `得分 ${r.totalScore} / ${r.maxScore}（${resultScorePercent.value}%)`,
-    `提交时间：${submittedLocal.value}`,
-    "",
-    "报告汇总页（电脑端）：",
-    quizReportsPageUrl(),
-  ];
-  try {
-    qrDataUrl.value = await QRCode.toDataURL(lines.join("\n"), {
-      width: 240,
-      margin: 2,
-      color: { dark: "#0f172a", light: "#ffffff" },
-    });
-    qrShareOpen.value = true;
-  } catch (e) {
-    console.error(e);
-    window.alert("生成二维码失败，请稍后重试。");
-  }
-}
-
-function closeQrShare() {
-  qrShareOpen.value = false;
-}
-
-async function copyReportLink() {
-  const url = quizReportsPageUrl();
-  try {
-    await navigator.clipboard.writeText(url);
-    window.alert("报告汇总页链接已复制，可粘贴到微信等应用分享。");
-  } catch {
-    window.prompt("请手动复制以下链接：", url);
   }
 }
 
@@ -906,45 +847,6 @@ onUnmounted(() => {
                 </svg>
                 {{ shareSaving ? "生成中…" : "保存图片" }}
               </button>
-              <button
-                type="button"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-card-inner px-3 py-2 text-[13px] font-medium text-fg-soft transition hover:border-primary/35 hover:bg-primary-muted/40 hover:text-primary"
-                @click="openQrShare"
-              >
-                <svg
-                  class="size-4 shrink-0 text-primary"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 4h2v2h-2v-2z"
-                  />
-                </svg>
-                二维码
-              </button>
-              <button
-                type="button"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-card-inner px-3 py-2 text-[13px] font-medium text-fg-soft transition hover:border-primary/35 hover:bg-primary-muted/40 hover:text-primary"
-                @click="copyReportLink"
-              >
-                <svg
-                  class="size-4 shrink-0 text-primary"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    d="M10 13a5 5 0 007.07.07l1-1a5 5 0 00-7.07-7.07l-.77.77M14 11a5 5 0 00-7.07-.07l-1 1a5 5 0 007.07 7.07l.77-.77"
-                  />
-                </svg>
-                复制链接
-              </button>
             </div>
             <div
               class="flex flex-wrap items-center justify-end gap-2"
@@ -965,56 +867,6 @@ onUnmounted(() => {
               </button>
             </div>
           </footer>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
-
-  <!-- 二维码分享 -->
-  <Teleport to="body">
-    <Transition
-      enter-active-class="transition-opacity duration-200"
-      leave-active-class="transition-opacity duration-150"
-      enter-from-class="opacity-0"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="qrShareOpen"
-        class="fixed inset-0 z-[130] flex items-center justify-center bg-black/50 p-4 backdrop-blur-[1px]"
-        role="dialog"
-        aria-modal="true"
-        aria-label="二维码分享"
-        @click.self="closeQrShare"
-      >
-        <div
-          class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
-          @click.stop
-        >
-          <h3 class="text-center text-[17px] font-semibold text-slate-900">
-            扫码分享
-          </h3>
-          <p class="mt-2 text-center text-[13px] leading-relaxed text-slate-500">
-            使用手机相机或微信扫一扫，即可查看测验摘要与报告页链接（演示环境）。
-          </p>
-          <div
-            class="mt-5 flex justify-center rounded-xl bg-slate-50 p-4"
-          >
-            <img
-              v-if="qrDataUrl"
-              :src="qrDataUrl"
-              alt="分享二维码"
-              width="240"
-              height="240"
-              class="size-60 max-w-full rounded-lg"
-            />
-          </div>
-          <button
-            type="button"
-            class="mt-6 w-full rounded-xl bg-primary py-3 text-[15px] font-medium text-white shadow-md transition hover:opacity-95"
-            @click="closeQrShare"
-          >
-            关闭
-          </button>
         </div>
       </div>
     </Transition>

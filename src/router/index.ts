@@ -18,6 +18,12 @@ const router = createRouter({
       meta: { title: "手势贪吃蛇" },
     },
     {
+      path: "/edu-bureau",
+      name: "edu-bureau",
+      component: () => import("@/views/EduBureauView.vue"),
+      meta: { title: "教育局统计" },
+    },
+    {
       path: "/",
       component: MainLayout,
       children: [
@@ -82,6 +88,10 @@ router.afterEach((to) => {
   if (to.name === "experiment-gesture-snake") {
     const t = (to.meta.title as string) ?? "实验";
     document.title = `${t} · 缤果AI实验室`;
+    return;
+  }
+  if (to.name === "edu-bureau") {
+    document.title = "教育局统计 · 缤果AI实验室";
     return;
   }
   const page = (to.meta.title as string) ?? "首页";

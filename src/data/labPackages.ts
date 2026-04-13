@@ -20,26 +20,26 @@ export const LAB_PACKAGE_OPTIONS: LabPackageOption[] = [
   {
     id: "pkg-g8-up",
     title: "八年级（上）",
-    cover: AI_COVER_IMAGES[4]!,
+    cover: AI_COVER_IMAGES[8]!,
     gradeRouteIndex: 5,
     detailTitle: "八年级（上）",
   },
   {
     id: "pkg-demo-g2",
     title: "中小学人工智能实验（二年级上）",
-    cover: AI_COVER_IMAGES[2]!,
+    cover: AI_COVER_IMAGES[1]!,
     gradeRouteIndex: 1,
   },
   {
     id: "pkg-g3-up",
     title: "三年级（上）",
-    cover: AI_COVER_IMAGES[0]!,
+    cover: AI_COVER_IMAGES[3]!,
     gradeRouteIndex: 2,
   },
   {
     id: "pkg-g5-up",
     title: "五年级（上）",
-    cover: AI_COVER_IMAGES[6]!,
+    cover: AI_COVER_IMAGES[5]!,
     gradeRouteIndex: 4,
   },
 ];

@@ -276,9 +276,17 @@ const pageSubtitle = computed(() => {
 </script>
 
 <template>
-  <section class="-mx-5 -mt-2 flex min-h-[min(640px,75vh)] flex-col gap-0 lg:-mx-7">
+  <!-- 上：页眉固定高度；下：三列同高且各自纵向滚动（不带动整页 main） -->
+  <section
+    class="-mx-5 -mt-2 flex min-h-0 flex-col gap-0 lg:-mx-7"
+    :class="[
+      /* 顶栏 + 外壳与 main 内边距，避免整块超出视口导致外层再滚动 */
+      'h-[calc(100dvh-var(--header-height)-5rem)]',
+      'max-h-[calc(100dvh-var(--header-height)-5rem)]',
+    ]"
+  >
     <header
-      class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle pb-3"
+      class="mb-4 shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle bg-surface pb-3"
     >
       <div class="flex min-w-0 items-center gap-3">
         <button
@@ -312,11 +320,11 @@ const pageSubtitle = computed(() => {
     </header>
 
     <div
-      class="grid min-h-0 flex-1 gap-0 overflow-hidden rounded-2xl border border-border-subtle bg-white shadow-card lg:grid-cols-[minmax(200px,280px)_minmax(200px,260px)_1fr]"
+      class="grid min-h-0 flex-1 grid-cols-1 gap-0 overflow-hidden rounded-2xl border border-border-subtle bg-white shadow-card max-lg:auto-rows-fr max-lg:grid-rows-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)] lg:grid-cols-[minmax(200px,280px)_minmax(200px,260px)_1fr] lg:grid-rows-1"
     >
       <!-- 列1：实验列表（默认）或学生（member-first 时通过 order 交换） -->
       <div
-        class="flex max-h-[40vh] min-h-0 flex-col border-b border-border-subtle lg:max-h-none lg:border-b-0 lg:border-r"
+        class="flex min-h-0 flex-col overflow-hidden border-b border-border-subtle lg:border-b-0 lg:border-r"
         :class="
           memberFirstLayout
             ? 'order-2 lg:order-2'
@@ -332,7 +340,9 @@ const pageSubtitle = computed(() => {
             class="text-fg-muted/80"
           > · {{ selectedMember.name }}</span>
         </div>
-        <ul class="min-h-0 flex-1 overflow-y-auto p-2">
+        <ul
+          class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 [scrollbar-gutter:stable]"
+        >
           <li
             v-for="(ex, i) in experiments"
             :key="ex.id"
@@ -412,7 +422,7 @@ const pageSubtitle = computed(() => {
 
       <!-- 列2：成员（默认）或学生优先 -->
       <div
-        class="flex max-h-[36vh] min-h-0 flex-col border-b border-border-subtle lg:max-h-none lg:border-b-0 lg:border-r"
+        class="flex min-h-0 flex-col overflow-hidden border-b border-border-subtle lg:border-b-0 lg:border-r"
         :class="
           memberFirstLayout
             ? 'order-1 lg:order-1'
@@ -429,7 +439,9 @@ const pageSubtitle = computed(() => {
             }}
           </template>
         </div>
-        <ul class="min-h-0 flex-1 overflow-y-auto p-2">
+        <ul
+          class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 [scrollbar-gutter:stable]"
+        >
           <li
             v-for="m in members"
             :key="m.id"
@@ -481,7 +493,7 @@ const pageSubtitle = computed(() => {
 
       <!-- 右：详情 -->
       <div
-        class="order-3 flex min-h-[280px] min-w-0 flex-col bg-slate-50/40 lg:min-h-0"
+        class="order-3 flex min-h-0 min-w-0 flex-col overflow-hidden bg-slate-50/40"
       >
         <div
           class="shrink-0 border-b border-border-subtle/80 px-4 py-2.5 text-[12px] font-medium text-slate-600"
@@ -491,7 +503,7 @@ const pageSubtitle = computed(() => {
 
         <div
           v-if="!selectedExperiment || !selectedMember"
-          class="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center text-[14px] text-fg-muted"
+          class="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-y-auto overscroll-contain px-6 py-8 text-center text-[14px] text-fg-muted"
         >
           <div
             class="flex size-24 items-center justify-center rounded-2xl bg-slate-100 text-slate-300"
@@ -515,7 +527,7 @@ const pageSubtitle = computed(() => {
 
         <div
           v-else
-          class="flex min-h-0 min-w-0 flex-1 flex-col"
+          class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
         >
           <div
             class="flex shrink-0 gap-0 border-b border-border-subtle bg-white px-2 pt-2"
@@ -554,7 +566,7 @@ const pageSubtitle = computed(() => {
           <!-- Tab：测验 -->
           <div
             v-if="statsDetailTab === 'quiz'"
-            class="min-h-0 flex-1 overflow-y-auto"
+            class="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]"
           >
             <div
               v-if="!activeReport"
@@ -667,7 +679,7 @@ const pageSubtitle = computed(() => {
           <!-- Tab：实验提交 -->
           <div
             v-else
-            class="min-h-0 flex-1 overflow-y-auto"
+            class="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]"
           >
             <div
               v-if="!activeExperimentResult"

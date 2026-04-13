@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="g6" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#312e81"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#g6)"/>
+  <!-- ????? -->
+  <g fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5">
+    <polygon points="400,100 450,130 450,190 400,220 350,190 350,130"/>
+    <polygon points="470,130 520,160 520,220 470,250 420,220 420,160"/>
+    <polygon points="330,130 380,160 380,220 330,250 280,220 280,160"/>
+    <polygon points="400,240 450,270 450,330 400,360 350,330 350,270"/>
+  </g>
+  <g fill="#c7d2fe" opacity="0.95">
+    <circle cx="400" cy="160" r="10"/><circle cx="470" cy="190" r="8"/><circle cx="330" cy="190" r="8"/>
+    <circle cx="400" cy="300" r="10"/>
+  </g>
+  <text x="400" y="405" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="system-ui,sans-serif" font-size="20" font-weight="600">Graph / Data</text>
+</svg>

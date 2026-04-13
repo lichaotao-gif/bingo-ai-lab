@@ -3,7 +3,7 @@ import { computed } from "vue";
 import { useRouter } from "vue-router";
 import CourseCard from "@/components/course/CourseCard.vue";
 import IconRobot from "@/components/icons/IconRobot.vue";
-import { AI_COVER_IMAGES, shuffleCovers } from "@/constants/aiCoverImages";
+import { AI_COVER_IMAGES } from "@/constants/aiCoverImages";
 
 const router = useRouter();
 
@@ -16,13 +16,11 @@ const grades = [
   "六年级（上）",
 ];
 
-/** 每次进入页面随机打乱封面与年级对应 */
-const covers = shuffleCovers(AI_COVER_IMAGES);
-
+/** 六个年级各用一张不同的 AI 主题封面（与 ai-01～06 一一对应） */
 const courses = computed(() =>
   grades.map((title, i) => ({
     title,
-    img: covers[i % covers.length],
+    img: AI_COVER_IMAGES[i]!,
   })),
 );
 

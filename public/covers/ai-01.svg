@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#5b21b6"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#g1)"/>
+  <!-- 三层神经网络示意 -->
+  <g fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.8">
+    <path d="M140 225 L260 140 M140 225 L260 225 M140 225 L260 310"/>
+    <path d="M140 140 L260 140 M140 310 L260 310"/>
+    <path d="M260 140 L380 90 M260 140 L380 180 M260 140 L380 270 M260 140 L380 360"/>
+    <path d="M260 225 L380 90 M260 225 L380 180 M260 225 L380 270 M260 225 L380 360"/>
+    <path d="M260 310 L380 90 M260 310 L380 180 M260 310 L380 270 M260 310 L380 360"/>
+    <path d="M380 90 L500 180 M380 180 L500 180 M380 270 L500 180 M380 360 L500 180"/>
+    <path d="M500 180 L620 225"/>
+  </g>
+  <g fill="#fff">
+    <circle cx="140" cy="140" r="11"/><circle cx="140" cy="225" r="11"/><circle cx="140" cy="310" r="11"/>
+    <circle cx="260" cy="140" r="9"/><circle cx="260" cy="225" r="9"/><circle cx="260" cy="310" r="9"/>
+    <circle cx="380" cy="90" r="8"/><circle cx="380" cy="180" r="8"/><circle cx="380" cy="270" r="8"/><circle cx="380" cy="360" r="8"/>
+    <circle cx="500" cy="180" r="10"/><circle cx="620" cy="225" r="12"/>
+  </g>
+  <text x="400" y="400" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-family="system-ui,sans-serif" font-size="20" font-weight="600">Neural Net</text>
+</svg>

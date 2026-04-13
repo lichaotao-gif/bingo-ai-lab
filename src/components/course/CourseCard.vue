@@ -1,5 +1,7 @@
 <script setup lang="ts">
-defineProps<{
+import { ref, watch } from "vue";
+
+const props = defineProps<{
   title: string;
   imageSrc: string;
   imageAlt?: string;
@@ -8,6 +10,22 @@ defineProps<{
 const emit = defineEmits<{
   click: [];
 }>();
+
+const displaySrc = ref(props.imageSrc);
+const fallbackCover = `${(import.meta.env.BASE_URL || "/").replace(/\/?$/, "/")}covers/ai-01.svg`;
+
+watch(
+  () => props.imageSrc,
+  (v) => {
+    displaySrc.value = v;
+  },
+);
+
+function onImgError() {
+  if (displaySrc.value !== fallbackCover) {
+    displaySrc.value = fallbackCover;
+  }
+}
 </script>
 
 <template>
@@ -20,12 +38,13 @@ const emit = defineEmits<{
   >
     <div class="overflow-hidden rounded-xl bg-white">
       <img
-        :src="imageSrc"
+        :src="displaySrc"
         :alt="imageAlt ?? title"
-        class="aspect-[300/169] w-full object-cover"
+        class="aspect-[300/169] w-full object-cover bg-slate-100"
         loading="lazy"
         decoding="async"
         referrerpolicy="no-referrer"
+        @error="onImgError"
       />
     </div>
     <h3

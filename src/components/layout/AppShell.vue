@@ -14,10 +14,35 @@ import { useCartoonAvatar } from "@/composables/useCartoonAvatar";
 const route = useRoute();
 const { avatarUrl } = useCartoonAvatar();
 
-const isMyLab = computed(() => route.name === "my-lab");
-const isAiLab = computed(
-  () => route.name === "ai-lab" || route.name === "grade-experiments",
-);
+/** 从首页「我的 AI 实验」进入实验列表 / 统计时携带，用于侧栏保持「我的AI实验」高亮 */
+const fromMyLabFlow = computed(() => route.query.from === "my-lab");
+
+const isMyLab = computed(() => {
+  if (route.name === "my-lab") {
+    return true;
+  }
+  if (
+    fromMyLabFlow.value &&
+    (route.name === "grade-experiments" || route.name === "stats")
+  ) {
+    return true;
+  }
+  return false;
+});
+
+const isAiLab = computed(() => {
+  if (route.name === "ai-lab") {
+    return true;
+  }
+  if (
+    !fromMyLabFlow.value &&
+    (route.name === "grade-experiments" || route.name === "stats")
+  ) {
+    return true;
+  }
+  return false;
+});
+
 function refresh() {
   window.location.reload();
 }
@@ -70,7 +95,7 @@ function refresh() {
       class="mx-auto flex min-h-0 w-full max-w-layout flex-1 gap-3 overflow-hidden px-3 pb-3 pt-3"
     >
       <aside
-        class="flex min-h-0 w-sidebar shrink-0 flex-col gap-5 overflow-y-auto rounded-2xl border border-border-subtle bg-surface p-4 shadow-sm"
+        class="flex min-h-0 w-sidebar shrink-0 flex-col gap-0 overflow-hidden rounded-2xl border border-border-subtle bg-surface p-4 shadow-sm"
       >
         <div class="flex flex-col items-center gap-2.5 text-[14px]">
           <img
@@ -85,7 +110,7 @@ function refresh() {
           </p>
         </div>
 
-        <nav class="flex flex-col gap-4">
+        <nav class="mt-5 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-0.5">
           <RouterLink
             v-slot="{ navigate }"
             to="/ai-lab"
@@ -142,6 +167,42 @@ function refresh() {
             </RouterLink>
           </div>
         </nav>
+
+        <div class="mt-4 shrink-0 border-t border-border-subtle pt-4">
+          <RouterLink
+            v-slot="{ navigate }"
+            to="/edu-bureau"
+            custom
+          >
+            <button
+              type="button"
+              class="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[14px] text-fg-soft transition hover:bg-slate-100"
+              @click="navigate"
+            >
+              <span
+                class="flex size-7 items-center justify-center rounded-lg bg-slate-200/80 text-slate-700"
+              >
+                <svg
+                  class="size-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    d="M4 19V5M10 19v-6M16 19V9M22 19V12"
+                  />
+                </svg>
+              </span>
+              教育局统计
+            </button>
+          </RouterLink>
+          <p class="mt-2 pl-1 text-[11px] leading-snug text-fg-muted">
+            管辖区域数据看板
+          </p>
+        </div>
       </aside>
 
       <main

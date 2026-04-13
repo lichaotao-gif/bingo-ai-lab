@@ -1,4 +1,5 @@
 import type { ExperimentResultSubmit } from "@/types/experimentResultSubmit";
+import { getDemoGestureSnakeResultIfApplicable } from "@/data/demoGestureSnakeExperimentResult";
 
 const KEY = "bingo-lab-experiment-results";
 
@@ -36,10 +37,18 @@ export function findExperimentResultSubmit(
   gradeLabel: string,
   studentName: string,
 ): ExperimentResultSubmit | undefined {
-  return loadExperimentResults().find(
+  const stored = loadExperimentResults().find(
     (r) =>
       r.experimentId === experimentId &&
       r.gradeLabel === gradeLabel &&
       r.studentName === studentName,
+  );
+  if (stored) {
+    return stored;
+  }
+  return getDemoGestureSnakeResultIfApplicable(
+    experimentId,
+    gradeLabel,
+    studentName,
   );
 }

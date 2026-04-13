@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { ref, watch } from "vue";
 import type { ExperimentItem } from "@/data/gradeExperiments";
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     item: ExperimentItem;
     /** 本年级下该实验测验已提交 */
@@ -15,6 +16,22 @@ const emit = defineEmits<{
   /** showResult 为 true 表示已做过测验，应直接打开结果页 */
   quiz: [payload: { showResult: boolean }];
 }>();
+
+const coverSrc = ref(props.item.cover);
+const coverFallback = `${(import.meta.env.BASE_URL || "/").replace(/\/?$/, "/")}covers/ai-01.svg`;
+
+watch(
+  () => props.item.cover,
+  (v) => {
+    coverSrc.value = v;
+  },
+);
+
+function onCoverError() {
+  if (coverSrc.value !== coverFallback) {
+    coverSrc.value = coverFallback;
+  }
+}
 </script>
 
 <template>
@@ -38,12 +55,13 @@ const emit = defineEmits<{
       class="size-[104px] shrink-0 overflow-hidden rounded-lg bg-card-inner ring-1 ring-black/[0.04]"
     >
       <img
-        :src="item.cover"
+        :src="coverSrc"
         :alt="item.title"
         class="size-full object-cover"
         loading="lazy"
         decoding="async"
         referrerpolicy="no-referrer"
+        @error="onCoverError"
       />
     </div>
 

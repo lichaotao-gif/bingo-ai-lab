@@ -69,19 +69,25 @@ const BASE_LIST: Omit<ExperimentItem, "cover">[] = [
   },
 ];
 
-function coverFor(index: number, gradeIndex: number): string {
-  const imgs = [...AI_COVER_IMAGES];
-  const n = (index + gradeIndex * 3) % imgs.length;
-  return imgs[n]!;
-}
+/** 每个实验固定一张不同的 AI 主题封面，避免同页重复或「看起来都一样」。 */
+const EXPERIMENT_COVER_INDEX: Record<string, number> = {
+  "graphical-programming": 0,
+  "gesture-snake": 1,
+  "rps-pk": 2,
+  "object-recognition": 3,
+  "plate-recognition": 4,
+  "face-compare": 5,
+  "image-segmentation": 6,
+  "face-tracking": 7,
+};
 
 /**
- * 某年级下的全部实验（演示数据：各年级条目相同，封面按序错开）。
+ * 某年级下的全部实验（演示数据：各年级条目相同；封面按实验 id 固定，各实验互不相同）。
  */
-export function getExperimentsForGrade(gradeIndex: number): ExperimentItem[] {
-  return BASE_LIST.map((item, i) => ({
+export function getExperimentsForGrade(_gradeIndex: number): ExperimentItem[] {
+  return BASE_LIST.map((item) => ({
     ...item,
-    cover: coverFor(i, gradeIndex),
+    cover: AI_COVER_IMAGES[EXPERIMENT_COVER_INDEX[item.id] ?? 0]!,
   }));
 }
 
