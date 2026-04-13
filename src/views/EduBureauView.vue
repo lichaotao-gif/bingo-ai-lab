@@ -59,7 +59,7 @@ function logout() {
           aria-hidden="true"
         />
         <h1 class="truncate text-[15px] font-semibold text-slate-800 sm:text-[16px]">
-          教育局统计
+          区域统计
         </h1>
       </div>
       <button

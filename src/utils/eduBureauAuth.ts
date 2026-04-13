@@ -1,4 +1,4 @@
-/** 教育局统计专属登录会话（演示：sessionStorage） */
+/** 区域统计专属登录会话（演示：sessionStorage） */
 
 const KEY = "bingo-lab-edu-bureau-session";
 

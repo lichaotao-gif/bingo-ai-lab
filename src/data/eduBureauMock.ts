@@ -1,4 +1,4 @@
-/** 教育局管辖范围演示数据：地区 → 学校 → 班级 → 学生 */
+/** 区域管辖范围演示数据：地区 → 学校 → 班级 → 学生 */
 
 export interface BureauRegion {
   id: string;

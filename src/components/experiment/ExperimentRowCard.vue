@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import type { ExperimentItem } from "@/data/gradeExperiments";
 
 const props = withDefaults(
@@ -7,6 +7,10 @@ const props = withDefaults(
     item: ExperimentItem;
     /** 本年级下该实验测验已提交 */
     quizCompleted?: boolean;
+    /**
+     * 本年级下该实验结果已提交；未传时沿用 item.completed（演示静态数据）
+     */
+    experimentSubmitCompleted?: boolean;
   }>(),
   { quizCompleted: false },
 );
@@ -32,22 +36,29 @@ function onCoverError() {
     coverSrc.value = coverFallback;
   }
 }
+
+/** 测验与实验结果均已提交时显示角标（与统计页「完成」定义一致） */
+const overallCompleted = computed(
+  () =>
+    props.quizCompleted &&
+    (props.experimentSubmitCompleted ?? props.item.completed),
+);
 </script>
 
 <template>
   <article
     class="relative flex gap-4 overflow-hidden rounded-xl border border-border-subtle bg-white p-4 shadow-card transition hover:shadow-md"
   >
-    <!-- 斜角「已完成」：小方块 overflow 裁切，不伸出卡片，避免被 main 裁掉 -->
+    <!-- 斜角「完成」：overflow 裁切不伸出卡片 -->
     <div
-      v-if="item.completed"
+      v-if="overallCompleted"
       class="pointer-events-none absolute right-0 top-0 z-10 h-[4.75rem] w-[4.75rem] overflow-hidden rounded-tr-xl"
       aria-hidden="true"
     >
       <div
         class="absolute right-[-38%] top-[22%] w-[140%] rotate-45 bg-gradient-to-br from-primary to-[#4f9cf9] py-1.5 text-center text-[10px] font-bold tracking-wider text-white shadow-sm"
       >
-        已完成
+        完成
       </div>
     </div>
 
@@ -77,21 +88,52 @@ function onCoverError() {
       <div class="flex flex-wrap justify-end gap-2 pt-1">
         <button
           type="button"
-          class="rounded-lg border px-4 py-2 text-[13px] font-medium shadow-sm transition active:scale-[0.98]"
-          :class="
-            quizCompleted
-              ? 'border-emerald-200/90 bg-emerald-50 text-emerald-800 hover:bg-emerald-100/90'
-              : 'border-border-subtle bg-white text-primary hover:bg-primary-muted'
-          "
+          class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border-subtle bg-white px-4 py-2 text-[13px] font-medium text-primary shadow-sm transition hover:bg-primary-muted active:scale-[0.98]"
+          :aria-label="quizCompleted ? '测验（已完成）' : '测验'"
           @click="emit('quiz', { showResult: quizCompleted })"
         >
-          {{ quizCompleted ? "完成测验" : "测验" }}
+          <span
+            v-if="quizCompleted"
+            class="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+            aria-hidden="true"
+          >
+            <svg class="size-2.5" viewBox="0 0 24 24" fill="none">
+              <path
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M20 6L9 17l-5-5"
+              />
+            </svg>
+          </span>
+          测验
         </button>
         <button
           type="button"
-          class="rounded-lg bg-primary px-4 py-2 text-[13px] font-medium text-white shadow-sm shadow-primary/25 transition hover:opacity-95 active:scale-[0.98]"
+          class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-[13px] font-medium text-white shadow-sm shadow-primary/25 transition hover:opacity-95 active:scale-[0.98]"
+          :aria-label="
+            (experimentSubmitCompleted ?? item.completed)
+              ? 'AI 实验（已完成）'
+              : 'AI 实验'
+          "
           @click="emit('start')"
         >
+          <span
+            v-if="experimentSubmitCompleted ?? item.completed"
+            class="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-white/95 text-primary"
+            aria-hidden="true"
+          >
+            <svg class="size-2.5" viewBox="0 0 24 24" fill="none">
+              <path
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M20 6L9 17l-5-5"
+              />
+            </svg>
+          </span>
           AI 实验
         </button>
       </div>

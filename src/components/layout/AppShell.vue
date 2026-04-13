@@ -196,7 +196,7 @@ function refresh() {
                   />
                 </svg>
               </span>
-              教育局统计
+              区域统计
             </button>
           </RouterLink>
           <p class="mt-2 pl-1 text-[11px] leading-snug text-fg-muted">

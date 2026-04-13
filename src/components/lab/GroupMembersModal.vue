@@ -147,7 +147,7 @@ onUnmounted(() => {
               :key="m.id"
               class="flex items-center gap-3 rounded-xl border border-border-subtle/80 bg-white p-3 shadow-card"
             >
-              <div class="relative shrink-0">
+              <div class="shrink-0">
                 <img
                   :src="m.avatar"
                   alt=""
@@ -157,16 +157,18 @@ onUnmounted(() => {
                   loading="lazy"
                   referrerpolicy="no-referrer"
                 />
-                <span
-                  v-if="m.role === 'admin'"
-                  class="absolute -top-1 left-1/2 z-10 -translate-x-1/2 rounded-full bg-success px-1.5 py-px text-[10px] font-medium leading-tight text-white shadow-sm"
-                >
-                  管理员
-                </span>
               </div>
-              <span class="min-w-0 flex-1 text-[15px] font-medium text-black">{{
-                m.name
-              }}</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                  <span class="text-[15px] font-medium text-black">{{ m.name }}</span>
+                  <span
+                    v-if="m.role === 'admin'"
+                    class="inline-flex shrink-0 items-center rounded-full bg-success px-2 py-0.5 text-[11px] font-medium leading-none text-white"
+                  >
+                    管理员
+                  </span>
+                </div>
+              </div>
               <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"

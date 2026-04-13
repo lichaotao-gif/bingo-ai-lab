@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { LAB_PACKAGE_OPTIONS } from "@/data/labPackages";
 import {
@@ -10,8 +10,11 @@ import {
 import type { ExperimentItem } from "@/data/gradeExperiments";
 import { INITIAL_MEMBERS_BY_GROUP } from "@/data/groupMembers";
 import type { GroupMember } from "@/data/groupMembers";
-import type { QuizReport } from "@/types/quizReport";
-import { normalizeKnowledgeLearned } from "@/types/quizReport";
+import {
+  normalizeKnowledgeLearned,
+  quizCorrectRatePercent,
+  type QuizReport,
+} from "@/types/quizReport";
 import { loadQuizReports } from "@/utils/quizReportStorage";
 import { findExperimentResultSubmit } from "@/utils/experimentResultStorage";
 
@@ -84,6 +87,7 @@ function reportFor(
   );
 }
 
+/** 单项完成：该实验的测验与实验结果提交均已存在 */
 function isExperimentCompleteForMember(
   ex: ExperimentItem,
   m: GroupMember | null,
@@ -91,10 +95,13 @@ function isExperimentCompleteForMember(
   if (!m) {
     return false;
   }
-  if (reportFor(ex.id, m.name)) {
-    return true;
-  }
-  return !!findExperimentResultSubmit(ex.id, listHeading.value, m.name);
+  const quizDone = !!reportFor(ex.id, m.name);
+  const submitDone = !!findExperimentResultSubmit(
+    ex.id,
+    listHeading.value,
+    m.name,
+  );
+  return quizDone && submitDone;
 }
 
 function memberHasAnyCompletion(m: GroupMember): boolean {
@@ -113,7 +120,7 @@ function completionForExperiment(ex: ExperimentItem): { done: number; total: num
   }
   let done = 0;
   for (const m of members.value) {
-    if (reportFor(ex.id, m.name)) {
+    if (isExperimentCompleteForMember(ex, m)) {
       done++;
     }
   }
@@ -223,7 +230,7 @@ function memberTags(m: GroupMember): { key: string; label: string; class: string
   }
   const ex = selectedExperiment.value;
   if (ex) {
-    if (reportFor(ex.id, m.name)) {
+    if (isExperimentCompleteForMember(ex, m)) {
       tags.push({
         key: "done",
         label: "已完成",
@@ -232,7 +239,7 @@ function memberTags(m: GroupMember): { key: string; label: string; class: string
     } else {
       tags.push({
         key: "pending",
-        label: "未测验",
+        label: "未完成",
         class: "bg-slate-100 text-slate-600",
       });
     }
@@ -273,6 +280,85 @@ const pageSubtitle = computed(() => {
   }
   return gradeLabel(gradeIndex.value);
 });
+
+/** 从「我的 AI 实验」进入时显示整体统计入口 */
+const showClassOverviewEntry = computed(
+  () => route.query.from === "my-lab",
+);
+
+const classOverviewOpen = ref(false);
+
+/** 整体统计弹窗：固定模拟 50 人（与左侧真实成员/存档无关） */
+const CLASS_OVERVIEW_SIM_TOTAL = 50;
+
+function hashExperimentId(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** 模拟：全班范围内「各实验均完成」的人数（与年级标题、实验列表绑定，稳定可复现） */
+function simulatedOverallFullyCompleted(
+  experimentList: ExperimentItem[],
+  heading: string,
+  total: number,
+): number {
+  if (experimentList.length === 0 || total <= 0) {
+    return 0;
+  }
+  let h = hashExperimentId(heading);
+  for (const ex of experimentList) {
+    h = (h ^ hashExperimentId(ex.id)) >>> 0;
+  }
+  const pct = 22 + (h % 58);
+  return Math.min(total, Math.max(0, Math.round((total * pct) / 100)));
+}
+
+/** 按实验 id 生成稳定的模拟完成人数（约占全班 18%～95%） */
+function simulatedClassCompletion(ex: ExperimentItem): {
+  done: number;
+  total: number;
+} {
+  const total = CLASS_OVERVIEW_SIM_TOTAL;
+  const h = hashExperimentId(ex.id);
+  const pct = 18 + (h % 78);
+  const done = Math.min(total, Math.max(0, Math.round((total * pct) / 100)));
+  return { done, total };
+}
+
+const packageCompletionRows = computed(() =>
+  experiments.value.map((ex) => {
+    const { done, total } = simulatedClassCompletion(ex);
+    const barPct = total > 0 ? Math.round((done / total) * 100) : 0;
+    return { ex, done, total, barPct };
+  }),
+);
+
+const packageCompletionSummary = computed(() => {
+  const rows = packageCompletionRows.value;
+  const memberCount = CLASS_OVERVIEW_SIM_TOTAL;
+  const experimentCount = rows.length;
+  const overallFullyDone = simulatedOverallFullyCompleted(
+    experiments.value,
+    listHeading.value,
+    memberCount,
+  );
+  if (experimentCount === 0) {
+    return { memberCount, experimentCount: 0, overallFullyDone: 0 };
+  }
+  return { memberCount, experimentCount, overallFullyDone };
+});
+
+watch(classOverviewOpen, (v) => {
+  document.body.style.overflow = v ? "hidden" : "";
+});
+
+onUnmounted(() => {
+  document.body.style.overflow = "";
+});
 </script>
 
 <template>
@@ -286,7 +372,7 @@ const pageSubtitle = computed(() => {
     ]"
   >
     <header
-      class="mb-4 shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle bg-surface pb-3"
+      class="mb-4 shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle bg-surface pb-3 pr-2 sm:pr-3"
     >
       <div class="flex min-w-0 items-center gap-3">
         <button
@@ -317,6 +403,28 @@ const pageSubtitle = computed(() => {
           </p>
         </div>
       </div>
+      <button
+        v-if="showClassOverviewEntry"
+        type="button"
+        class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border-subtle bg-white px-3 py-2 text-[13px] font-medium text-primary shadow-sm transition hover:bg-primary-muted"
+        @click="classOverviewOpen = true"
+      >
+        <svg
+          class="size-[18px] shrink-0 opacity-90"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M4 20V10M12 20V4M20 20v-7"
+          />
+        </svg>
+        <span class="whitespace-nowrap">整体统计</span>
+      </button>
     </header>
 
     <div
@@ -602,12 +710,14 @@ const pageSubtitle = computed(() => {
               <div
                 class="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4"
               >
-                <p class="text-[12px] text-blue-800/80">测验得分</p>
-                <p class="mt-1 text-3xl font-semibold text-blue-700">
-                  {{ activeReport.totalScore
-                  }}<span class="text-lg font-normal text-blue-600/80"
-                    >/ {{ activeReport.maxScore }}</span
-                  >
+                <p class="text-[12px] text-blue-800/80">正确率</p>
+                <p class="mt-1 text-3xl font-semibold tabular-nums text-blue-700">
+                  {{
+                    quizCorrectRatePercent(
+                      activeReport.totalScore,
+                      activeReport.maxScore,
+                    )
+                  }}%
                 </p>
                 <p class="mt-1 text-[12px] text-fg-muted">
                   提交于 {{ formatSubmitted(activeReport.submittedAt) }}
@@ -664,7 +774,7 @@ const pageSubtitle = computed(() => {
                             : 'bg-amber-100 text-amber-900'
                         "
                       >
-                        {{ d.earnedPoints }}/{{ d.maxPoints }} 分
+                        {{ d.isCorrect ? "正确" : "有误" }}
                       </span>
                     </div>
                     <p class="mt-1 line-clamp-2 text-[12px] text-fg-muted">
@@ -802,5 +912,112 @@ const pageSubtitle = computed(() => {
         </div>
       </div>
     </div>
+
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        leave-active-class="transition-opacity duration-150"
+        enter-from-class="opacity-0"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="classOverviewOpen"
+          class="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="class-overview-title"
+          @click.self="classOverviewOpen = false"
+        >
+          <div
+            class="flex max-h-[min(560px,88vh)] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-surface shadow-popover"
+            @click.stop
+          >
+            <header
+              class="flex shrink-0 items-start justify-between gap-3 border-b border-border-subtle px-5 py-4"
+            >
+              <div class="min-w-0">
+                <h2
+                  id="class-overview-title"
+                  class="text-[17px] font-semibold text-black"
+                >
+                  整体统计
+                </h2>
+                <p class="mt-1 text-[13px] text-fg-muted">
+                  {{ pageSubtitle }} · {{ listHeading }}
+                </p>
+              </div>
+              <button
+                type="button"
+                class="flex size-9 shrink-0 items-center justify-center rounded-full text-fg-muted transition hover:bg-card-inner hover:text-black"
+                aria-label="关闭"
+                @click="classOverviewOpen = false"
+              >
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    d="M6 6l12 12M18 6L6 18"
+                  />
+                </svg>
+              </button>
+            </header>
+            <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+              <p class="mb-4 text-[12px] leading-relaxed text-fg-muted">
+                完成标准：每位学生需同时提交该实验的「测验」与「实验结果」。以下按模拟
+                50 人展示各实验完成人数（演示数据，与左侧成员列表中的真实统计无关）。
+              </p>
+              <div
+                class="mb-5 grid grid-cols-3 gap-2 rounded-xl border border-border-subtle/80 bg-slate-50/80 px-3 py-3 text-center"
+              >
+                <div>
+                  <p class="text-[20px] font-semibold tabular-nums text-black">
+                    {{ packageCompletionSummary.memberCount }}
+                  </p>
+                  <p class="mt-0.5 text-[11px] text-fg-muted">人数</p>
+                </div>
+                <div>
+                  <p class="text-[20px] font-semibold tabular-nums text-black">
+                    {{ packageCompletionSummary.experimentCount }}
+                  </p>
+                  <p class="mt-0.5 text-[11px] text-fg-muted">实验数</p>
+                </div>
+                <div>
+                  <p
+                    class="text-[18px] font-semibold tabular-nums leading-snug text-black sm:text-[20px]"
+                  >
+                    {{ packageCompletionSummary.overallFullyDone
+                    }}<span class="text-fg-muted">/</span
+                    >{{ packageCompletionSummary.memberCount }}
+                  </p>
+                  <p class="mt-0.5 text-[11px] text-fg-muted">全员进度</p>
+                </div>
+              </div>
+              <ul class="space-y-4">
+                <li
+                  v-for="row in packageCompletionRows"
+                  :key="row.ex.id"
+                >
+                  <div class="mb-1.5 flex items-start justify-between gap-2 text-[13px]">
+                    <span class="min-w-0 font-medium leading-snug text-black">{{
+                      row.ex.title
+                    }}</span>
+                    <span class="shrink-0 tabular-nums text-fg-muted">
+                      完成{{ row.done }}/{{ row.total }}人
+                    </span>
+                  </div>
+                  <div class="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      class="h-full rounded-full bg-gradient-to-r from-primary to-[#4f9cf9] transition-[width] duration-300"
+                      :style="{ width: `${row.barPct}%` }"
+                    />
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </section>
 </template>

@@ -1,10 +1,19 @@
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue";
+import type { ComponentPublicInstance } from "vue";
 import html2canvas from "html2canvas";
 import type { QuizQuestion } from "@/data/experimentQuizzes";
 import { getQuizForExperiment } from "@/data/experimentQuizzes";
 import {
   normalizeKnowledgeLearned,
+  quizCorrectRatePercent,
   type QuizReport,
 } from "@/types/quizReport";
 import { useCartoonAvatar } from "@/composables/useCartoonAvatar";
@@ -27,6 +36,14 @@ const knowledgePoints = computed(() =>
     ? normalizeKnowledgeLearned(report.value.knowledgeLearned)
     : [],
 );
+
+const resultCorrectRatePercent = computed(() => {
+  const r = report.value;
+  if (!r) {
+    return 0;
+  }
+  return quizCorrectRatePercent(r.totalScore, r.maxScore);
+});
 
 const STUDENT_NAME = "李超涛";
 
@@ -51,6 +68,132 @@ const report = ref<QuizReport | null>(null);
 /** 当前题下标（逐题展示） */
 const currentIndex = ref(0);
 
+/** 连线题：已选中的左侧下标，等待点选右侧完成配对 */
+const matchPendingLeft = ref<number | null>(null);
+
+/** 连线题：左右按钮节点，用于绘制 SVG 连线 */
+const matchAreaRef = ref<HTMLElement | null>(null);
+const matchLeftEls = ref<Record<number, HTMLElement>>({});
+const matchRightEls = ref<Record<number, HTMLElement>>({});
+const matchLines = ref<
+  { x1: number; y1: number; x2: number; y2: number }[]
+>([]);
+const matchSvgSize = ref({ w: 0, h: 0 });
+
+function domFromRef(
+  el: Element | ComponentPublicInstance | null,
+): HTMLElement | null {
+  if (!el) {
+    return null;
+  }
+  if (el instanceof HTMLElement) {
+    return el;
+  }
+  const inner = (el as ComponentPublicInstance).$el;
+  return inner instanceof HTMLElement ? inner : null;
+}
+
+function setMatchLeftEl(
+  el: Element | ComponentPublicInstance | null,
+  li: number,
+) {
+  const node = domFromRef(el);
+  const next = { ...matchLeftEls.value };
+  if (node) {
+    next[li] = node;
+  } else {
+    delete next[li];
+  }
+  matchLeftEls.value = next;
+  nextTick(updateMatchLines);
+}
+
+function setMatchRightEl(
+  el: Element | ComponentPublicInstance | null,
+  ri: number,
+) {
+  const node = domFromRef(el);
+  const next = { ...matchRightEls.value };
+  if (node) {
+    next[ri] = node;
+  } else {
+    delete next[ri];
+  }
+  matchRightEls.value = next;
+  nextTick(updateMatchLines);
+}
+
+function updateMatchLines() {
+  const container = matchAreaRef.value;
+  const q = currentQuestion.value;
+  if (!container || !q || q.type !== "match") {
+    matchLines.value = [];
+    return;
+  }
+  const cr = container.getBoundingClientRect();
+  const w = Math.round(cr.width);
+  const h = Math.round(cr.height);
+  if (w < 8 || h < 8) {
+    requestAnimationFrame(() => {
+      nextTick(updateMatchLines);
+    });
+    return;
+  }
+  matchSvgSize.value = { w, h };
+  const arr = (answers.value[q.id] as number[]) ?? [];
+  const lines: { x1: number; y1: number; x2: number; y2: number }[] = [];
+  for (let li = 0; li < q.leftItems.length; li++) {
+    const ri = arr[li];
+    if (typeof ri !== "number" || ri < 0) {
+      continue;
+    }
+    const le = matchLeftEls.value[li];
+    const re = matchRightEls.value[ri];
+    if (!le || !re) {
+      continue;
+    }
+    const lr = le.getBoundingClientRect();
+    const rr = re.getBoundingClientRect();
+    lines.push({
+      x1: lr.right - cr.left,
+      y1: lr.top - cr.top + lr.height / 2,
+      x2: rr.left - cr.left,
+      y2: rr.top - cr.top + rr.height / 2,
+    });
+  }
+  matchLines.value = lines;
+}
+
+let matchResizeObserver: ResizeObserver | null = null;
+
+watch(
+  matchAreaRef,
+  (el) => {
+    matchResizeObserver?.disconnect();
+    matchResizeObserver = null;
+    if (!el) {
+      return;
+    }
+    matchResizeObserver = new ResizeObserver(() => {
+      nextTick(updateMatchLines);
+    });
+    matchResizeObserver.observe(el);
+    nextTick(() => {
+      nextTick(updateMatchLines);
+    });
+  },
+  { flush: "post" },
+);
+
+function shuffleIndices(n: number): number[] {
+  const arr = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function resetAnswers(qs: QuizQuestion[]) {
   const next: Record<string, unknown> = {};
   for (const q of qs) {
@@ -58,8 +201,17 @@ function resetAnswers(qs: QuizQuestion[]) {
       next[q.id] = [] as number[];
     } else if (q.type === "truefalse") {
       next[q.id] = null as boolean | null;
-    } else if (q.type === "single") {
+    } else if (
+      q.type === "single" ||
+      q.type === "image_pick" ||
+      q.type === "image_stem" ||
+      q.type === "text_figure_choice"
+    ) {
       next[q.id] = null as number | null;
+    } else if (q.type === "match") {
+      next[q.id] = q.leftItems.map(() => -1);
+    } else if (q.type === "sort") {
+      next[q.id] = shuffleIndices(q.items.length);
     } else {
       next[q.id] = "";
     }
@@ -96,7 +248,12 @@ function tryShowSavedResult(): boolean {
 
 function isAnswered(q: QuizQuestion): boolean {
   const a = answers.value[q.id];
-  if (q.type === "single") {
+  if (
+    q.type === "single" ||
+    q.type === "image_pick" ||
+    q.type === "image_stem" ||
+    q.type === "text_figure_choice"
+  ) {
     return typeof a === "number";
   }
   if (q.type === "multi") {
@@ -107,6 +264,19 @@ function isAnswered(q: QuizQuestion): boolean {
   }
   if (q.type === "fill" || q.type === "short") {
     return String(a ?? "").trim().length > 0;
+  }
+  if (q.type === "match") {
+    if (!Array.isArray(a)) {
+      return false;
+    }
+    const arr = a as number[];
+    return (
+      arr.length === q.leftItems.length &&
+      arr.every((x) => typeof x === "number" && x >= 0)
+    );
+  }
+  if (q.type === "sort") {
+    return Array.isArray(a) && (a as number[]).length === q.items.length;
   }
   return false;
 }
@@ -162,7 +332,111 @@ function questionTypeLabel(q: QuizQuestion): string {
   if (q.type === "fill") {
     return "填空题";
   }
-  return "简答题";
+  if (q.type === "short") {
+    return "简答题";
+  }
+  if (q.type === "match") {
+    return "连线题";
+  }
+  if (q.type === "sort") {
+    return "拖拽排序";
+  }
+  if (
+    q.type === "text_figure_choice" ||
+    q.type === "image_pick" ||
+    q.type === "image_stem"
+  ) {
+    return "选择题";
+  }
+  return "";
+}
+
+function matchAnswerArray(q: Extract<QuizQuestion, { type: "match" }>) {
+  return [...((answers.value[q.id] as number[]) ?? q.leftItems.map(() => -1))];
+}
+
+function onMatchLeftClick(q: Extract<QuizQuestion, { type: "match" }>, li: number) {
+  const arr = matchAnswerArray(q);
+  if (arr[li] >= 0) {
+    arr[li] = -1;
+    answers.value[q.id] = arr;
+    matchPendingLeft.value = null;
+    nextTick(updateMatchLines);
+    return;
+  }
+  matchPendingLeft.value = matchPendingLeft.value === li ? null : li;
+}
+
+function onMatchRightClick(q: Extract<QuizQuestion, { type: "match" }>, ri: number) {
+  if (matchPendingLeft.value !== null) {
+    const li = matchPendingLeft.value;
+    const arr = matchAnswerArray(q);
+    for (let i = 0; i < arr.length; i++) {
+      if (i !== li && arr[i] === ri) {
+        arr[i] = -1;
+      }
+    }
+    arr[li] = ri;
+    answers.value[q.id] = arr;
+    matchPendingLeft.value = null;
+    nextTick(updateMatchLines);
+    return;
+  }
+  const arr = matchAnswerArray(q);
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] === ri) {
+      arr[i] = -1;
+      answers.value[q.id] = arr;
+      nextTick(updateMatchLines);
+      return;
+    }
+  }
+}
+
+function onSortDragStart(
+  _q: Extract<QuizQuestion, { type: "sort" }>,
+  fromPos: number,
+  e: DragEvent,
+) {
+  e.dataTransfer?.setData("application/x-sort-pos", String(fromPos));
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move";
+  }
+}
+
+function onSortDragOver(e: DragEvent) {
+  e.preventDefault();
+  if (e.dataTransfer) {
+    e.dataTransfer.dropEffect = "move";
+  }
+}
+
+function onSortDrop(
+  q: Extract<QuizQuestion, { type: "sort" }>,
+  toPos: number,
+  e: DragEvent,
+) {
+  e.preventDefault();
+  const fromRaw = e.dataTransfer?.getData("application/x-sort-pos");
+  if (fromRaw === "") {
+    return;
+  }
+  const fromPos = Number(fromRaw);
+  if (Number.isNaN(fromPos) || fromPos === toPos) {
+    return;
+  }
+  const arr = [...((answers.value[q.id] as number[]) ?? [])];
+  if (
+    fromPos < 0 ||
+    fromPos >= arr.length ||
+    toPos < 0 ||
+    toPos >= arr.length
+  ) {
+    return;
+  }
+  const [moved] = arr.splice(fromPos, 1);
+  arr.splice(toPos, 0, moved);
+  answers.value[q.id] = arr;
 }
 
 watch(
@@ -179,6 +453,25 @@ watch(
       document.body.style.overflow = "";
     }
   },
+);
+
+watch(currentIndex, () => {
+  matchPendingLeft.value = null;
+  nextTick(updateMatchLines);
+});
+
+watch(
+  () => {
+    const q = currentQuestion.value;
+    if (!q || q.type !== "match") {
+      return null;
+    }
+    return answers.value[q.id];
+  },
+  () => {
+    nextTick(updateMatchLines);
+  },
+  { deep: true },
 );
 
 function close() {
@@ -287,7 +580,7 @@ async function saveShareImage() {
     const url = canvas.toDataURL("image/png");
     const a = document.createElement("a");
     a.href = url;
-    a.download = `缤果AI实验室-测验结果-${r.studentName}-${r.totalScore}分.png`;
+    a.download = `缤果AI实验室-测验结果-${r.studentName}-正确率${resultCorrectRatePercent.value}%.png`;
     a.click();
   } catch (e) {
     console.error(e);
@@ -297,8 +590,19 @@ async function saveShareImage() {
   }
 }
 
+function onMatchWindowResize() {
+  nextTick(updateMatchLines);
+}
+
+onMounted(() => {
+  window.addEventListener("resize", onMatchWindowResize);
+});
+
 onUnmounted(() => {
   document.body.style.overflow = "";
+  window.removeEventListener("resize", onMatchWindowResize);
+  matchResizeObserver?.disconnect();
+  matchResizeObserver = null;
 });
 </script>
 
@@ -349,7 +653,7 @@ onUnmounted(() => {
           <!-- 答题：题目区居中 + 右侧进度 -->
           <div
             v-if="phase === 'quiz'"
-            class="flex min-h-[min(360px,45vh)] flex-1 flex-col overflow-hidden lg:min-h-[400px] lg:flex-row"
+            class="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row"
           >
             <div
               class="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto px-4 py-5 sm:px-6 lg:min-w-0 lg:py-6"
@@ -375,14 +679,21 @@ onUnmounted(() => {
                       第 {{ currentIndex + 1 }} / {{ totalSteps }} 题 ·
                       {{ questionTypeLabel(currentQuestion) }}
                     </span>
-                    <span class="text-[12px] text-fg-muted"
-                      >{{ currentQuestion.points }} 分</span
-                    >
                   </div>
                   <p
+                    v-if="
+                      currentQuestion.type !== 'image_stem' &&
+                      currentQuestion.type !== 'text_figure_choice'
+                    "
                     class="text-center text-[16px] font-medium leading-relaxed text-black"
                   >
                     {{ currentQuestion.prompt }}
+                  </p>
+                  <p
+                    v-if="currentQuestion.type === 'image_pick' && currentQuestion.choiceHint"
+                    class="mt-2 text-center text-[14px] text-fg-muted"
+                  >
+                    {{ currentQuestion.choiceHint }}
                   </p>
 
                   <template v-if="currentQuestion.type === 'single'">
@@ -463,7 +774,7 @@ onUnmounted(() => {
                         :name="`tf-${currentQuestion.id}`"
                         :value="true"
                       />
-                      <span class="text-[14px] text-slate-900">正确</span>
+                      <span class="text-[14px] text-slate-900">是</span>
                     </label>
                     <label
                       class="flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 transition"
@@ -480,7 +791,7 @@ onUnmounted(() => {
                         :name="`tf-${currentQuestion.id}`"
                         :value="false"
                       />
-                      <span class="text-[14px] text-slate-900">错误</span>
+                      <span class="text-[14px] text-slate-900">否</span>
                     </label>
                   </div>
 
@@ -499,13 +810,264 @@ onUnmounted(() => {
                     class="mx-auto mt-5 block w-full max-w-md resize-y rounded-xl border border-border-subtle bg-white px-3 py-2.5 text-[14px] leading-relaxed outline-none ring-primary focus:border-primary focus:ring-2 focus:ring-primary/20"
                     placeholder="请简要作答"
                   />
+
+                  <template v-else-if="currentQuestion.type === 'match'">
+                    <p class="mt-3 text-center text-[12px] text-fg-muted">
+                      先点左侧文字，再点右侧文字完成连线；已连线时，再次点同一左侧或同一右侧可取消该连线
+                    </p>
+                    <div
+                      ref="matchAreaRef"
+                      class="relative mx-auto mt-4 min-h-[10rem] w-full max-w-2xl"
+                    >
+                      <!-- 下层 SVG 连线；上层透明叠层仅按钮可点，中间缝与标题区可透出蓝色线段 -->
+                      <svg
+                        class="pointer-events-none absolute inset-0 z-[1] h-full min-h-[10rem] w-full overflow-visible"
+                        :viewBox="`0 0 ${Math.max(matchSvgSize.w, 1)} ${Math.max(matchSvgSize.h, 1)}`"
+                        preserveAspectRatio="none"
+                        aria-hidden="true"
+                      >
+                        <line
+                          v-for="(ln, i) in matchLines"
+                          :key="'ml-bg' + i"
+                          :x1="ln.x1"
+                          :y1="ln.y1"
+                          :x2="ln.x2"
+                          :y2="ln.y2"
+                          stroke="#ffffff"
+                          stroke-width="7"
+                          stroke-linecap="round"
+                          opacity="0.98"
+                        />
+                        <line
+                          v-for="(ln, i) in matchLines"
+                          :key="'ml' + i"
+                          :x1="ln.x1"
+                          :y1="ln.y1"
+                          :x2="ln.x2"
+                          :y2="ln.y2"
+                          stroke="#2563eb"
+                          stroke-width="3"
+                          stroke-linecap="round"
+                          opacity="1"
+                        />
+                      </svg>
+                      <div
+                        class="absolute inset-0 z-[2] flex items-start gap-2 sm:gap-4"
+                        style="pointer-events: none"
+                      >
+                        <div class="min-w-0 flex-1 space-y-2 pointer-events-auto">
+                          <p
+                            class="pointer-events-none text-center text-[11px] font-medium uppercase tracking-wide text-fg-muted"
+                          >
+                            选项
+                          </p>
+                          <button
+                            v-for="(left, li) in currentQuestion.leftItems"
+                            :key="'L' + li"
+                            type="button"
+                            :ref="(el) => setMatchLeftEl(el, li)"
+                            class="w-full rounded-xl border bg-white px-3 py-2.5 text-left text-[14px] leading-snug text-black shadow-sm transition"
+                            :class="
+                              matchPendingLeft === li
+                                ? 'border-primary bg-primary-muted ring-2 ring-primary/35'
+                                : ((answers[currentQuestion.id] as number[])[li] ?? -1) >= 0
+                                  ? 'border-emerald-300 bg-emerald-50'
+                                  : 'border-border-subtle hover:bg-slate-50'
+                            "
+                            @click="onMatchLeftClick(currentQuestion, li)"
+                          >
+                            {{ left }}
+                          </button>
+                        </div>
+                        <div
+                          class="pointer-events-none w-3 shrink-0 self-stretch rounded-md border-x border-dashed border-blue-400/90 sm:w-9"
+                          aria-hidden="true"
+                        />
+                        <div class="min-w-0 flex-1 space-y-2 pointer-events-auto">
+                          <p
+                            class="pointer-events-none text-center text-[11px] font-medium uppercase tracking-wide text-fg-muted"
+                          >
+                            答案
+                          </p>
+                          <button
+                            v-for="(right, ri) in currentQuestion.rightItems"
+                            :key="'R' + ri"
+                            type="button"
+                            :ref="(el) => setMatchRightEl(el, ri)"
+                            class="w-full rounded-xl border bg-white px-3 py-2.5 text-left text-[14px] leading-snug shadow-sm transition"
+                            :class="
+                              ((answers[currentQuestion.id] as number[]) ?? []).some(
+                                (v) => v === ri,
+                              )
+                                ? 'border-emerald-300 bg-emerald-50 text-slate-900'
+                                : 'border-border-subtle text-black hover:bg-slate-50'
+                            "
+                            @click="onMatchRightClick(currentQuestion, ri)"
+                          >
+                            {{ right }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <template v-else-if="currentQuestion.type === 'sort'">
+                    <p class="mt-3 text-center text-[12px] text-fg-muted">
+                      拖拽下列步骤调整顺序，使其符合题目要求（从上到下为先后）
+                    </p>
+                    <ul
+                      class="mx-auto mt-4 max-w-lg list-none space-y-2 p-0"
+                    >
+                      <li
+                        v-for="(itemIdx, pos) in answers[currentQuestion.id] as number[]"
+                        :key="currentQuestion.id + '-s' + pos + '-' + itemIdx"
+                        draggable="true"
+                        class="flex cursor-grab items-center gap-3 rounded-xl border border-border-subtle bg-white px-3 py-2.5 text-[14px] shadow-sm active:cursor-grabbing"
+                        @dragstart="onSortDragStart(currentQuestion, pos, $event)"
+                        @dragover.prevent="onSortDragOver"
+                        @drop="onSortDrop(currentQuestion, pos, $event)"
+                      >
+                        <span
+                          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[12px] font-semibold text-slate-600"
+                        >{{ pos + 1 }}</span>
+                        <span class="min-w-0 flex-1 text-black">{{
+                          currentQuestion.items[itemIdx]
+                        }}</span>
+                      </li>
+                    </ul>
+                  </template>
+
+                  <template v-else-if="currentQuestion.type === 'text_figure_choice'">
+                    <div class="mx-auto mt-5 max-w-lg space-y-4">
+                      <p
+                        class="text-center text-[15px] font-medium leading-relaxed text-black"
+                      >
+                        {{ currentQuestion.prompt }}
+                      </p>
+                      <img
+                        :src="currentQuestion.stemImage"
+                        alt="题干配图"
+                        class="mx-auto max-h-52 w-full max-w-md rounded-xl border border-border-subtle object-contain"
+                      />
+                      <ul class="space-y-2">
+                        <li
+                          v-for="(opt, oi) in currentQuestion.options"
+                          :key="oi"
+                        >
+                          <label
+                            class="flex cursor-pointer items-start gap-2 rounded-lg border border-transparent px-2 py-2.5 transition hover:bg-slate-50"
+                            :class="
+                              answers[currentQuestion.id] === oi
+                                ? 'border-blue-500 bg-blue-50'
+                                : ''
+                            "
+                          >
+                            <input
+                              v-model.number="answers[currentQuestion.id]"
+                              type="radio"
+                              class="mt-1 accent-blue-600"
+                              :name="`tfc-${currentQuestion.id}`"
+                              :value="oi"
+                            />
+                            <span class="text-[14px] text-black/90"
+                              ><span class="font-medium text-fg-muted"
+                                >{{ String.fromCharCode(65 + oi) }}.</span
+                              >
+                              {{ opt }}</span
+                            >
+                          </label>
+                        </li>
+                      </ul>
+                    </div>
+                  </template>
+
+                  <template v-else-if="currentQuestion.type === 'image_pick'">
+                    <ul
+                      class="mx-auto mt-5 grid max-w-lg grid-cols-1 gap-3 sm:grid-cols-3"
+                    >
+                      <li
+                        v-for="(img, oi) in currentQuestion.optionImages"
+                        :key="oi"
+                      >
+                        <label
+                          class="flex cursor-pointer flex-col gap-2 rounded-xl border p-2 transition"
+                          :class="
+                            answers[currentQuestion.id] === oi
+                              ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500/30'
+                              : 'border-border-subtle hover:bg-slate-50'
+                          "
+                        >
+                          <input
+                            v-model.number="answers[currentQuestion.id]"
+                            type="radio"
+                            class="sr-only"
+                            :name="`img-${currentQuestion.id}`"
+                            :value="oi"
+                          />
+                          <span
+                            class="text-center text-[12px] font-medium text-fg-muted"
+                          >{{
+                            currentQuestion.labels?.[oi] ??
+                              String.fromCharCode(65 + oi)
+                          }}</span>
+                          <img
+                            :src="img"
+                            alt=""
+                            class="mx-auto h-24 w-full max-w-[160px] rounded-lg object-cover"
+                          />
+                        </label>
+                      </li>
+                    </ul>
+                  </template>
+
+                  <template v-else-if="currentQuestion.type === 'image_stem'">
+                    <div class="mx-auto mt-5 max-w-lg">
+                      <img
+                        :src="currentQuestion.stemImage"
+                        alt="题干配图"
+                        class="mx-auto max-h-48 w-full max-w-md rounded-xl border border-border-subtle object-contain"
+                      />
+                      <p
+                        v-if="currentQuestion.prompt"
+                        class="mt-3 text-center text-[15px] leading-relaxed text-black"
+                      >
+                        {{ currentQuestion.prompt }}
+                      </p>
+                      <ul class="mt-5 space-y-2">
+                        <li
+                          v-for="(opt, oi) in currentQuestion.options"
+                          :key="oi"
+                        >
+                          <label
+                            class="flex cursor-pointer items-start gap-2 rounded-lg border border-transparent px-2 py-2.5 transition hover:bg-slate-50"
+                            :class="
+                              answers[currentQuestion.id] === oi
+                                ? 'border-blue-500 bg-blue-50'
+                                : ''
+                            "
+                          >
+                            <input
+                              v-model.number="answers[currentQuestion.id]"
+                              type="radio"
+                              class="mt-1 accent-blue-600"
+                              :name="`stem-${currentQuestion.id}`"
+                              :value="oi"
+                            />
+                            <span class="text-[14px] text-black/90">{{ opt }}</span>
+                          </label>
+                        </li>
+                      </ul>
+                    </div>
+                  </template>
                 </div>
               </Transition>
             </div>
 
-            <!-- 右侧：进度 + 题号状态 -->
+            <!-- 右侧：答题进度 + 题号列表；内容多时在侧栏内整体上下滑动 -->
             <aside
-              class="flex w-full shrink-0 flex-col border-t border-border-subtle bg-card-inner/40 px-4 py-4 lg:w-[220px] lg:justify-center lg:border-l lg:border-t-0"
+              role="region"
+              aria-label="答题进度与题号列表"
+              class="min-h-0 w-full max-h-[min(55vh,460px)] shrink-0 overflow-y-auto overflow-x-hidden overscroll-y-contain scroll-smooth [-webkit-overflow-scrolling:touch] [touch-action:pan-y] border-t border-border-subtle bg-card-inner/40 px-4 py-4 lg:max-h-none lg:h-full lg:w-[220px] lg:max-w-[220px] lg:flex-[0_0_220px] lg:self-stretch lg:border-l lg:border-t-0 lg:py-5"
             >
               <h3 class="text-[13px] font-semibold text-black">
                 答题进度
@@ -533,14 +1095,14 @@ onUnmounted(() => {
               <h3 class="mt-6 text-[13px] font-semibold text-black">
                 答题状态
               </h3>
-              <ul class="mt-2 flex max-h-40 flex-wrap gap-2 overflow-y-auto lg:max-h-52 lg:flex-col lg:gap-1.5">
+              <ul class="mt-2 flex flex-col gap-1.5 pb-1">
                 <li
                   v-for="(q, idx) in questions"
                   :key="q.id"
                 >
                   <button
                     type="button"
-                    class="flex w-full min-w-[7rem] items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left text-[13px] transition"
+                    class="flex w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left text-[13px] transition"
                     :class="
                       idx === currentIndex
                         ? 'border-primary bg-primary-muted shadow-sm ring-1 ring-primary/30'
@@ -550,7 +1112,7 @@ onUnmounted(() => {
                     "
                     @click="goToQuestion(idx)"
                   >
-                    <span class="font-medium">第 {{ idx + 1 }} 题</span>
+                    <span class="min-w-0 font-medium">第 {{ idx + 1 }} 题</span>
                     <span
                       class="shrink-0 text-[11px]"
                       :class="
@@ -620,7 +1182,7 @@ onUnmounted(() => {
             class="quiz-result-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-[#f8fafc] to-[#f1f5f9] px-4 py-5 sm:px-6"
           >
             <div class="mx-auto max-w-2xl space-y-5">
-              <!-- 分享图区域：头像 + 姓名 + 分数（保存图片仅截取此块） -->
+              <!-- 分享图区域：头像 + 姓名 + 正确率（保存图片仅截取此块） -->
               <div
                 ref="shareCardRef"
                 class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2563eb] via-[#4f46e5] to-[#06b6d4] text-white shadow-[0_12px_40px_-8px_rgba(37,99,235,0.55)]"
@@ -650,13 +1212,10 @@ onUnmounted(() => {
                       <p
                         class="text-[11px] font-medium uppercase tracking-wider text-white/70"
                       >
-                        测验得分
+                        正确率
                       </p>
                       <p class="mt-1 text-3xl font-bold tabular-nums leading-none">
-                        {{ report.totalScore }}
-                        <span class="text-lg font-semibold text-white/75"
-                          >/ {{ report.maxScore }}</span
-                        >
+                        {{ resultCorrectRatePercent }}%
                       </p>
                     </div>
                   </div>
@@ -681,18 +1240,14 @@ onUnmounted(() => {
                     <p
                       class="text-[11px] font-medium uppercase tracking-wider text-white/70"
                     >
-                      测验得分
+                      正确率
                     </p>
-                    <div
-                      class="mt-1 flex items-baseline justify-end gap-1"
-                    >
+                    <div class="mt-1 flex items-baseline justify-end gap-0.5">
                       <span
                         class="text-5xl font-bold tabular-nums tracking-tight text-white"
-                        >{{ report.totalScore }}</span
+                        >{{ resultCorrectRatePercent }}</span
                       >
-                      <span class="text-xl font-medium text-white/75"
-                        >/ {{ report.maxScore }}</span
-                      >
+                      <span class="text-2xl font-semibold text-white/85">%</span>
                     </div>
                   </div>
                 </div>
@@ -786,8 +1341,7 @@ onUnmounted(() => {
                             : 'bg-amber-500/15 text-amber-900 ring-1 ring-amber-500/25'
                         "
                       >
-                        {{ d.isCorrect ? "正确" : "有误" }} ·
-                        {{ d.earnedPoints }}/{{ d.maxPoints }} 分
+                        {{ d.isCorrect ? "正确" : "有误" }}
                       </span>
                     </div>
                     <p class="text-[14px] font-medium leading-snug text-slate-900">

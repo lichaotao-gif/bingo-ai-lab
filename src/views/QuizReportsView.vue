@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import {
   normalizeKnowledgeLearned,
+  quizCorrectRatePercent,
   type QuizReport,
 } from "@/types/quizReport";
 import { loadQuizReports } from "@/utils/quizReportStorage";
@@ -37,11 +38,8 @@ function toggle(id: string) {
   expandedId.value = expandedId.value === id ? null : id;
 }
 
-function pct(r: QuizReport) {
-  if (r.maxScore <= 0) {
-    return 0;
-  }
-  return Math.round((r.totalScore / r.maxScore) * 100);
+function correctRate(r: QuizReport) {
+  return quizCorrectRatePercent(r.totalScore, r.maxScore);
 }
 
 function knowledgePoints(r: QuizReport) {
@@ -98,11 +96,9 @@ function knowledgePoints(r: QuizReport) {
             </p>
           </div>
           <div class="shrink-0 text-right">
-            <p class="text-[16px] font-semibold text-primary">
-              {{ pct(r) }}%
-            </p>
-            <p class="text-[11px] text-fg-muted">
-              {{ r.totalScore }}/{{ r.maxScore }} 分
+            <p class="text-[11px] text-fg-muted">正确率</p>
+            <p class="text-[16px] font-semibold tabular-nums text-primary">
+              {{ correctRate(r) }}%
             </p>
           </div>
           <span
@@ -160,7 +156,7 @@ function knowledgePoints(r: QuizReport) {
                           : 'bg-amber-100 text-amber-900'
                       "
                     >
-                      {{ d.earnedPoints }}/{{ d.maxPoints }} 分
+                      {{ d.isCorrect ? "正确" : "有误" }}
                     </span>
                   </div>
                   <p class="text-black/90">{{ d.prompt }}</p>

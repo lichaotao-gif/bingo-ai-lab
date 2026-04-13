@@ -187,9 +187,6 @@ function openExperimentPackageDetail(pkg: LabPackageOption, groupId: string) {
       <h1 class="text-[22px] font-semibold tracking-tight text-black/90 lg:text-[24px]">
         我的 AI 实验
       </h1>
-      <p class="mt-1.5 max-w-2xl text-[14px] leading-relaxed text-fg-muted">
-        按班级管理实验包与成员；点击卡片进入对应年级的实验列表。
-      </p>
     </header>
     <div class="flex flex-col gap-8">
       <GroupPanel

@@ -24,6 +24,17 @@ export interface QuizReport {
   details: QuizAnswerDetail[];
 }
 
+/** 由得分折算正确率（0～100），用于界面去分数化展示 */
+export function quizCorrectRatePercent(
+  totalScore: number,
+  maxScore: number,
+): number {
+  if (maxScore <= 0) {
+    return 0;
+  }
+  return Math.round((totalScore / maxScore) * 100);
+}
+
 /** 兼容本地旧数据：曾为单行字符串 */
 export function normalizeKnowledgeLearned(raw: unknown): string[] {
   if (Array.isArray(raw)) {

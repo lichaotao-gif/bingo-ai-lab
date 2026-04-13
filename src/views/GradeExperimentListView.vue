@@ -10,6 +10,10 @@ import {
 } from "@/data/gradeExperiments";
 import { LAB_PACKAGE_OPTIONS } from "@/data/labPackages";
 import { hasQuizReportForExperimentAndGrade } from "@/utils/quizReportStorage";
+import { findExperimentResultSubmit } from "@/utils/experimentResultStorage";
+
+/** 与测验弹窗、实验提交中使用的演示学生名一致 */
+const CURRENT_STUDENT_NAME = "李超涛";
 
 const route = useRoute();
 const router = useRouter();
@@ -62,12 +66,21 @@ const quizExperimentId = ref("");
 const quizExperimentTitle = ref("");
 /** 为 true 时弹窗打开本地存档直接进入答题结果 */
 const quizOpenToResult = ref(false);
-/** 与本地测验记录同步，提交后刷新「完成测验」状态 */
-const quizReportsRev = ref(0);
+/** 与本地测验 / 实验提交记录同步，刷新角标 */
+const labDataRev = ref(0);
 
 function isQuizCompletedForRow(experimentId: string): boolean {
-  void quizReportsRev.value;
+  void labDataRev.value;
   return hasQuizReportForExperimentAndGrade(experimentId, listHeading.value);
+}
+
+function isExperimentSubmitCompletedForRow(experimentId: string): boolean {
+  void labDataRev.value;
+  return !!findExperimentResultSubmit(
+    experimentId,
+    listHeading.value,
+    CURRENT_STUDENT_NAME,
+  );
 }
 
 function onStartExperiment(id: string) {
@@ -96,8 +109,15 @@ function onOpenQuiz(
 }
 
 function onQuizSubmitted() {
-  quizReportsRev.value += 1;
+  labDataRev.value += 1;
 }
+
+watch(
+  () => route.fullPath,
+  () => {
+    labDataRev.value += 1;
+  },
+);
 
 function setDocTitle() {
   document.title = `${listHeading.value} · 实验列表 · 缤果AI实验室`;
@@ -169,6 +189,7 @@ watch(listHeading, setDocTitle);
         :key="ex.id"
         :item="ex"
         :quiz-completed="isQuizCompletedForRow(ex.id)"
+        :experiment-submit-completed="isExperimentSubmitCompletedForRow(ex.id)"
         @start="onStartExperiment(ex.id)"
         @quiz="(p) => onOpenQuiz(ex, p)"
       />

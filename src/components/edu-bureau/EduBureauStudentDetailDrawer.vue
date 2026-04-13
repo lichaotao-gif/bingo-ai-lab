@@ -5,6 +5,7 @@ import {
   buildBureauStudentDetail,
   formatDetailTime,
 } from "@/data/eduBureauStudentDetailMock";
+import { quizCorrectRatePercent } from "@/types/quizReport";
 
 const props = defineProps<{
   open: boolean;
@@ -34,6 +35,10 @@ onUnmounted(() => {
 
 function close() {
   emit("update:open", false);
+}
+
+function quizRatePct(r: { totalScore: number; maxScore: number }) {
+  return quizCorrectRatePercent(r.totalScore, r.maxScore);
 }
 </script>
 
@@ -223,7 +228,7 @@ function close() {
                               }}</span>
                               <span
                                 class="text-[11px] font-semibold tabular-nums text-indigo-700"
-                              >{{ r.totalScore }}/{{ r.maxScore }} 分</span>
+                              >正确率 {{ quizRatePct(r) }}%</span>
                             </div>
                             <p class="mt-0.5 text-[10px] text-slate-500">
                               {{ formatDetailTime(r.submittedAt) }}
