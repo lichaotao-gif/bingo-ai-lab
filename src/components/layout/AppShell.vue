@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import LogoMark from "@/components/brand/LogoMark.vue";
 import HeaderNavIcon from "@/components/nav/HeaderNavIcon.vue";
@@ -45,6 +45,23 @@ const isAiLab = computed(() => {
 
 function refresh() {
   window.location.reload();
+}
+
+/** 友情链接：双师AI课 · 缤果AI实验室（外站 lab.bingoai.cn） */
+const BINGO_AI_LAB_EXTERNAL_URL = "https://lab.bingoai.cn";
+const friendLinkModalOpen = ref(false);
+const friendLinkCopied = ref(false);
+
+async function copyBingoAiLabUrl() {
+  try {
+    await navigator.clipboard.writeText(BINGO_AI_LAB_EXTERNAL_URL);
+    friendLinkCopied.value = true;
+    window.setTimeout(() => {
+      friendLinkCopied.value = false;
+    }, 2600);
+  } catch {
+    window.prompt("请手动复制以下网址：", BINGO_AI_LAB_EXTERNAL_URL);
+  }
 }
 </script>
 
@@ -168,40 +185,59 @@ function refresh() {
           </div>
         </nav>
 
-        <div class="mt-4 shrink-0 border-t border-border-subtle pt-4">
-          <RouterLink
-            v-slot="{ navigate }"
-            to="/edu-bureau"
-            custom
-          >
+        <div class="mt-4 shrink-0 space-y-4">
+          <div>
+            <p class="mb-2 pl-1 text-[13px] text-fg-muted">
+              友情链接（在人工智能双师AI课堂上增加）
+            </p>
             <button
               type="button"
-              class="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[14px] text-fg-soft transition hover:bg-slate-100"
-              @click="navigate"
+              class="w-full rounded-xl px-3 py-2.5 text-left text-[14px] text-fg-soft transition hover:bg-card-inner"
+              @click="friendLinkModalOpen = true"
             >
               <span
-                class="flex size-7 items-center justify-center rounded-lg bg-slate-200/80 text-slate-700"
+                class="font-medium text-primary underline decoration-primary/40 underline-offset-[5px] hover:decoration-primary"
               >
-                <svg
-                  class="size-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    d="M4 19V5M10 19v-6M16 19V9M22 19V12"
-                  />
-                </svg>
+                缤果AI实验室
               </span>
-              区域统计
             </button>
-          </RouterLink>
-          <p class="mt-2 pl-1 text-[11px] leading-snug text-fg-muted">
-            管辖区域数据看板
-          </p>
+          </div>
+
+          <div class="border-t border-border-subtle pt-4">
+            <RouterLink
+              v-slot="{ navigate }"
+              to="/edu-bureau"
+              custom
+            >
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[14px] text-fg-soft transition hover:bg-slate-100"
+                @click="navigate"
+              >
+                <span
+                  class="flex size-7 items-center justify-center rounded-lg bg-slate-200/80 text-slate-700"
+                >
+                  <svg
+                    class="size-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke="currentColor"
+                      stroke-width="1.75"
+                      stroke-linecap="round"
+                      d="M4 19V5M10 19v-6M16 19V9M22 19V12"
+                    />
+                  </svg>
+                </span>
+                区域统计
+              </button>
+            </RouterLink>
+            <p class="mt-2 pl-1 text-[11px] leading-snug text-fg-muted">
+              管辖区域数据看板
+            </p>
+          </div>
         </div>
       </aside>
 
@@ -213,5 +249,86 @@ function refresh() {
         </div>
       </main>
     </div>
+
+    <Teleport to="body">
+      <Transition name="friend-link-fade">
+        <div
+          v-if="friendLinkModalOpen"
+          class="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="friend-link-dialog-title"
+        >
+          <div
+            class="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
+            aria-hidden="true"
+            @click="friendLinkModalOpen = false"
+          />
+          <div
+            class="relative z-10 w-full max-w-lg rounded-2xl border border-border-subtle bg-surface p-6 shadow-popover sm:p-8"
+            @click.stop
+          >
+            <h2
+              id="friend-link-dialog-title"
+              class="text-center text-[20px] font-semibold text-black sm:text-[22px]"
+            >
+              缤果AI实验室
+            </h2>
+            <div
+              class="mt-6 rounded-xl border border-emerald-200/80 bg-emerald-50/50 px-4 py-6 text-center"
+            >
+              <p
+                class="break-all font-mono text-[clamp(1.05rem,2.8vw,1.35rem)] font-semibold leading-snug tracking-tight text-emerald-950 sm:text-[24px]"
+              >
+                {{ BINGO_AI_LAB_EXTERNAL_URL }}
+              </p>
+            </div>
+            <p
+              class="mt-5 text-center text-[14px] leading-relaxed text-fg-soft"
+            >
+              请复制网址后，在系统浏览器中粘贴打开。
+            </p>
+            <div class="mt-6 flex justify-center">
+              <button
+                type="button"
+                class="inline-flex w-full max-w-xs items-center justify-center rounded-xl bg-primary px-5 py-3 text-[15px] font-medium text-white shadow-md shadow-primary/25 transition hover:opacity-95 sm:w-auto sm:min-w-[140px]"
+                @click="copyBingoAiLabUrl"
+              >
+                {{ friendLinkCopied ? "已复制到剪贴板" : "复制网址" }}
+              </button>
+            </div>
+            <button
+              type="button"
+              class="mt-4 w-full rounded-xl py-2.5 text-[14px] text-fg-muted transition hover:text-black"
+              @click="friendLinkModalOpen = false"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.friend-link-fade-enter-active,
+.friend-link-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.friend-link-fade-enter-active .relative.z-10,
+.friend-link-fade-leave-active .relative.z-10 {
+  transition:
+    transform 0.22s cubic-bezier(0.34, 1.1, 0.64, 1),
+    opacity 0.2s ease;
+}
+.friend-link-fade-enter-from,
+.friend-link-fade-leave-to {
+  opacity: 0;
+}
+.friend-link-fade-enter-from .relative.z-10,
+.friend-link-fade-leave-to .relative.z-10 {
+  transform: scale(0.96) translateY(8px);
+  opacity: 0.9;
+}
+</style>

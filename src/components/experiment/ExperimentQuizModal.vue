@@ -98,6 +98,10 @@ function setMatchLeftEl(
   li: number,
 ) {
   const node = domFromRef(el);
+  const prev = matchLeftEls.value[li];
+  if (node === prev) {
+    return;
+  }
   const next = { ...matchLeftEls.value };
   if (node) {
     next[li] = node;
@@ -105,7 +109,7 @@ function setMatchLeftEl(
     delete next[li];
   }
   matchLeftEls.value = next;
-  nextTick(updateMatchLines);
+  scheduleMatchLinesUpdate();
 }
 
 function setMatchRightEl(
@@ -113,6 +117,10 @@ function setMatchRightEl(
   ri: number,
 ) {
   const node = domFromRef(el);
+  const prev = matchRightEls.value[ri];
+  if (node === prev) {
+    return;
+  }
   const next = { ...matchRightEls.value };
   if (node) {
     next[ri] = node;
@@ -120,25 +128,36 @@ function setMatchRightEl(
     delete next[ri];
   }
   matchRightEls.value = next;
-  nextTick(updateMatchLines);
+  scheduleMatchLinesUpdate();
 }
+
+/** 尺寸未就绪时重试次数上限，避免无限 rAF 占满主线程（弹窗动画等会导致短暂 width/height 为 0） */
+let matchLinesSizeRetry = 0;
+const MATCH_LINES_SIZE_RETRY_MAX = 24;
 
 function updateMatchLines() {
   const container = matchAreaRef.value;
   const q = currentQuestion.value;
   if (!container || !q || q.type !== "match") {
     matchLines.value = [];
+    matchLinesSizeRetry = 0;
     return;
   }
   const cr = container.getBoundingClientRect();
   const w = Math.round(cr.width);
   const h = Math.round(cr.height);
   if (w < 8 || h < 8) {
-    requestAnimationFrame(() => {
-      nextTick(updateMatchLines);
-    });
+    if (matchLinesSizeRetry < MATCH_LINES_SIZE_RETRY_MAX) {
+      matchLinesSizeRetry++;
+      requestAnimationFrame(() => {
+        nextTick(updateMatchLines);
+      });
+    } else {
+      matchLinesSizeRetry = 0;
+    }
     return;
   }
+  matchLinesSizeRetry = 0;
   matchSvgSize.value = { w, h };
   const arr = (answers.value[q.id] as number[]) ?? [];
   const lines: { x1: number; y1: number; x2: number; y2: number }[] = [];
@@ -164,6 +183,24 @@ function updateMatchLines() {
   matchLines.value = lines;
 }
 
+let matchLinesFlushScheduled = false;
+
+/** 合并多次调度为一次双帧 + nextTick，避免点击后 v-for ref 与 watch 叠加成百上千次 rAF */
+function scheduleMatchLinesUpdate() {
+  if (matchLinesFlushScheduled) {
+    return;
+  }
+  matchLinesFlushScheduled = true;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      nextTick(() => {
+        matchLinesFlushScheduled = false;
+        updateMatchLines();
+      });
+    });
+  });
+}
+
 let matchResizeObserver: ResizeObserver | null = null;
 
 watch(
@@ -175,12 +212,10 @@ watch(
       return;
     }
     matchResizeObserver = new ResizeObserver(() => {
-      nextTick(updateMatchLines);
+      scheduleMatchLinesUpdate();
     });
     matchResizeObserver.observe(el);
-    nextTick(() => {
-      nextTick(updateMatchLines);
-    });
+    scheduleMatchLinesUpdate();
   },
   { flush: "post" },
 );
@@ -361,7 +396,7 @@ function onMatchLeftClick(q: Extract<QuizQuestion, { type: "match" }>, li: numbe
     arr[li] = -1;
     answers.value[q.id] = arr;
     matchPendingLeft.value = null;
-    nextTick(updateMatchLines);
+    scheduleMatchLinesUpdate();
     return;
   }
   matchPendingLeft.value = matchPendingLeft.value === li ? null : li;
@@ -371,6 +406,13 @@ function onMatchRightClick(q: Extract<QuizQuestion, { type: "match" }>, ri: numb
   if (matchPendingLeft.value !== null) {
     const li = matchPendingLeft.value;
     const arr = matchAnswerArray(q);
+    if (arr[li] === ri) {
+      arr[li] = -1;
+      answers.value[q.id] = arr;
+      matchPendingLeft.value = null;
+      scheduleMatchLinesUpdate();
+      return;
+    }
     for (let i = 0; i < arr.length; i++) {
       if (i !== li && arr[i] === ri) {
         arr[i] = -1;
@@ -379,7 +421,7 @@ function onMatchRightClick(q: Extract<QuizQuestion, { type: "match" }>, ri: numb
     arr[li] = ri;
     answers.value[q.id] = arr;
     matchPendingLeft.value = null;
-    nextTick(updateMatchLines);
+    scheduleMatchLinesUpdate();
     return;
   }
   const arr = matchAnswerArray(q);
@@ -387,7 +429,7 @@ function onMatchRightClick(q: Extract<QuizQuestion, { type: "match" }>, ri: numb
     if (arr[i] === ri) {
       arr[i] = -1;
       answers.value[q.id] = arr;
-      nextTick(updateMatchLines);
+      scheduleMatchLinesUpdate();
       return;
     }
   }
@@ -457,21 +499,21 @@ watch(
 
 watch(currentIndex, () => {
   matchPendingLeft.value = null;
-  nextTick(updateMatchLines);
+  scheduleMatchLinesUpdate();
 });
 
 watch(
   () => {
     const q = currentQuestion.value;
     if (!q || q.type !== "match") {
-      return null;
+      return "";
     }
-    return answers.value[q.id];
+    const a = answers.value[q.id] as number[] | undefined;
+    return a?.join(",") ?? "";
   },
   () => {
-    nextTick(updateMatchLines);
+    scheduleMatchLinesUpdate();
   },
-  { deep: true },
 );
 
 function close() {
@@ -591,7 +633,7 @@ async function saveShareImage() {
 }
 
 function onMatchWindowResize() {
-  nextTick(updateMatchLines);
+  scheduleMatchLinesUpdate();
 }
 
 onMounted(() => {
@@ -815,29 +857,17 @@ onUnmounted(() => {
                     <p class="mt-3 text-center text-[12px] text-fg-muted">
                       先点左侧文字，再点右侧文字完成连线；已连线时，再次点同一左侧或同一右侧可取消该连线
                     </p>
+                    <!-- 布局：缤果学院 SegmentMatch — 全屏 SVG 垫底，左 | → | 右 三栏 flex，z-10 可点 -->
                     <div
                       ref="matchAreaRef"
-                      class="relative mx-auto mt-4 min-h-[10rem] w-full max-w-2xl"
+                      class="relative mx-auto mt-4 flex min-h-[120px] w-full max-w-2xl flex-wrap items-start gap-4"
                     >
-                      <!-- 下层 SVG 连线；上层透明叠层仅按钮可点，中间缝与标题区可透出蓝色线段 -->
                       <svg
-                        class="pointer-events-none absolute inset-0 z-[1] h-full min-h-[10rem] w-full overflow-visible"
+                        class="pointer-events-none absolute inset-0 z-0 h-full w-full overflow-visible"
                         :viewBox="`0 0 ${Math.max(matchSvgSize.w, 1)} ${Math.max(matchSvgSize.h, 1)}`"
                         preserveAspectRatio="none"
                         aria-hidden="true"
                       >
-                        <line
-                          v-for="(ln, i) in matchLines"
-                          :key="'ml-bg' + i"
-                          :x1="ln.x1"
-                          :y1="ln.y1"
-                          :x2="ln.x2"
-                          :y2="ln.y2"
-                          stroke="#ffffff"
-                          stroke-width="7"
-                          stroke-linecap="round"
-                          opacity="0.98"
-                        />
                         <line
                           v-for="(ln, i) in matchLines"
                           :key="'ml' + i"
@@ -845,68 +875,68 @@ onUnmounted(() => {
                           :y1="ln.y1"
                           :x2="ln.x2"
                           :y2="ln.y2"
-                          stroke="#2563eb"
-                          stroke-width="3"
-                          stroke-linecap="round"
-                          opacity="1"
+                          stroke="#10b981"
+                          stroke-width="2"
+                          stroke-linecap="butt"
                         />
                       </svg>
                       <div
-                        class="absolute inset-0 z-[2] flex items-start gap-2 sm:gap-4"
-                        style="pointer-events: none"
+                        class="relative z-10 flex min-w-[120px] flex-1 flex-col space-y-2"
                       >
-                        <div class="min-w-0 flex-1 space-y-2 pointer-events-auto">
-                          <p
-                            class="pointer-events-none text-center text-[11px] font-medium uppercase tracking-wide text-fg-muted"
-                          >
-                            选项
-                          </p>
-                          <button
-                            v-for="(left, li) in currentQuestion.leftItems"
-                            :key="'L' + li"
-                            type="button"
-                            :ref="(el) => setMatchLeftEl(el, li)"
-                            class="w-full rounded-xl border bg-white px-3 py-2.5 text-left text-[14px] leading-snug text-black shadow-sm transition"
-                            :class="
-                              matchPendingLeft === li
-                                ? 'border-primary bg-primary-muted ring-2 ring-primary/35'
-                                : ((answers[currentQuestion.id] as number[])[li] ?? -1) >= 0
-                                  ? 'border-emerald-300 bg-emerald-50'
-                                  : 'border-border-subtle hover:bg-slate-50'
-                            "
-                            @click="onMatchLeftClick(currentQuestion, li)"
-                          >
-                            {{ left }}
-                          </button>
-                        </div>
-                        <div
-                          class="pointer-events-none w-3 shrink-0 self-stretch rounded-md border-x border-dashed border-blue-400/90 sm:w-9"
-                          aria-hidden="true"
-                        />
-                        <div class="min-w-0 flex-1 space-y-2 pointer-events-auto">
-                          <p
-                            class="pointer-events-none text-center text-[11px] font-medium uppercase tracking-wide text-fg-muted"
-                          >
-                            答案
-                          </p>
-                          <button
-                            v-for="(right, ri) in currentQuestion.rightItems"
-                            :key="'R' + ri"
-                            type="button"
-                            :ref="(el) => setMatchRightEl(el, ri)"
-                            class="w-full rounded-xl border bg-white px-3 py-2.5 text-left text-[14px] leading-snug shadow-sm transition"
-                            :class="
-                              ((answers[currentQuestion.id] as number[]) ?? []).some(
-                                (v) => v === ri,
-                              )
-                                ? 'border-emerald-300 bg-emerald-50 text-slate-900'
-                                : 'border-border-subtle text-black hover:bg-slate-50'
-                            "
-                            @click="onMatchRightClick(currentQuestion, ri)"
-                          >
-                            {{ right }}
-                          </button>
-                        </div>
+                        <p
+                          class="text-center text-[11px] font-medium uppercase tracking-wide text-fg-muted"
+                        >
+                          选项
+                        </p>
+                        <button
+                          v-for="(left, li) in currentQuestion.leftItems"
+                          :key="'L' + li"
+                          type="button"
+                          :ref="(el) => setMatchLeftEl(el, li)"
+                          class="w-full rounded-lg bg-slate-100 px-3 py-2 text-left text-[14px] leading-snug text-black transition"
+                          :class="
+                            matchPendingLeft === li
+                              ? 'ring-2 ring-emerald-500'
+                              : ((answers[currentQuestion.id] as number[])[li] ?? -1) >= 0
+                                ? 'ring-1 ring-emerald-400/80'
+                                : 'hover:bg-slate-200/80'
+                          "
+                          @click="onMatchLeftClick(currentQuestion, li)"
+                        >
+                          {{ left }}
+                        </button>
+                      </div>
+                      <div
+                        class="relative z-10 self-center text-slate-400 select-none"
+                        aria-hidden="true"
+                      >
+                        →
+                      </div>
+                      <div
+                        class="relative z-10 flex min-w-[120px] flex-1 flex-col space-y-2"
+                      >
+                        <p
+                          class="text-center text-[11px] font-medium uppercase tracking-wide text-fg-muted"
+                        >
+                          答案
+                        </p>
+                        <button
+                          v-for="(right, ri) in currentQuestion.rightItems"
+                          :key="'R' + ri"
+                          type="button"
+                          :ref="(el) => setMatchRightEl(el, ri)"
+                          class="w-full rounded-lg bg-slate-100 px-3 py-2 text-left text-[14px] leading-snug transition"
+                          :class="
+                            ((answers[currentQuestion.id] as number[]) ?? []).some(
+                              (v) => v === ri,
+                            )
+                              ? 'bg-emerald-50 ring-2 ring-emerald-500 text-slate-900'
+                              : 'text-black hover:bg-slate-200/80'
+                          "
+                          @click="onMatchRightClick(currentQuestion, ri)"
+                        >
+                          {{ right }}
+                        </button>
                       </div>
                     </div>
                   </template>
