@@ -14,6 +14,7 @@ import { getQuizForExperiment } from "@/data/experimentQuizzes";
 import {
   normalizeKnowledgeLearned,
   quizCorrectRatePercent,
+  type QuizAnswerDetail,
   type QuizReport,
 } from "@/types/quizReport";
 import { useCartoonAvatar } from "@/composables/useCartoonAvatar";
@@ -520,6 +521,16 @@ function close() {
   emit("update:open", false);
 }
 
+/** 题解析：优先存档，否则从当前题库定义补全（旧报告也可显示） */
+function explanationForDetail(d: QuizAnswerDetail): string {
+  const fromReport = d.explanation?.trim();
+  if (fromReport) {
+    return fromReport;
+  }
+  const q = questions.value.find((x) => x.id === d.questionId);
+  return q?.explanation?.trim() ?? "";
+}
+
 /** 清空答案并回到第一题（重新作答） */
 function restartQuiz() {
   const qs = questions.value;
@@ -875,7 +886,7 @@ onUnmounted(() => {
                           :y1="ln.y1"
                           :x2="ln.x2"
                           :y2="ln.y2"
-                          stroke="#10b981"
+                          stroke="#2563eb"
                           stroke-width="2"
                           stroke-linecap="butt"
                         />
@@ -896,9 +907,9 @@ onUnmounted(() => {
                           class="w-full rounded-lg bg-slate-100 px-3 py-2 text-left text-[14px] leading-snug text-black transition"
                           :class="
                             matchPendingLeft === li
-                              ? 'ring-2 ring-emerald-500'
+                              ? 'ring-2 ring-blue-500'
                               : ((answers[currentQuestion.id] as number[])[li] ?? -1) >= 0
-                                ? 'ring-1 ring-emerald-400/80'
+                                ? 'ring-1 ring-blue-400/80'
                                 : 'hover:bg-slate-200/80'
                           "
                           @click="onMatchLeftClick(currentQuestion, li)"
@@ -930,7 +941,7 @@ onUnmounted(() => {
                             ((answers[currentQuestion.id] as number[]) ?? []).some(
                               (v) => v === ri,
                             )
-                              ? 'bg-emerald-50 ring-2 ring-emerald-500 text-slate-900'
+                              ? 'bg-blue-50 ring-2 ring-blue-500 text-slate-900'
                               : 'text-black hover:bg-slate-200/80'
                           "
                           @click="onMatchRightClick(currentQuestion, ri)"
@@ -1340,11 +1351,11 @@ onUnmounted(() => {
                   class="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3"
                 >
                   <span
-                    class="flex size-8 items-center justify-center rounded-lg bg-slate-800 text-[11px] font-bold text-white"
+                    class="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[#4f9cf9] text-[11px] font-bold text-white shadow-sm"
                     aria-hidden="true"
                     >Q</span
                   >
-                  <h3 class="text-[13px] font-bold tracking-wide text-slate-700">
+                  <h3 class="text-[13px] font-bold tracking-wide text-primary">
                     答题详情
                   </h3>
                 </div>
@@ -1356,7 +1367,7 @@ onUnmounted(() => {
                   >
                     <div class="mb-2 flex flex-wrap items-center gap-2">
                       <span
-                        class="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-slate-600 to-slate-800 text-[12px] font-bold text-white"
+                        class="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[#4f9cf9] text-[12px] font-bold text-white shadow-sm"
                         >{{ i + 1 }}</span
                       >
                       <span
@@ -1384,9 +1395,9 @@ onUnmounted(() => {
                         <span class="font-medium text-slate-500">你的答案</span>
                         <span class="text-slate-800">：{{ d.userAnswer }}</span>
                       </p>
-                      <p>
-                        <span class="font-medium text-slate-500">参考要点</span>
-                        <span class="text-slate-600">：{{ d.correctAnswer }}</span>
+                      <p v-if="explanationForDetail(d)">
+                        <span class="font-medium text-slate-500">题解析</span>
+                        <span class="text-slate-700">：{{ explanationForDetail(d) }}</span>
                       </p>
                     </div>
                   </li>

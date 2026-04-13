@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { getQuizForExperiment } from "@/data/experimentQuizzes";
 import {
   normalizeKnowledgeLearned,
   quizCorrectRatePercent,
+  type QuizAnswerDetail,
   type QuizReport,
 } from "@/types/quizReport";
 import { loadQuizReports } from "@/utils/quizReportStorage";
@@ -44,6 +46,15 @@ function correctRate(r: QuizReport) {
 
 function knowledgePoints(r: QuizReport) {
   return normalizeKnowledgeLearned(r.knowledgeLearned);
+}
+
+function explanationForDetailRow(r: QuizReport, d: QuizAnswerDetail): string {
+  if (d.explanation?.trim()) {
+    return d.explanation.trim();
+  }
+  const qs = getQuizForExperiment(r.experimentId);
+  const q = qs.find((x) => x.id === d.questionId);
+  return q?.explanation?.trim() ?? "";
 }
 </script>
 
@@ -135,7 +146,14 @@ function knowledgePoints(r: QuizReport) {
               </ol>
             </div>
             <div>
-              <h3 class="mb-2 text-[12px] font-semibold uppercase tracking-wide text-fg-muted">
+              <h3
+                class="mb-2 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-wide text-primary"
+              >
+                <span
+                  class="flex size-6 items-center justify-center rounded-md bg-gradient-to-br from-primary to-[#4f9cf9] text-[10px] font-bold text-white shadow-sm"
+                  aria-hidden="true"
+                  >Q</span
+                >
                 答题详情
               </h3>
               <ul class="space-y-2">
@@ -145,9 +163,11 @@ function knowledgePoints(r: QuizReport) {
                   class="rounded-lg border border-border-subtle bg-white p-3 text-[13px]"
                 >
                   <div class="mb-1 flex flex-wrap items-center gap-2">
-                    <span class="font-medium text-black/80"
-                      >{{ i + 1 }}. {{ d.typeLabel }}</span
+                    <span
+                      class="inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary to-[#4f9cf9] text-[11px] font-bold text-white shadow-sm"
+                      >{{ i + 1 }}</span
                     >
+                    <span class="font-medium text-black/80">{{ d.typeLabel }}</span>
                     <span
                       class="rounded px-1.5 py-0.5 text-[11px]"
                       :class="
@@ -163,7 +183,12 @@ function knowledgePoints(r: QuizReport) {
                   <p class="mt-1 text-fg-muted">
                     学生答案：{{ d.userAnswer }}
                   </p>
-                  <p class="text-fg-muted">参考要点：{{ d.correctAnswer }}</p>
+                  <p
+                    v-if="explanationForDetailRow(r, d)"
+                    class="mt-1 text-black/85"
+                  >
+                    题解析：{{ explanationForDetailRow(r, d) }}
+                  </p>
                 </li>
               </ul>
             </div>

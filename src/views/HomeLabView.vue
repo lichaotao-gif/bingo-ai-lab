@@ -13,11 +13,21 @@ import {
   type LabPackageOption,
 } from "@/data/labPackages";
 import {
+  getExperimentsForGrade,
+  gradeLabel,
+  type ExperimentItem,
+} from "@/data/gradeExperiments";
+import { findExperimentResultSubmit } from "@/utils/experimentResultStorage";
+import { hasQuizReportForExperimentAndGrade } from "@/utils/quizReportStorage";
+import {
   INITIAL_MEMBERS_BY_GROUP,
   type GroupMember,
 } from "@/data/groupMembers";
 
 const router = useRouter();
+
+/** 与实验列表、测验存档一致 */
+const CURRENT_STUDENT_NAME = "李超涛";
 
 /** 班级 id → 展示名 */
 const GROUP_TITLES: Record<string, string> = {
@@ -170,6 +180,41 @@ function onCreateGroupConfirm(name: string) {
   window.alert(`已创建实验组（演示）：${name}`);
 }
 
+/** 与实验列表页 listHeading 一致，用于匹配本地测验存档的 gradeLabel */
+function packageListHeading(pkg: LabPackageOption): string {
+  return pkg.detailTitle ?? gradeLabel(pkg.gradeRouteIndex);
+}
+
+function experimentSubmitDone(ex: ExperimentItem, heading: string): boolean {
+  return (
+    !!findExperimentResultSubmit(ex.id, heading, CURRENT_STUDENT_NAME) ||
+    !!ex.completed
+  );
+}
+
+/** 单个实验：测验已交 + AI 实验已交（或演示 completed），与 ExperimentRowCard「完成」一致 */
+function experimentDualDone(ex: ExperimentItem, heading: string): boolean {
+  const quizOk = hasQuizReportForExperimentAndGrade(ex.id, heading);
+  return quizOk && experimentSubmitDone(ex, heading);
+}
+
+/** 该年级下至少有一个实验双完成 → 实验包卡片显示斜角「完成」 */
+function packageOverallCompleted(pkg: LabPackageOption): boolean {
+  const heading = packageListHeading(pkg);
+  return getExperimentsForGrade(pkg.gradeRouteIndex).some((ex) =>
+    experimentDualDone(ex, heading),
+  );
+}
+
+/** 有测验进度，但尚无任何实验达到「测验+AI 实验」双完成 */
+function packageQuizPartialOnly(pkg: LabPackageOption): boolean {
+  const heading = packageListHeading(pkg);
+  const hasAnyQuiz = getExperimentsForGrade(pkg.gradeRouteIndex).some((ex) =>
+    hasQuizReportForExperimentAndGrade(ex.id, heading),
+  );
+  return hasAnyQuiz && !packageOverallCompleted(pkg);
+}
+
 /** 与 AI 实验室大厅进入的实验列表为同一路由与同一套列表数据 */
 function openExperimentPackageDetail(pkg: LabPackageOption, groupId: string) {
   manageModalOpen.value = false;
@@ -211,6 +256,8 @@ function openExperimentPackageDetail(pkg: LabPackageOption, groupId: string) {
               :title="pkg.title"
               :image-src="pkg.cover"
               image-alt="实验封面"
+              :overall-completed="packageOverallCompleted(pkg)"
+              :quiz-completed="packageQuizPartialOnly(pkg)"
               @click="openExperimentPackageDetail(pkg, 'ai-group')"
             />
           </div>
@@ -255,6 +302,8 @@ function openExperimentPackageDetail(pkg: LabPackageOption, groupId: string) {
               :title="pkg.title"
               :image-src="pkg.cover"
               image-alt="实验封面"
+              :overall-completed="packageOverallCompleted(pkg)"
+              :quiz-completed="packageQuizPartialOnly(pkg)"
               @click="openExperimentPackageDetail(pkg, 'grade3-2')"
             />
           </div>
@@ -279,6 +328,8 @@ function openExperimentPackageDetail(pkg: LabPackageOption, groupId: string) {
               :title="pkg.title"
               :image-src="pkg.cover"
               image-alt="实验封面"
+              :overall-completed="packageOverallCompleted(pkg)"
+              :quiz-completed="packageQuizPartialOnly(pkg)"
               @click="openExperimentPackageDetail(pkg, 'ai-class-1')"
             />
           </div>

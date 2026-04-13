@@ -4,6 +4,8 @@ export interface QuizAnswerDetail {
   typeLabel: string;
   userAnswer: string;
   correctAnswer: string;
+  /** 题解析（来自题库；旧存档可能为空） */
+  explanation?: string;
   isCorrect: boolean;
   earnedPoints: number;
   maxPoints: number;

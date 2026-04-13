@@ -200,12 +200,17 @@ export function gradeQuiz(
     const raw = answers[q.id];
     const { ok, earned } = isCorrect(q, raw);
     totalScore += earned;
+    const explanation =
+      "explanation" in q && typeof q.explanation === "string"
+        ? q.explanation.trim() || undefined
+        : undefined;
     details.push({
       questionId: q.id,
       prompt: q.prompt,
       typeLabel: typeLabel(q.type),
       userAnswer: fmtUser(q, raw),
       correctAnswer: fmtCorrect(q),
+      explanation,
       isCorrect: ok,
       earnedPoints: earned,
       maxPoints: q.points,

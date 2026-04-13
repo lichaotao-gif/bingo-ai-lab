@@ -49,10 +49,11 @@ const overallCompleted = computed(
   <article
     class="relative flex gap-4 overflow-hidden rounded-xl border border-border-subtle bg-white p-4 shadow-card transition hover:shadow-md"
   >
-    <!-- 斜角「完成」：overflow 裁切不伸出卡片 -->
+    <!-- 单实验：测验 + AI 实验均完成 → 右上角斜角「完成」 -->
     <div
       v-if="overallCompleted"
       class="pointer-events-none absolute right-0 top-0 z-10 h-[4.75rem] w-[4.75rem] overflow-hidden rounded-tr-xl"
+      title="测验与 AI 实验均已完成"
       aria-hidden="true"
     >
       <div
