@@ -11,6 +11,7 @@ import type { ComponentPublicInstance } from "vue";
 import html2canvas from "html2canvas";
 import type { QuizQuestion } from "@/data/experimentQuizzes";
 import { getQuizForExperiment } from "@/data/experimentQuizzes";
+import QuizAnswerDetailItem from "@/components/quiz/QuizAnswerDetailItem.vue";
 import {
   normalizeKnowledgeLearned,
   quizCorrectRatePercent,
@@ -1180,15 +1181,8 @@ onUnmounted(() => {
 
           <footer
             v-if="phase === 'quiz'"
-            class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border-subtle px-4 py-4 sm:px-5"
+            class="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-border-subtle px-4 py-4 sm:px-5"
           >
-            <button
-              type="button"
-              class="rounded-xl border border-border-subtle px-5 py-2.5 text-[14px] text-fg-soft transition hover:bg-card-inner"
-              @click="close"
-            >
-              取消
-            </button>
             <div class="flex flex-wrap items-center justify-end gap-2">
               <button
                 type="button"
@@ -1363,43 +1357,12 @@ onUnmounted(() => {
                   <li
                     v-for="(d, i) in report.details"
                     :key="d.questionId"
-                    class="rounded-xl border border-slate-100 bg-slate-50/80 p-4 transition hover:border-slate-200 hover:bg-slate-50"
                   >
-                    <div class="mb-2 flex flex-wrap items-center gap-2">
-                      <span
-                        class="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[#4f9cf9] text-[12px] font-bold text-white shadow-sm"
-                        >{{ i + 1 }}</span
-                      >
-                      <span
-                        class="text-[12px] font-semibold text-slate-500"
-                        >{{ d.typeLabel }}</span
-                      >
-                      <span
-                        class="ml-auto rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                        :class="
-                          d.isCorrect
-                            ? 'bg-emerald-500/15 text-emerald-800 ring-1 ring-emerald-500/25'
-                            : 'bg-amber-500/15 text-amber-900 ring-1 ring-amber-500/25'
-                        "
-                      >
-                        {{ d.isCorrect ? "正确" : "有误" }}
-                      </span>
-                    </div>
-                    <p class="text-[14px] font-medium leading-snug text-slate-900">
-                      {{ d.prompt }}
-                    </p>
-                    <div
-                      class="mt-3 space-y-1.5 rounded-lg border border-dashed border-slate-200/90 bg-white/90 px-3 py-2.5 text-[12px]"
-                    >
-                      <p>
-                        <span class="font-medium text-slate-500">你的答案</span>
-                        <span class="text-slate-800">：{{ d.userAnswer }}</span>
-                      </p>
-                      <p v-if="explanationForDetail(d)">
-                        <span class="font-medium text-slate-500">题解析</span>
-                        <span class="text-slate-700">：{{ explanationForDetail(d) }}</span>
-                      </p>
-                    </div>
+                    <QuizAnswerDetailItem
+                      :detail="d"
+                      :index="i"
+                      :explanation="explanationForDetail(d)"
+                    />
                   </li>
                 </ul>
               </section>

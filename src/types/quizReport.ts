@@ -9,6 +9,14 @@ export interface QuizAnswerDetail {
   isCorrect: boolean;
   earnedPoints: number;
   maxPoints: number;
+  /** 选择题类：题干配图（部分题型） */
+  stemImageUrl?: string;
+  /** 文字选项行，如「A. xxx」；图选项题可能为空，见 imageOptionUrls */
+  optionLines?: string[];
+  /** 图选项（image_pick）：选项图 URL */
+  imageOptionUrls?: string[];
+  /** 与 imageOptionUrls 对应的选项字母，如 A、B */
+  imageOptionLabels?: string[];
 }
 
 export interface QuizReport {

@@ -10,11 +10,14 @@ import {
 import type { ExperimentItem } from "@/data/gradeExperiments";
 import { INITIAL_MEMBERS_BY_GROUP } from "@/data/groupMembers";
 import type { GroupMember } from "@/data/groupMembers";
+import QuizAnswerDetailItem from "@/components/quiz/QuizAnswerDetailItem.vue";
 import {
   normalizeKnowledgeLearned,
   quizCorrectRatePercent,
+  type QuizAnswerDetail,
   type QuizReport,
 } from "@/types/quizReport";
+import { resolveQuizExplanation } from "@/utils/quizExplanation";
 import { loadQuizReports } from "@/utils/quizReportStorage";
 import { findExperimentResultSubmit } from "@/utils/experimentResultStorage";
 
@@ -175,6 +178,14 @@ const activeReport = computed((): QuizReport | null => {
   }
   return reportFor(ex.id, mem.name) ?? null;
 });
+
+function quizDetailExplanation(d: QuizAnswerDetail): string {
+  const r = activeReport.value;
+  if (!r) {
+    return "";
+  }
+  return resolveQuizExplanation(r.experimentId, d);
+}
 
 const activeExperimentResult = computed(() => {
   loadTick.value;
@@ -753,33 +764,19 @@ onUnmounted(() => {
 
               <div>
                 <h3 class="mb-2 text-[12px] font-semibold text-fg-muted">
-                  答题摘要
+                  答题详情
                 </h3>
-                <ul class="space-y-2">
+                <ul class="space-y-3">
                   <li
-                    v-for="d in activeReport.details"
+                    v-for="(d, di) in activeReport.details"
                     :key="d.questionId"
-                    class="rounded-lg border border-slate-100 bg-white px-3 py-2 text-[13px]"
                   >
-                    <div class="flex flex-wrap items-center gap-2">
-                      <span
-                        class="font-medium text-slate-800"
-                      >{{ d.typeLabel }}</span
-                      >
-                      <span
-                        class="rounded px-1.5 py-0.5 text-[11px]"
-                        :class="
-                          d.isCorrect
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-900'
-                        "
-                      >
-                        {{ d.isCorrect ? "正确" : "有误" }}
-                      </span>
-                    </div>
-                    <p class="mt-1 line-clamp-2 text-[12px] text-fg-muted">
-                      {{ d.prompt }}
-                    </p>
+                    <QuizAnswerDetailItem
+                      variant="compact"
+                      :detail="d"
+                      :index="di"
+                      :explanation="quizDetailExplanation(d)"
+                    />
                   </li>
                 </ul>
               </div>

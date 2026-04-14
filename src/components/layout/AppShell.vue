@@ -4,7 +4,7 @@ import { RouterLink, useRoute } from "vue-router";
 import LogoMark from "@/components/brand/LogoMark.vue";
 import HeaderNavIcon from "@/components/nav/HeaderNavIcon.vue";
 import HeaderNavLink from "@/components/nav/HeaderNavLink.vue";
-import SettingsMenu from "@/components/nav/SettingsMenu.vue";
+import UserFeedbackModal from "@/components/feedback/UserFeedbackModal.vue";
 import UserAvatarMenu from "@/components/nav/UserAvatarMenu.vue";
 import IconRefresh from "@/components/icons/IconRefresh.vue";
 import IconGift from "@/components/icons/IconGift.vue";
@@ -51,6 +51,7 @@ function refresh() {
 const BINGO_AI_LAB_EXTERNAL_URL = "https://lab.bingoai.cn";
 const friendLinkModalOpen = ref(false);
 const friendLinkCopied = ref(false);
+const feedbackModalOpen = ref(false);
 
 async function copyBingoAiLabUrl() {
   try {
@@ -95,7 +96,25 @@ async function copyBingoAiLabUrl() {
           <HeaderNavLink to="/redeem" label="兑换">
             <IconGift />
           </HeaderNavLink>
-          <SettingsMenu />
+          <HeaderNavIcon
+            label="用户反馈"
+            @click="feedbackModalOpen = true"
+          >
+            <svg
+              class="size-[19px]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"
+              />
+            </svg>
+          </HeaderNavIcon>
 
           <div
             class="hidden h-9 w-px shrink-0 bg-border-subtle sm:block"
@@ -249,6 +268,8 @@ async function copyBingoAiLabUrl() {
         </div>
       </main>
     </div>
+
+    <UserFeedbackModal v-model:open="feedbackModalOpen" />
 
     <Teleport to="body">
       <Transition name="friend-link-fade">

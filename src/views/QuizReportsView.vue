@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { getQuizForExperiment } from "@/data/experimentQuizzes";
+import QuizAnswerDetailItem from "@/components/quiz/QuizAnswerDetailItem.vue";
 import {
   normalizeKnowledgeLearned,
   quizCorrectRatePercent,
   type QuizAnswerDetail,
   type QuizReport,
 } from "@/types/quizReport";
+import { resolveQuizExplanation } from "@/utils/quizExplanation";
 import { loadQuizReports } from "@/utils/quizReportStorage";
 
 const reports = ref<QuizReport[]>([]);
@@ -49,12 +50,7 @@ function knowledgePoints(r: QuizReport) {
 }
 
 function explanationForDetailRow(r: QuizReport, d: QuizAnswerDetail): string {
-  if (d.explanation?.trim()) {
-    return d.explanation.trim();
-  }
-  const qs = getQuizForExperiment(r.experimentId);
-  const q = qs.find((x) => x.id === d.questionId);
-  return q?.explanation?.trim() ?? "";
+  return resolveQuizExplanation(r.experimentId, d);
 }
 </script>
 
@@ -156,39 +152,17 @@ function explanationForDetailRow(r: QuizReport, d: QuizAnswerDetail): string {
                 >
                 答题详情
               </h3>
-              <ul class="space-y-2">
+              <ul class="space-y-3">
                 <li
                   v-for="(d, i) in r.details"
                   :key="d.questionId"
-                  class="rounded-lg border border-border-subtle bg-white p-3 text-[13px]"
                 >
-                  <div class="mb-1 flex flex-wrap items-center gap-2">
-                    <span
-                      class="inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary to-[#4f9cf9] text-[11px] font-bold text-white shadow-sm"
-                      >{{ i + 1 }}</span
-                    >
-                    <span class="font-medium text-black/80">{{ d.typeLabel }}</span>
-                    <span
-                      class="rounded px-1.5 py-0.5 text-[11px]"
-                      :class="
-                        d.isCorrect
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-amber-100 text-amber-900'
-                      "
-                    >
-                      {{ d.isCorrect ? "正确" : "有误" }}
-                    </span>
-                  </div>
-                  <p class="text-black/90">{{ d.prompt }}</p>
-                  <p class="mt-1 text-fg-muted">
-                    学生答案：{{ d.userAnswer }}
-                  </p>
-                  <p
-                    v-if="explanationForDetailRow(r, d)"
-                    class="mt-1 text-black/85"
-                  >
-                    题解析：{{ explanationForDetailRow(r, d) }}
-                  </p>
+                  <QuizAnswerDetailItem
+                    answer-label="学生答案"
+                    :detail="d"
+                    :index="i"
+                    :explanation="explanationForDetailRow(r, d)"
+                  />
                 </li>
               </ul>
             </div>

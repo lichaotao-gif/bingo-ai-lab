@@ -1,6 +1,50 @@
 import type { QuizQuestion } from "@/data/experimentQuizzes";
 import type { QuizAnswerDetail } from "@/types/quizReport";
 
+function choiceDetailFields(
+  q: QuizQuestion,
+): Pick<
+  QuizAnswerDetail,
+  | "stemImageUrl"
+  | "optionLines"
+  | "imageOptionUrls"
+  | "imageOptionLabels"
+> {
+  if (
+    q.type === "single" ||
+    q.type === "multi" ||
+    q.type === "text_figure_choice" ||
+    q.type === "image_stem"
+  ) {
+    const stemImageUrl =
+      (q.type === "text_figure_choice" || q.type === "image_stem") &&
+      "stemImage" in q
+        ? q.stemImage
+        : undefined;
+    return {
+      stemImageUrl,
+      optionLines: q.options.map(
+        (opt, i) => `${String.fromCharCode(65 + i)}. ${opt}`,
+      ),
+    };
+  }
+  if (q.type === "image_pick") {
+    const labels =
+      q.labels?.map(String) ??
+      q.optionImages.map((_, i) => String.fromCharCode(65 + i));
+    return {
+      imageOptionUrls: [...q.optionImages],
+      imageOptionLabels: labels,
+    };
+  }
+  if (q.type === "truefalse") {
+    return {
+      optionLines: ["A. 是", "B. 否"],
+    };
+  }
+  return {};
+}
+
 function typeLabel(t: QuizQuestion["type"]): string {
   const m: Record<QuizQuestion["type"], string> = {
     single: "单选题",
@@ -214,6 +258,7 @@ export function gradeQuiz(
       isCorrect: ok,
       earnedPoints: earned,
       maxPoints: q.points,
+      ...choiceDetailFields(q),
     });
   }
 
