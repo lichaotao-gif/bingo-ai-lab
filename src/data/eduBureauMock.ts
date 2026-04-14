@@ -1,7 +1,20 @@
-/** 区域管辖范围演示数据：地区 → 学校 → 班级 → 学生 */
+/** 区域管辖范围演示数据：省 → 市 → 区县 → 学校 → 班级 → 学生 */
 
+export interface BureauProvince {
+  id: string;
+  name: string;
+}
+
+export interface BureauCity {
+  id: string;
+  provinceId: string;
+  name: string;
+}
+
+/** 区/县（原「地区」粒度，与学校.regionId 对应） */
 export interface BureauRegion {
   id: string;
+  cityId: string;
   name: string;
 }
 
@@ -27,10 +40,21 @@ export interface BureauStudent {
   quizPct: number;
 }
 
+export const BUREAU_PROVINCES: BureauProvince[] = [
+  { id: "pr-gd", name: "广东省" },
+  { id: "pr-bj", name: "北京市" },
+];
+
+export const BUREAU_CITIES: BureauCity[] = [
+  { id: "ct-sz", provinceId: "pr-gd", name: "深圳市" },
+  { id: "ct-gz", provinceId: "pr-gd", name: "广州市" },
+  { id: "ct-bj", provinceId: "pr-bj", name: "市辖区" },
+];
+
 export const BUREAU_REGIONS: BureauRegion[] = [
-  { id: "r-east", name: "东城区" },
-  { id: "r-west", name: "西城区" },
-  { id: "r-sub", name: "经开区" },
+  { id: "r-east", cityId: "ct-sz", name: "东城区" },
+  { id: "r-west", cityId: "ct-gz", name: "西城区" },
+  { id: "r-sub", cityId: "ct-sz", name: "经开区" },
 ];
 
 export const BUREAU_SCHOOLS: BureauSchool[] = [
@@ -108,6 +132,60 @@ export const BUREAU_STUDENTS: BureauStudent[] = [
   })),
 ];
 
+export function citiesForProvince(provinceId: string | ""): BureauCity[] {
+  if (!provinceId) {
+    return [...BUREAU_CITIES];
+  }
+  return BUREAU_CITIES.filter((c) => c.provinceId === provinceId);
+}
+
+export function districtsForCity(cityId: string | ""): BureauRegion[] {
+  if (!cityId) {
+    return [...BUREAU_REGIONS];
+  }
+  return BUREAU_REGIONS.filter((r) => r.cityId === cityId);
+}
+
+/**
+ * 按省 / 市 / 区筛选时，得到涉及的区县 id 集合；null 表示不限（全部区县）
+ */
+export function districtIdsForScope(
+  provinceId: string | "",
+  cityId: string | "",
+  districtId: string | "",
+): Set<string> | null {
+  if (districtId) {
+    return new Set([districtId]);
+  }
+  if (cityId) {
+    return new Set(
+      BUREAU_REGIONS.filter((r) => r.cityId === cityId).map((r) => r.id),
+    );
+  }
+  if (provinceId) {
+    const cityIds = new Set(
+      BUREAU_CITIES.filter((c) => c.provinceId === provinceId).map((c) => c.id),
+    );
+    return new Set(
+      BUREAU_REGIONS.filter((r) => cityIds.has(r.cityId)).map((r) => r.id),
+    );
+  }
+  return null;
+}
+
+export function schoolsForScope(
+  provinceId: string | "",
+  cityId: string | "",
+  districtId: string | "",
+): BureauSchool[] {
+  const dids = districtIdsForScope(provinceId, cityId, districtId);
+  if (!dids) {
+    return [...BUREAU_SCHOOLS];
+  }
+  return BUREAU_SCHOOLS.filter((s) => dids.has(s.regionId));
+}
+
+/** 兼容旧逻辑：regionId 实为区县 id */
 export function schoolsForRegion(regionId: string | ""): BureauSchool[] {
   if (!regionId) {
     return [...BUREAU_SCHOOLS];
@@ -123,16 +201,21 @@ export function classesForSchool(schoolId: string | ""): BureauClass[] {
 }
 
 export function classIdsForFilters(
-  regionId: string | "",
+  districtId: string | "",
   schoolId: string | "",
   classId: string | "",
+  cityId: string | "",
+  provinceId: string | "",
 ): Set<string> {
-  let classes = BUREAU_CLASSES;
+  const dids = districtIdsForScope(provinceId, cityId, districtId);
+  let schools = BUREAU_SCHOOLS;
+  if (dids) {
+    schools = schools.filter((s) => dids.has(s.regionId));
+  }
+  const schoolIds = new Set(schools.map((s) => s.id));
+  let classes = BUREAU_CLASSES.filter((c) => schoolIds.has(c.schoolId));
   if (schoolId) {
     classes = classes.filter((c) => c.schoolId === schoolId);
-  } else if (regionId) {
-    const sids = new Set(schoolsForRegion(regionId).map((s) => s.id));
-    classes = classes.filter((c) => sids.has(c.schoolId));
   }
   if (classId) {
     return new Set([classId]);
@@ -163,11 +246,21 @@ export function regionById(id: string): BureauRegion | undefined {
   return BUREAU_REGIONS.find((r) => r.id === id);
 }
 
+export function cityById(id: string): BureauCity | undefined {
+  return BUREAU_CITIES.find((c) => c.id === id);
+}
+
+export function provinceById(id: string): BureauProvince | undefined {
+  return BUREAU_PROVINCES.find((p) => p.id === id);
+}
+
 /** 按学校聚合平均完成度（用于条形图） */
 export function schoolBars(
-  regionId: string | "",
+  provinceId: string | "",
+  cityId: string | "",
+  districtId: string | "",
 ): { schoolId: string; schoolName: string; exp: number; quiz: number; students: number }[] {
-  const schools = schoolsForRegion(regionId);
+  const schools = schoolsForScope(provinceId, cityId, districtId);
   return schools.map((sch) => {
     const cids = new Set(
       BUREAU_CLASSES.filter((c) => c.schoolId === sch.id).map((c) => c.id),

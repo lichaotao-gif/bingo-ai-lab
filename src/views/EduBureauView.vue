@@ -7,18 +7,15 @@ import EduBureauDashboard from "@/components/edu-bureau/EduBureauDashboard.vue";
 import {
   clearEduBureauSession,
   getEduBureauSession,
+  maskPhone,
   type EduBureauSession,
 } from "@/utils/eduBureauAuth";
 
 const router = useRouter();
 const session = ref<EduBureauSession | null>(null);
 
-function goBackToLab() {
-  void router.push({ name: "my-lab" });
-}
-
 function onCloseLogin() {
-  goBackToLab();
+  void router.push({ name: "my-lab" });
 }
 
 onMounted(() => {
@@ -42,33 +39,39 @@ function logout() {
     <header
       class="z-20 flex shrink-0 items-center justify-between gap-3 border-b border-slate-200/90 bg-white px-4 py-3 shadow-sm sm:px-6"
     >
-      <div class="flex min-w-0 items-center gap-3">
-        <RouterLink
-          to="/"
-          class="flex items-center gap-2 rounded-lg outline-none ring-primary/30 focus-visible:ring-2"
-        >
-          <div class="size-8 shrink-0">
-            <LogoMark />
-          </div>
-          <span class="hidden text-[15px] font-semibold text-slate-900 sm:inline"
-            >缤果AI实验室</span
-          >
-        </RouterLink>
-        <span
-          class="hidden h-6 w-px shrink-0 bg-slate-200 sm:block"
-          aria-hidden="true"
-        />
-        <h1 class="truncate text-[15px] font-semibold text-slate-800 sm:text-[16px]">
-          区域统计
-        </h1>
-      </div>
-      <button
-        type="button"
-        class="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[13px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50"
-        @click="goBackToLab"
+      <RouterLink
+        to="/"
+        class="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg outline-none ring-primary/30 focus-visible:ring-2 sm:gap-3"
       >
-        返回实验平台
-      </button>
+        <div class="size-8 shrink-0">
+          <LogoMark />
+        </div>
+        <h1
+          class="truncate text-[15px] font-semibold tracking-tight text-slate-900 sm:text-[16px]"
+        >
+          缤果AI实验室融合看板
+        </h1>
+      </RouterLink>
+      <div
+        v-if="session"
+        class="flex shrink-0 items-center gap-2 sm:gap-3"
+      >
+        <p
+          class="max-w-[min(42vw,200px)] truncate text-right text-[12px] text-slate-600 sm:max-w-none sm:text-[13px]"
+          :title="`${session.displayName} ${maskPhone(session.phone)}`"
+        >
+          <span class="font-medium text-slate-800">{{ session.displayName }}</span>
+          <span class="text-slate-400"> · </span>
+          <span class="tabular-nums text-slate-500">{{ maskPhone(session.phone) }}</span>
+        </p>
+        <button
+          type="button"
+          class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 sm:text-[13px]"
+          @click="logout"
+        >
+          退出登录
+        </button>
+      </div>
     </header>
 
     <div class="relative min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f0f4f9_100%)]">
@@ -94,10 +97,7 @@ function logout() {
         v-if="session"
         class="h-full overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 lg:px-10"
       >
-        <EduBureauDashboard
-          :session="session"
-          @logout="logout"
-        />
+        <EduBureauDashboard />
       </div>
     </div>
   </div>

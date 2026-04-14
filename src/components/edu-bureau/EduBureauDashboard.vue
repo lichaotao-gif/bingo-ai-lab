@@ -1,33 +1,43 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import type { EduBureauSession } from "@/utils/eduBureauAuth";
-import { maskPhone } from "@/utils/eduBureauAuth";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import EduBureauDataCharts from "@/components/edu-bureau/EduBureauDataCharts.vue";
 import {
   BUREAU_CLASSES,
+  BUREAU_CITIES,
+  BUREAU_PROVINCES,
   BUREAU_REGIONS,
   classById,
   classIdsForFilters,
   classesForSchool,
+  cityById,
+  provinceById,
   regionById,
   schoolById,
-  schoolsForRegion,
+  schoolsForScope,
   studentsForClassIds,
   type BureauStudent,
 } from "@/data/eduBureauMock";
 
-const props = defineProps<{
-  session: EduBureauSession;
-}>();
-
-const emit = defineEmits<{
-  logout: [];
-}>();
-
-const regionId = ref<string | "">("");
+const provinceId = ref<string | "">("");
+const cityId = ref<string | "">("");
+const districtId = ref<string | "">("");
 const schoolId = ref<string | "">("");
 const classId = ref<string | "">("");
 
-watch(regionId, () => {
+watch(provinceId, () => {
+  cityId.value = "";
+  districtId.value = "";
+  schoolId.value = "";
+  classId.value = "";
+});
+
+watch(cityId, () => {
+  districtId.value = "";
+  schoolId.value = "";
+  classId.value = "";
+});
+
+watch(districtId, () => {
   schoolId.value = "";
   classId.value = "";
 });
@@ -36,23 +46,47 @@ watch(schoolId, () => {
   classId.value = "";
 });
 
-const schoolOptions = computed(() => schoolsForRegion(regionId.value));
+const cityOptions = computed(() => {
+  if (!provinceId.value) {
+    return [...BUREAU_CITIES];
+  }
+  return BUREAU_CITIES.filter((c) => c.provinceId === provinceId.value);
+});
+
+const districtOptions = computed(() => {
+  if (!cityId.value) {
+    if (!provinceId.value) {
+      return [...BUREAU_REGIONS];
+    }
+    const cids = new Set(
+      BUREAU_CITIES.filter((c) => c.provinceId === provinceId.value).map(
+        (c) => c.id,
+      ),
+    );
+    return BUREAU_REGIONS.filter((r) => cids.has(r.cityId));
+  }
+  return BUREAU_REGIONS.filter((r) => r.cityId === cityId.value);
+});
+
+const schoolOptions = computed(() =>
+  schoolsForScope(provinceId.value, cityId.value, districtId.value),
+);
+
 const classOptions = computed(() => {
   if (schoolId.value) {
     return classesForSchool(schoolId.value);
   }
-  if (regionId.value) {
-    const sids = new Set(schoolOptions.value.map((s) => s.id));
-    return classesForSchool("").filter((c) => sids.has(c.schoolId));
-  }
-  return classesForSchool("");
+  const schIds = new Set(schoolOptions.value.map((s) => s.id));
+  return BUREAU_CLASSES.filter((c) => schIds.has(c.schoolId));
 });
 
 const filteredStudents = computed((): BureauStudent[] => {
   const ids = classIdsForFilters(
-    regionId.value,
+    districtId.value,
     schoolId.value,
     classId.value,
+    cityId.value,
+    provinceId.value,
   );
   return studentsForClassIds(ids);
 });
@@ -69,7 +103,6 @@ function quizDoneCount(s: BureauStudent): number {
   return Math.round((s.quizPct / 100) * QUIZ_ITEMS_PER_STUDENT);
 }
 
-/** 实验、测验两项均达到每人应完成项数（折算后） */
 function isExperimentAndQuizFullyDone(s: BureauStudent): boolean {
   return (
     experimentDoneCount(s) === EXPERIMENT_ITEMS_PER_STUDENT &&
@@ -77,7 +110,6 @@ function isExperimentAndQuizFullyDone(s: BureauStudent): boolean {
   );
 }
 
-/** 一组学生：实验/测验项数累计 +「每人 1 套实验任务，双项均完成计 1」人数 */
 function aggregateDoneForStudents(stu: BureauStudent[]) {
   let expDone = 0;
   let quizDone = 0;
@@ -97,7 +129,6 @@ function aggregateDoneForStudents(stu: BureauStudent[]) {
     expExpected,
     quizDone,
     quizExpected,
-    /** 实验与测验均完成人数（1 人最多计 1 次完成） */
     fullyDoneCount,
     n,
   };
@@ -155,7 +186,11 @@ const progressTiles = computed(() => {
       };
     });
   }
-  return schoolsForRegion(regionId.value).map((sch) => {
+  return schoolsForScope(
+    provinceId.value,
+    cityId.value,
+    districtId.value,
+  ).map((sch) => {
     const cids = new Set(
       BUREAU_CLASSES.filter((c) => c.schoolId === sch.id).map((c) => c.id),
     );
@@ -167,69 +202,259 @@ const progressTiles = computed(() => {
   });
 });
 
-function rowSchoolName(student: BureauStudent): string {
-  const cl = classById(student.classId);
-  const sch = cl ? schoolById(cl.schoolId) : undefined;
-  return sch?.name ?? "—";
+/** 演示：当前筛选下「双项均满」人数，按周次平滑爬升曲线 */
+const completionTrendPoints = computed(() => {
+  const end = kpi.value.fullyCompletedStudentCount;
+  const weeks = 8;
+  const out: { label: string; value: number }[] = [];
+  const last = weeks - 1;
+  for (let i = 0; i < weeks; i++) {
+    const t = last === 0 ? 1 : i / last;
+    const start = Math.max(0, Math.round(end * 0.22));
+    const v = Math.round(start + (end - start) * (t * t));
+    out.push({ label: `第${i + 1}周`, value: i === last ? end : v });
+  }
+  return out;
+});
+
+const barChartRows = computed(() =>
+  progressTiles.value.map((row) => ({
+    label: row.label,
+    pct: row.n ? Math.min(100, Math.round((row.fullyDoneCount / row.n) * 100)) : 0,
+    sub: `${row.fullyDoneCount}/${row.n} 人`,
+  })),
+);
+
+const barChartTitle = computed(() =>
+  schoolId.value ? "各班级完成率" : "各学校完成率",
+);
+
+/** 省 / 市 / 区：合并为一个级联下拉 */
+const regionPanelOpen = ref(false);
+const regionCascaderRef = ref<HTMLElement | null>(null);
+
+const regionSummaryText = computed(() => {
+  if (!provinceId.value && !cityId.value && !districtId.value) {
+    return "请选择省 / 市 / 区（县）";
+  }
+  const parts: string[] = [];
+  if (provinceId.value) {
+    parts.push(provinceById(provinceId.value)?.name ?? "");
+  }
+  if (cityId.value) {
+    parts.push(cityById(cityId.value)?.name ?? "");
+  }
+  if (districtId.value) {
+    parts.push(regionById(districtId.value)?.name ?? "");
+  }
+  return parts.filter(Boolean).join(" · ") || "请选择省 / 市 / 区（县）";
+});
+
+function closeRegionPanel() {
+  regionPanelOpen.value = false;
 }
 
-function rowClassName(student: BureauStudent): string {
-  return classById(student.classId)?.name ?? "—";
+function onRegionDocClick(e: MouseEvent) {
+  const root = regionCascaderRef.value;
+  if (!regionPanelOpen.value || !root) {
+    return;
+  }
+  if (!root.contains(e.target as Node)) {
+    regionPanelOpen.value = false;
+  }
 }
 
-function rowRegionName(student: BureauStudent): string {
-  const cl = classById(student.classId);
-  const sch = cl ? schoolById(cl.schoolId) : undefined;
-  const r = sch ? regionById(sch.regionId) : undefined;
-  return r?.name ?? "—";
+function onRegionKeydown(e: KeyboardEvent) {
+  if (e.key === "Escape") {
+    regionPanelOpen.value = false;
+  }
 }
+
+onMounted(() => {
+  document.addEventListener("click", onRegionDocClick, true);
+  document.addEventListener("keydown", onRegionKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", onRegionDocClick, true);
+  document.removeEventListener("keydown", onRegionKeydown);
+});
 </script>
 
 <template>
   <div class="edu-viz flex min-h-0 flex-col gap-6 pb-8 text-slate-800">
-    <header
-      class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200/90 pb-4"
-    >
-      <div>
-        <h2 class="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-          实验 & 测验 融合看板
-        </h2>
-        <p class="mt-1.5 text-[13px] text-slate-500">
-          {{ props.session.displayName }} · {{ maskPhone(props.session.phone) }}
-        </p>
-      </div>
-      <button
-        type="button"
-        class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-[13px] font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-        @click="emit('logout')"
-      >
-        退出登录
-      </button>
-    </header>
-
-    <!-- 筛选 -->
+    <!-- 筛选：省市区 + 学校 + 班级 -->
     <div
       class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm"
     >
       <p class="mb-3 text-[12px] font-medium text-slate-500">筛选范围</p>
-      <div class="flex flex-wrap items-end gap-3">
-        <div class="min-w-[140px] flex-1 sm:max-w-[200px]">
-          <label class="mb-1 block text-[11px] text-slate-500">地区</label>
-          <select
-            v-model="regionId"
-            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-slate-800 outline-none ring-primary/30 focus:ring-2"
+      <div
+        class="flex flex-wrap items-end gap-3"
+      >
+        <div
+          ref="regionCascaderRef"
+          class="relative min-w-[min(100%,280px)] flex-1 sm:max-w-[420px]"
+        >
+          <label class="mb-1 block text-[11px] text-slate-500">省 / 市 / 区（县）</label>
+          <button
+            type="button"
+            class="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-[14px] text-slate-800 outline-none ring-primary/30 transition hover:border-slate-300 focus:ring-2"
+            :class="regionPanelOpen ? 'border-primary/40 ring-2 ring-primary/25' : ''"
+            :aria-expanded="regionPanelOpen"
+            aria-haspopup="listbox"
+            @click.stop="regionPanelOpen = !regionPanelOpen"
           >
-            <option value="">全部区县</option>
-            <option
-              v-for="r in BUREAU_REGIONS"
-              :key="r.id"
-              :value="r.id"
-            >
-              {{ r.name }}
-            </option>
-          </select>
+            <span
+              class="min-w-0 flex-1 truncate"
+              :class="
+                provinceId || cityId || districtId ? 'text-slate-900' : 'text-slate-400'
+              "
+            >{{ regionSummaryText }}</span>
+            <span
+              class="shrink-0 text-slate-400 transition"
+              :class="regionPanelOpen ? 'rotate-180' : ''"
+              aria-hidden="true"
+            >▼</span>
+          </button>
+
+          <div
+            v-show="regionPanelOpen"
+            class="absolute left-0 right-0 top-full z-[60] mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg ring-1 ring-black/[0.06] sm:right-auto sm:w-[min(100vw-2rem,520px)]"
+            role="dialog"
+            aria-label="选择省市区"
+            @click.stop
+          >
+            <div class="grid max-h-[min(70vh,280px)] grid-cols-3 divide-x divide-slate-100">
+              <!-- 省 -->
+              <div class="flex min-h-0 min-w-0 flex-col">
+                <p class="shrink-0 border-b border-slate-100 bg-slate-50 px-2 py-1.5 text-[11px] font-medium text-slate-500">
+                  省
+                </p>
+                <ul class="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1">
+                  <li>
+                    <button
+                      type="button"
+                      class="w-full px-2.5 py-2 text-left text-[13px] transition"
+                      :class="
+                        !provinceId
+                          ? 'bg-primary/10 font-medium text-primary'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      "
+                      @click="provinceId = ''"
+                    >
+                      全部省
+                    </button>
+                  </li>
+                  <li
+                    v-for="p in BUREAU_PROVINCES"
+                    :key="p.id"
+                  >
+                    <button
+                      type="button"
+                      class="w-full px-2.5 py-2 text-left text-[13px] transition"
+                      :class="
+                        provinceId === p.id
+                          ? 'bg-primary/10 font-medium text-primary'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      "
+                      @click="provinceId = p.id"
+                    >
+                      {{ p.name }}
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <!-- 市 -->
+              <div class="flex min-h-0 min-w-0 flex-col">
+                <p class="shrink-0 border-b border-slate-100 bg-slate-50 px-2 py-1.5 text-[11px] font-medium text-slate-500">
+                  市
+                </p>
+                <ul class="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1">
+                  <li>
+                    <button
+                      type="button"
+                      class="w-full px-2.5 py-2 text-left text-[13px] transition"
+                      :class="
+                        !cityId
+                          ? 'bg-primary/10 font-medium text-primary'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      "
+                      @click="cityId = ''"
+                    >
+                      全部市
+                    </button>
+                  </li>
+                  <li
+                    v-for="c in cityOptions"
+                    :key="c.id"
+                  >
+                    <button
+                      type="button"
+                      class="w-full px-2.5 py-2 text-left text-[13px] transition"
+                      :class="
+                        cityId === c.id
+                          ? 'bg-primary/10 font-medium text-primary'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      "
+                      @click="cityId = c.id"
+                    >
+                      {{ c.name }}
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <!-- 区/县 -->
+              <div class="flex min-h-0 min-w-0 flex-col">
+                <p class="shrink-0 border-b border-slate-100 bg-slate-50 px-2 py-1.5 text-[11px] font-medium text-slate-500">
+                  区/县
+                </p>
+                <ul class="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1">
+                  <li>
+                    <button
+                      type="button"
+                      class="w-full px-2.5 py-2 text-left text-[13px] transition"
+                      :class="
+                        !districtId
+                          ? 'bg-primary/10 font-medium text-primary'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      "
+                      @click="districtId = ''; closeRegionPanel()"
+                    >
+                      全部区县
+                    </button>
+                  </li>
+                  <li
+                    v-for="r in districtOptions"
+                    :key="r.id"
+                  >
+                    <button
+                      type="button"
+                      class="w-full px-2.5 py-2 text-left text-[13px] transition"
+                      :class="
+                        districtId === r.id
+                          ? 'bg-primary/10 font-medium text-primary'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      "
+                      @click="districtId = r.id; closeRegionPanel()"
+                    >
+                      {{ r.name }}
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="flex justify-end border-t border-slate-100 bg-slate-50/90 px-2 py-2">
+              <button
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-[12px] font-medium text-primary transition hover:bg-primary/10"
+                @click="closeRegionPanel"
+              >
+                完成
+              </button>
+            </div>
+          </div>
         </div>
-        <div class="min-w-[160px] flex-1 sm:max-w-[220px]">
+        <div class="min-w-[140px] flex-1 sm:max-w-[200px]">
           <label class="mb-1 block text-[11px] text-slate-500">学校</label>
           <select
             v-model="schoolId"
@@ -245,7 +470,7 @@ function rowRegionName(student: BureauStudent): string {
             </option>
           </select>
         </div>
-        <div class="min-w-[140px] flex-1 sm:max-w-[200px]">
+        <div class="min-w-[120px] flex-1 sm:max-w-[180px]">
           <label class="mb-1 block text-[11px] text-slate-500">班级</label>
           <select
             v-model="classId"
@@ -264,91 +489,145 @@ function rowRegionName(student: BureauStudent): string {
       </div>
     </div>
 
-    <!-- KPI：前三项紧凑；完成数板块加宽 -->
+    <!-- 管辖概览 + 实验&测验完成数：同一行（大屏并排） -->
     <div
-      class="grid grid-cols-1 gap-3 sm:grid-cols-6 lg:grid-cols-12 lg:items-stretch"
+      class="grid gap-4 lg:grid-cols-12 lg:items-stretch"
     >
       <div
-        class="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50/80 to-white p-3 shadow-sm sm:col-span-2 lg:col-span-2"
+        class="flex flex-col rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5 lg:col-span-5"
       >
-        <p class="text-[11px] text-sky-800/80">管辖学校</p>
-        <p class="mt-0.5 text-xl font-semibold tabular-nums text-sky-950">
-          {{ kpi.schoolCount }}
+        <p class="mb-3 text-[12px] font-medium text-slate-500">
+          管辖范围概览
         </p>
+        <div
+          class="grid flex-1 grid-cols-3 gap-2 rounded-xl bg-slate-50/80 p-3 sm:gap-3 sm:p-4"
+        >
+          <div class="text-center sm:text-left">
+            <p class="text-[11px] text-sky-800/85">学校</p>
+            <p class="mt-1 text-2xl font-bold tabular-nums text-sky-950 sm:text-3xl">
+              {{ kpi.schoolCount }}
+            </p>
+            <p class="text-[11px] text-slate-400">所</p>
+          </div>
+          <div class="border-x border-slate-200/80 px-2 text-center sm:px-3 sm:text-left">
+            <p class="text-[11px] text-violet-800/85">班级</p>
+            <p class="mt-1 text-2xl font-bold tabular-nums text-violet-950 sm:text-3xl">
+              {{ kpi.classCount }}
+            </p>
+            <p class="text-[11px] text-slate-400">个</p>
+          </div>
+          <div class="text-center sm:text-left">
+            <p class="text-[11px] text-emerald-800/85">学生</p>
+            <p class="mt-1 text-2xl font-bold tabular-nums text-emerald-950 sm:text-3xl">
+              {{ kpi.studentCount }}
+            </p>
+            <p class="text-[11px] text-slate-400">人</p>
+          </div>
+        </div>
       </div>
+
       <div
-        class="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/80 to-white p-3 shadow-sm sm:col-span-2 lg:col-span-2"
+        class="flex flex-col rounded-2xl border border-indigo-200/70 bg-gradient-to-br from-indigo-50/95 via-white to-violet-50/40 p-4 shadow-sm sm:p-5 lg:col-span-7"
       >
-        <p class="text-[11px] text-violet-800/80">班级数</p>
-        <p class="mt-0.5 text-xl font-semibold tabular-nums text-violet-950">
-          {{ kpi.classCount }}
-        </p>
-      </div>
-      <div
-        class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/80 to-white p-3 shadow-sm sm:col-span-2 lg:col-span-2"
-      >
-        <p class="text-[11px] text-emerald-800/80">学生数</p>
-        <p class="mt-0.5 text-xl font-semibold tabular-nums text-emerald-950">
-          {{ kpi.studentCount }}
-        </p>
-      </div>
-      <div
-        class="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/90 to-white p-4 shadow-sm sm:col-span-6 sm:p-5 lg:col-span-6 lg:p-6"
-      >
-        <p class="text-[13px] font-medium text-indigo-900/85">实验 & 测验 · 完成数（项）</p>
-        <div class="mt-3 tabular-nums sm:mt-4">
-          <p class="text-[11px] font-medium text-slate-500 sm:text-[12px]">
-            总完成项（实验 + 测验累计）
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <p class="text-[13px] font-semibold text-indigo-950">
+            实验 &amp; 测验 · 完成情况
           </p>
-          <p class="mt-1 flex flex-wrap items-baseline gap-1">
-            <span
-              class="text-3xl font-bold leading-none tracking-tight text-indigo-800 sm:text-4xl"
-              >{{ kpi.totalItemsCompleted }}</span
+          <span
+            class="rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-medium text-indigo-700 ring-1 ring-indigo-100"
+          >项数累计</span>
+        </div>
+
+        <div
+          class="grid flex-1 gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:gap-5"
+        >
+          <div class="tabular-nums">
+            <p class="text-[11px] text-indigo-900/70">总完成 / 应完成</p>
+            <p class="mt-1 flex flex-wrap items-baseline gap-1">
+              <span class="text-3xl font-bold tracking-tight text-indigo-800 sm:text-[2.1rem]">{{
+                kpi.totalItemsCompleted
+              }}</span>
+              <span class="text-lg text-indigo-300">/</span>
+              <span class="text-xl font-semibold text-slate-700">{{
+                kpi.totalItemsExpected
+              }}</span>
+              <span class="text-[12px] text-slate-500">项</span>
+            </p>
+            <div
+              class="mt-3 h-2 overflow-hidden rounded-full bg-indigo-100/90"
+              role="presentation"
             >
-            <span class="text-lg text-slate-400 sm:text-xl">/</span>
-            <span class="text-xl font-semibold text-slate-700 sm:text-2xl">{{
-              kpi.totalItemsExpected
-            }}</span>
-            <span class="text-[12px] text-slate-500 sm:text-[13px]">项</span>
-          </p>
-          <div class="mt-3 space-y-1.5 border-t border-indigo-100/80 pt-3 text-[12px]">
-            <p class="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
-              <span class="text-slate-500">实验完成</span>
+              <div
+                class="h-full rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 transition-[width]"
+                :style="{
+                  width: `${
+                    kpi.totalItemsExpected > 0
+                      ? Math.min(
+                          100,
+                          (kpi.totalItemsCompleted / kpi.totalItemsExpected) * 100,
+                        )
+                      : 0
+                  }%`,
+                }"
+              />
+            </div>
+          </div>
+
+          <div
+            class="flex flex-col justify-center gap-2 rounded-xl border border-white/80 bg-white/60 p-3 text-[12px] shadow-sm ring-1 ring-indigo-100/60"
+          >
+            <div class="flex items-center justify-between gap-2 tabular-nums">
+              <span class="text-slate-600">实验</span>
               <span>
                 <span class="font-semibold text-sky-700">{{ kpi.experimentCompletedSum }}</span>
-                <span class="text-slate-400"> / </span>
+                <span class="text-slate-400">/</span>
                 <span class="text-slate-600">{{ kpi.experimentExpectedSum }}</span>
-                <span class="text-slate-400"> 项</span>
               </span>
-            </p>
-            <p class="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
-              <span class="text-slate-500">测验完成</span>
+            </div>
+            <div class="flex items-center justify-between gap-2 border-t border-slate-100/90 pt-2 tabular-nums">
+              <span class="text-slate-600">测验</span>
               <span>
                 <span class="font-semibold text-violet-700">{{ kpi.quizCompletedSum }}</span>
-                <span class="text-slate-400"> / </span>
+                <span class="text-slate-400">/</span>
                 <span class="text-slate-600">{{ kpi.quizExpectedSum }}</span>
-                <span class="text-slate-400"> 项</span>
               </span>
-            </p>
+            </div>
+            <div
+              class="flex items-center justify-between gap-2 border-t border-indigo-100/90 pt-2 tabular-nums"
+            >
+              <span class="font-medium text-indigo-900/90">双项均满</span>
+              <span>
+                <span class="text-base font-bold text-indigo-800">{{
+                  kpi.fullyCompletedStudentCount
+                }}</span>
+                <span class="text-slate-400">/</span>
+                <span class="font-medium text-slate-700">{{ kpi.studentCount }}</span>
+                <span class="text-slate-400">人</span>
+              </span>
+            </div>
           </div>
-          <p
-            class="mt-3 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 border-t border-indigo-100/80 pt-3 text-[12px]"
-          >
-            <span class="text-slate-600">完成（1 人 1 次）</span>
-            <span>
-              <span class="text-base font-bold text-indigo-800">{{
-                kpi.fullyCompletedStudentCount
-              }}</span>
-              <span class="text-slate-400"> / </span>
-              <span class="font-medium text-slate-700">{{ kpi.studentCount }}</span>
-              <span class="text-slate-400"> 人</span>
-            </span>
-          </p>
         </div>
       </div>
     </div>
 
-    <!-- 辖区进度：小板块网格，完成项数 -->
+    <!-- 数据视图（在辖区进度卡片之上） -->
+    <section>
+      <div class="mb-3">
+        <h3 class="text-[15px] font-semibold text-slate-900">
+          数据视图
+        </h3>
+        <p class="mt-0.5 text-[12px] text-slate-500">
+          趋势为演示累计曲线；柱状为当前筛选下各校/各班双项完成率
+        </p>
+      </div>
+      <EduBureauDataCharts
+        :trend-points="completionTrendPoints"
+        :bar-rows="barChartRows"
+        :bar-title="barChartTitle"
+      />
+    </section>
+
+    <!-- 辖区进度 -->
     <section>
       <div class="mb-3">
         <h3 class="text-[15px] font-semibold text-slate-900">
@@ -396,73 +675,6 @@ function rowRegionName(student: BureauStudent): string {
         </li>
       </ul>
     </section>
-
-    <!-- 学生明细 -->
-    <div
-      class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm"
-    >
-      <div class="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
-        <p class="text-[14px] font-semibold text-slate-800">学生明细</p>
-        <p class="text-[11px] text-slate-500">当前筛选</p>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full min-w-[720px] text-left text-[13px]">
-          <thead>
-            <tr class="border-b border-slate-100 bg-white text-[12px] text-slate-500">
-              <th class="px-4 py-3 font-medium">区县</th>
-              <th class="px-4 py-3 font-medium">学校</th>
-              <th class="px-4 py-3 font-medium">班级</th>
-              <th class="px-4 py-3 font-medium">学生</th>
-              <th class="px-4 py-3 font-medium">实验 / 测验 / 完成</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="st in filteredStudents"
-              :key="st.id"
-              class="border-b border-slate-100 odd:bg-slate-50/50"
-            >
-              <td class="px-4 py-2.5 text-slate-600">
-                {{ rowRegionName(st) }}
-              </td>
-              <td class="px-4 py-2.5 text-slate-800">
-                {{ rowSchoolName(st) }}
-              </td>
-              <td class="px-4 py-2.5 text-slate-600">
-                {{ rowClassName(st) }}
-              </td>
-              <td class="px-4 py-2.5 font-medium text-slate-900">
-                {{ st.name }}
-              </td>
-              <td class="px-4 py-2.5 text-[12px] tabular-nums text-slate-700">
-                <span class="text-sky-700"
-                  >{{ experimentDoneCount(st) }}/{{ EXPERIMENT_ITEMS_PER_STUDENT }}</span
-                >
-                <span class="mx-1 text-slate-300">·</span>
-                <span class="text-violet-700"
-                  >{{ quizDoneCount(st) }}/{{ QUIZ_ITEMS_PER_STUDENT }}</span
-                >
-                <span class="mx-1 text-slate-300">·</span>
-                <span
-                  class="font-medium"
-                  :class="
-                    isExperimentAndQuizFullyDone(st)
-                      ? 'text-indigo-800'
-                      : 'text-slate-400'
-                  "
-                >{{ isExperimentAndQuizFullyDone(st) ? "1" : "0" }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p
-        v-if="filteredStudents.length === 0"
-        class="px-4 py-10 text-center text-[13px] text-slate-500"
-      >
-        当前筛选下暂无学生数据
-      </p>
-    </div>
   </div>
 </template>
 

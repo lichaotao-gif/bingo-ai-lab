@@ -4,10 +4,17 @@ import vue from "@vitejs/plugin-vue";
 
 export default defineConfig({
   plugins: [vue()],
-  /** 默认 5173；若已被占用，Vite 会自动递增（5174、5175…），请以终端里打印的 Local 为准 */
+  /** 本地开发固定端口；若启动失败说明 5173 已被占用，请先结束占用进程或改端口 */
   server: {
+    host: "127.0.0.1",
     port: 5173,
-    strictPort: false,
+    strictPort: true,
+  },
+  /** npm run preview 固定端口 */
+  preview: {
+    host: "127.0.0.1",
+    port: 4173,
+    strictPort: true,
   },
   resolve: {
     alias: {

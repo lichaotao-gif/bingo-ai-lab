@@ -105,7 +105,7 @@ function onClose() {
           id="edu-bureau-login-heading"
           class="mt-3 text-xl font-semibold tracking-tight text-black"
         >
-          区域统计
+          管理员登录
         </h2>
         <p class="mt-1.5 text-[13px] text-fg-muted">
           使用「账号密码」或「验证码」登录后查看管辖范围数据
