@@ -9,6 +9,7 @@ import UserAvatarMenu from "@/components/nav/UserAvatarMenu.vue";
 import IconRefresh from "@/components/icons/IconRefresh.vue";
 import IconGift from "@/components/icons/IconGift.vue";
 import IconRobot from "@/components/icons/IconRobot.vue";
+import IconChip from "@/components/icons/IconChip.vue";
 import { useCartoonAvatar } from "@/composables/useCartoonAvatar";
 
 const route = useRoute();
@@ -219,11 +220,17 @@ function openBingoAiLab() {
             </p>
             <button
               type="button"
-              class="w-full rounded-xl px-3 py-2.5 text-left text-[14px] text-fg-soft transition hover:bg-card-inner"
+              class="flex w-full flex-nowrap items-center gap-1.5 rounded-xl px-2.5 py-2 text-left text-[13px] text-fg-soft transition hover:bg-card-inner"
               @click="friendLinkModalOpen = true"
             >
               <span
-                class="font-medium text-primary underline decoration-primary/40 underline-offset-[5px] hover:decoration-primary"
+                class="flex size-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-primary"
+                aria-hidden="true"
+              >
+                <IconChip />
+              </span>
+              <span
+                class="min-w-0 whitespace-nowrap font-medium text-primary"
               >
                 缤果AI实验室
               </span>
@@ -256,9 +263,6 @@ function openBingoAiLab() {
               </span>
               区域统计
             </a>
-            <p class="mt-2 pl-1 text-[11px] leading-snug text-fg-muted">
-              管辖区域数据看板
-            </p>
           </div>
         </div>
       </aside>
