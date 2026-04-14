@@ -545,6 +545,59 @@ function restartQuiz() {
   report.value = null;
 }
 
+/** 自定义确认弹层（替代 window.confirm） */
+const quizConfirmKind = ref<null | "submit-unanswered" | "restart">(null);
+const submitUnansweredCount = ref(0);
+
+function dismissQuizConfirm() {
+  quizConfirmKind.value = null;
+}
+
+function applyQuizConfirm() {
+  const k = quizConfirmKind.value;
+  quizConfirmKind.value = null;
+  if (k === "submit-unanswered") {
+    submitQuiz();
+  } else if (k === "restart") {
+    restartQuiz();
+  }
+}
+
+function onQuizConfirmKeydown(e: KeyboardEvent) {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    dismissQuizConfirm();
+  }
+}
+
+watch(quizConfirmKind, (k) => {
+  if (k) {
+    document.addEventListener("keydown", onQuizConfirmKeydown);
+  } else {
+    document.removeEventListener("keydown", onQuizConfirmKeydown);
+  }
+});
+
+/** 结果页「重新作答」：先确认，避免误触清空全部作答 */
+function confirmRestartQuiz() {
+  quizConfirmKind.value = "restart";
+}
+
+/** 提交前：若有未答题，二次确认是否仍要提交 */
+function confirmSubmitQuiz() {
+  const total = questions.value.length;
+  if (total <= 0) {
+    return;
+  }
+  const unanswered = questions.value.filter((q) => !isAnswered(q)).length;
+  if (unanswered > 0) {
+    submitUnansweredCount.value = unanswered;
+    quizConfirmKind.value = "submit-unanswered";
+    return;
+  }
+  submitQuiz();
+}
+
 function toggleMulti(q: Extract<QuizQuestion, { type: "multi" }>, index: number) {
   const cur = [...((answers.value[q.id] as number[]) ?? [])];
   const pos = cur.indexOf(index);
@@ -655,6 +708,7 @@ onMounted(() => {
 onUnmounted(() => {
   document.body.style.overflow = "";
   window.removeEventListener("resize", onMatchWindowResize);
+  document.removeEventListener("keydown", onQuizConfirmKeydown);
   matchResizeObserver?.disconnect();
   matchResizeObserver = null;
 });
@@ -1204,7 +1258,7 @@ onUnmounted(() => {
                 v-else
                 type="button"
                 class="rounded-xl bg-primary px-6 py-2.5 text-[14px] font-medium text-white shadow-md shadow-primary/20 transition hover:opacity-95"
-                @click="submitQuiz"
+                @click="confirmSubmitQuiz"
               >
                 提交测验
               </button>
@@ -1412,7 +1466,7 @@ onUnmounted(() => {
               <button
                 type="button"
                 class="rounded-xl border border-border-subtle px-5 py-2.5 text-[14px] font-medium text-fg-soft transition hover:bg-card-inner"
-                @click="restartQuiz"
+                @click="confirmRestartQuiz"
               >
                 重新作答
               </button>
@@ -1425,6 +1479,95 @@ onUnmounted(() => {
               </button>
             </div>
           </footer>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
+  <!-- 测验内二次确认（叠在测验弹窗之上） -->
+  <Teleport to="body">
+    <Transition name="quiz-confirm-fade">
+      <div
+        v-if="quizConfirmKind"
+        class="fixed inset-0 z-[210] flex items-center justify-center p-4 sm:p-6"
+        role="dialog"
+        aria-modal="true"
+        :aria-labelledby="
+          quizConfirmKind === 'submit-unanswered'
+            ? 'quiz-confirm-submit-title'
+            : 'quiz-confirm-restart-title'
+        "
+      >
+        <div
+          class="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+          aria-hidden="true"
+          @click="dismissQuizConfirm"
+        />
+        <div
+          class="relative z-10 w-full max-w-md rounded-2xl border border-border-subtle bg-surface p-6 shadow-popover sm:p-7"
+          @click.stop
+        >
+          <template v-if="quizConfirmKind === 'submit-unanswered'">
+            <h3
+              id="quiz-confirm-submit-title"
+              class="text-[18px] font-semibold text-black"
+            >
+              尚有题目未作答
+            </h3>
+            <p class="mt-3 text-[14px] leading-relaxed text-fg-soft">
+              还有
+              <span class="font-semibold text-amber-800">{{
+                submitUnansweredCount
+              }}</span>
+              道题未作答。仍要提交将按当前已答内容判分并生成测评结果；你也可以返回继续完成全部题目。
+            </p>
+            <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+              <button
+                type="button"
+                class="rounded-xl border border-border-subtle px-4 py-2.5 text-[14px] font-medium text-fg-soft transition hover:bg-card-inner"
+                @click="dismissQuizConfirm"
+              >
+                返回继续答题
+              </button>
+              <button
+                type="button"
+                class="rounded-xl bg-primary px-5 py-2.5 text-[14px] font-medium text-white shadow-md shadow-primary/25 transition hover:opacity-95"
+                @click="applyQuizConfirm"
+              >
+                仍要提交
+              </button>
+            </div>
+          </template>
+          <template v-else-if="quizConfirmKind === 'restart'">
+            <h3
+              id="quiz-confirm-restart-title"
+              class="text-[18px] font-semibold text-black"
+            >
+              确认重新作答
+            </h3>
+            <p class="mt-3 text-[14px] leading-relaxed text-fg-soft">
+              重新作答将清空本测验的<strong class="text-slate-800">全部作答记录</strong>，并从第一题重新开始。
+            </p>
+            <p class="mt-2 text-[13px] leading-relaxed text-amber-900/90">
+              此操作不可撤销，请确认后再继续。
+            </p>
+            <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+              <button
+                type="button"
+                class="rounded-xl border border-border-subtle px-4 py-2.5 text-[14px] font-medium text-fg-soft transition hover:bg-card-inner"
+                @click="dismissQuizConfirm"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                class="rounded-xl bg-primary px-5 py-2.5 text-[14px] font-medium text-white shadow-md shadow-primary/25 transition hover:opacity-95"
+                @click="applyQuizConfirm"
+              >
+                确认重新作答
+              </button>
+            </div>
+          </template>
         </div>
       </div>
     </Transition>
@@ -1461,5 +1604,14 @@ onUnmounted(() => {
 }
 .quiz-result-scroll::-webkit-scrollbar-track {
   background: transparent;
+}
+
+.quiz-confirm-fade-enter-active,
+.quiz-confirm-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.quiz-confirm-fade-enter-from,
+.quiz-confirm-fade-leave-to {
+  opacity: 0;
 }
 </style>

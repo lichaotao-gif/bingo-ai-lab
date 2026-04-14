@@ -49,18 +49,22 @@ const overallCompleted = computed(
   <article
     class="relative flex gap-4 overflow-hidden rounded-xl border border-border-subtle bg-white p-4 shadow-card transition hover:shadow-md"
   >
-    <!-- 单实验：测验 + AI 实验均完成 → 右上角斜角「完成」 -->
+    <!-- 单实验：测验 + AI 实验均完成 → 右上角三角形「已完成」角标 -->
     <div
       v-if="overallCompleted"
-      class="pointer-events-none absolute right-0 top-0 z-10 h-[4.75rem] w-[4.75rem] overflow-hidden rounded-tr-xl"
+      class="pointer-events-none absolute right-0 top-0 z-10 h-[3.75rem] w-[3.75rem] overflow-hidden rounded-tr-xl sm:h-[4.25rem] sm:w-[4.25rem]"
       title="测验与 AI 实验均已完成"
       aria-hidden="true"
     >
       <div
-        class="absolute right-[-38%] top-[22%] w-[140%] rotate-45 bg-gradient-to-br from-primary to-[#4f9cf9] py-1.5 text-center text-[10px] font-bold tracking-wider text-white shadow-sm"
+        class="absolute inset-0 bg-gradient-to-br from-sky-200 via-[#38bdf8] to-[#1d4ed8] shadow-[2px_2px_10px_rgba(29,78,216,0.35)]"
+        style="clip-path: polygon(100% 0, 100% 100%, 0 0)"
+      />
+      <span
+        class="absolute left-[67%] top-[33%] w-max min-w-[2.75rem] -translate-x-1/2 -translate-y-1/2 rotate-45 select-none text-center text-[9px] font-bold leading-none tracking-wider text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.2)] sm:text-[10px]"
       >
-        完成
-      </div>
+        已完成
+      </span>
     </div>
 
     <div

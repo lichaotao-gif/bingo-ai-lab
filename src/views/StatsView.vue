@@ -130,6 +130,15 @@ function completionForExperiment(ex: ExperimentItem): { done: number; total: num
   return { done, total };
 }
 
+/** 实验列表：完成情况进度条宽度（0～100） */
+function completionBarPercent(ex: ExperimentItem): number {
+  const { done, total } = completionForExperiment(ex);
+  if (total <= 0) {
+    return 0;
+  }
+  return Math.round((done / total) * 100);
+}
+
 const selectedExpIndex = ref(0);
 const selectedMemberId = ref<string | null>(null);
 
@@ -493,17 +502,42 @@ onUnmounted(() => {
                 >
                   {{ i + 1 }}. {{ ex.title }}
                 </p>
-                <p
+                <div
                   v-if="!memberFirstLayout"
-                  class="mt-1 text-[11px]"
-                  :class="
-                    selectedExpIndex === i ? 'text-white/85' : 'text-fg-muted'
-                  "
+                  class="mt-1.5 space-y-1"
                 >
-                  完成情况: {{ completionForExperiment(ex).done }}/{{
-                    completionForExperiment(ex).total
-                  }}
-                </p>
+                  <div
+                    class="flex items-center justify-between gap-2 text-[11px]"
+                    :class="
+                      selectedExpIndex === i ? 'text-white/90' : 'text-fg-muted'
+                    "
+                  >
+                    <span>
+                      完成{{ completionForExperiment(ex).done }}/{{
+                        completionForExperiment(ex).total
+                      }}人
+                    </span>
+                    <span
+                      class="shrink-0 tabular-nums opacity-90"
+                    >{{ completionBarPercent(ex) }}%</span>
+                  </div>
+                  <div
+                    class="h-1.5 overflow-hidden rounded-full"
+                    :class="
+                      selectedExpIndex === i ? 'bg-white/25' : 'bg-slate-200/90'
+                    "
+                  >
+                    <div
+                      class="h-full max-w-full rounded-full transition-[width] duration-300"
+                      :class="
+                        selectedExpIndex === i
+                          ? 'bg-white'
+                          : 'bg-gradient-to-r from-primary to-[#4f9cf9]'
+                      "
+                      :style="{ width: `${completionBarPercent(ex)}%` }"
+                    />
+                  </div>
+                </div>
                 <div
                   v-else
                   class="mt-1.5 flex items-center justify-between gap-2"
@@ -553,9 +587,9 @@ onUnmounted(() => {
         >
           <template v-if="memberFirstLayout">学生</template>
           <template v-else>
-            完成情况: {{ completionCurrent.done }}/{{
+            完成{{ completionCurrent.done }}/{{
               completionCurrent.total
-            }}
+            }}人
           </template>
         </div>
         <ul
