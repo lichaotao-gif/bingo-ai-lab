@@ -710,9 +710,6 @@ onUnmounted(() => {
                 </svg>
               </div>
               <p class="text-[15px] font-medium text-slate-600">暂无测验记录</p>
-              <p class="max-w-xs text-[13px] leading-relaxed text-fg-muted">
-                「{{ selectedMember.name }}」在「{{ selectedExperiment.title }}」下尚未提交测验。
-              </p>
             </div>
             <div
               v-else

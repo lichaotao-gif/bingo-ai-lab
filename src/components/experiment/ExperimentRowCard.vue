@@ -89,30 +89,30 @@ const overallCompleted = computed(
       <div class="flex flex-wrap justify-end gap-2 pt-1">
         <button
           type="button"
-          class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border-subtle bg-white px-4 py-2 text-[13px] font-medium text-primary shadow-sm transition hover:bg-primary-muted active:scale-[0.98]"
+          class="inline-flex items-center justify-center gap-1 rounded-lg border border-border-subtle bg-white px-4 py-2 text-[13px] font-medium text-primary shadow-sm transition hover:bg-primary-muted active:scale-[0.98]"
           :aria-label="quizCompleted ? '测验（已完成）' : '测验'"
           @click="emit('quiz', { showResult: quizCompleted })"
         >
-          <span
+          <span>测验</span>
+          <svg
             v-if="quizCompleted"
-            class="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+            class="size-2 shrink-0 text-primary"
+            viewBox="0 0 24 24"
+            fill="none"
             aria-hidden="true"
           >
-            <svg class="size-2.5" viewBox="0 0 24 24" fill="none">
-              <path
-                stroke="currentColor"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M20 6L9 17l-5-5"
-              />
-            </svg>
-          </span>
-          测验
+            <path
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M20 6L9 17l-5-5"
+            />
+          </svg>
         </button>
         <button
           type="button"
-          class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-[13px] font-medium text-white shadow-sm shadow-primary/25 transition hover:opacity-95 active:scale-[0.98]"
+          class="inline-flex items-center justify-center gap-1 rounded-lg bg-primary px-4 py-2 text-[13px] font-medium text-white shadow-sm shadow-primary/25 transition hover:opacity-95 active:scale-[0.98]"
           :aria-label="
             (experimentSubmitCompleted ?? item.completed)
               ? 'AI 实验（已完成）'
@@ -120,22 +120,22 @@ const overallCompleted = computed(
           "
           @click="emit('start')"
         >
-          <span
+          <span>AI 实验</span>
+          <svg
             v-if="experimentSubmitCompleted ?? item.completed"
-            class="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-white/95 text-primary"
+            class="size-2 shrink-0 text-white"
+            viewBox="0 0 24 24"
+            fill="none"
             aria-hidden="true"
           >
-            <svg class="size-2.5" viewBox="0 0 24 24" fill="none">
-              <path
-                stroke="currentColor"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M20 6L9 17l-5-5"
-              />
-            </svg>
-          </span>
-          AI 实验
+            <path
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M20 6L9 17l-5-5"
+            />
+          </svg>
         </button>
       </div>
     </div>

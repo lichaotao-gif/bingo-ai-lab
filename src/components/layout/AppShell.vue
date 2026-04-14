@@ -68,6 +68,10 @@ async function copyBingoAiLabUrl() {
     window.prompt("请手动复制以下网址：", BINGO_AI_LAB_EXTERNAL_URL);
   }
 }
+
+function openBingoAiLab() {
+  window.open(BINGO_AI_LAB_EXTERNAL_URL, "_blank", "noopener,noreferrer");
+}
 </script>
 
 <template>
@@ -295,26 +299,67 @@ async function copyBingoAiLabUrl() {
               缤果AI实验室
             </h2>
             <div
-              class="mt-6 rounded-xl border border-emerald-200/80 bg-emerald-50/50 px-4 py-6 text-center"
+              class="mt-6 rounded-xl border border-emerald-200/80 bg-emerald-50/50 px-4 py-4 sm:px-5 sm:py-5"
             >
-              <p
-                class="break-all font-mono text-[clamp(1.05rem,2.8vw,1.35rem)] font-semibold leading-snug tracking-tight text-emerald-950 sm:text-[24px]"
+              <div
+                class="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-3 sm:gap-y-2"
               >
-                {{ BINGO_AI_LAB_EXTERNAL_URL }}
-              </p>
+                <p
+                  class="min-w-0 flex-1 break-all text-left font-mono text-[clamp(1rem,2.6vw,1.25rem)] font-semibold leading-snug tracking-tight text-emerald-950 sm:text-[22px]"
+                >
+                  {{ BINGO_AI_LAB_EXTERNAL_URL }}
+                </p>
+                <button
+                  type="button"
+                  class="group inline-flex shrink-0 items-center gap-1 self-start rounded-md px-1.5 py-0.5 text-[13px] font-medium text-emerald-800/85 transition hover:bg-emerald-200/40 hover:text-emerald-950 active:opacity-80 sm:self-auto"
+                  @click="copyBingoAiLabUrl"
+                >
+                  <svg
+                    class="size-3.5 shrink-0 opacity-80 transition group-hover:opacity-100"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <span class="border-b border-transparent pb-px group-hover:border-emerald-600/50">{{
+                    friendLinkCopied ? "已复制" : "复制"
+                  }}</span>
+                </button>
+              </div>
             </div>
             <p
               class="mt-5 text-center text-[14px] leading-relaxed text-fg-soft"
             >
-              请复制网址后，在系统浏览器中粘贴打开。
+              点击下方按钮在新标签页打开外站；也可使用上方「复制」仅复制网址。
             </p>
             <div class="mt-6 flex justify-center">
               <button
                 type="button"
-                class="inline-flex w-full max-w-xs items-center justify-center rounded-xl bg-primary px-5 py-3 text-[15px] font-medium text-white shadow-md shadow-primary/25 transition hover:opacity-95 sm:w-auto sm:min-w-[140px]"
-                @click="copyBingoAiLabUrl"
+                class="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-[15px] font-medium text-white shadow-md shadow-primary/25 transition hover:opacity-95 sm:w-auto sm:min-w-[200px]"
+                @click="openBingoAiLab"
               >
-                {{ friendLinkCopied ? "已复制到剪贴板" : "复制网址" }}
+                <svg
+                  class="size-[18px] shrink-0 opacity-95"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+                打开缤果AI实验室
               </button>
             </div>
             <button
