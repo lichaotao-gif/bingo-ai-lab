@@ -216,21 +216,21 @@ function openBingoAiLab() {
         <div class="mt-4 shrink-0 space-y-4">
           <div>
             <p class="mb-2 pl-1 text-[13px] text-fg-muted">
-              友情链接（在人工智能双师AI课堂上增加）
+              友情链接
             </p>
             <button
               type="button"
-              class="flex w-full flex-nowrap items-center gap-1.5 rounded-xl px-2.5 py-2 text-left text-[13px] text-fg-soft transition hover:bg-card-inner"
+              class="group flex w-full flex-nowrap items-center gap-1.5 rounded-xl px-2.5 py-2 text-left text-[13px] transition hover:bg-card-inner"
               @click="friendLinkModalOpen = true"
             >
               <span
-                class="flex size-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-primary"
+                class="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-200/80 text-slate-700 transition-colors group-hover:text-primary"
                 aria-hidden="true"
               >
                 <IconChip />
               </span>
               <span
-                class="min-w-0 whitespace-nowrap font-medium text-primary"
+                class="min-w-0 whitespace-nowrap text-fg-soft transition-colors group-hover:text-primary"
               >
                 缤果AI实验室
               </span>
