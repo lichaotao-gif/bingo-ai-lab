@@ -8,7 +8,6 @@ import {
   parseGradeId,
 } from "@/data/gradeExperiments";
 import type { ExperimentItem } from "@/data/gradeExperiments";
-import { INITIAL_MEMBERS_BY_GROUP } from "@/data/groupMembers";
 import type { GroupMember } from "@/data/groupMembers";
 import QuizAnswerDetailItem from "@/components/quiz/QuizAnswerDetailItem.vue";
 import {
@@ -20,6 +19,7 @@ import {
 import { resolveQuizExplanation } from "@/utils/quizExplanation";
 import { loadQuizReports } from "@/utils/quizReportStorage";
 import { findExperimentResultSubmit } from "@/utils/experimentResultStorage";
+import { loadGroupMembersByGroup } from "@/utils/groupMembersStorage";
 
 const route = useRoute();
 const router = useRouter();
@@ -69,9 +69,10 @@ const experiments = computed((): ExperimentItem[] =>
 );
 
 const members = computed((): GroupMember[] => {
+  const membersByGroup = loadGroupMembersByGroup();
   return (
-    INITIAL_MEMBERS_BY_GROUP[groupId.value] ??
-    INITIAL_MEMBERS_BY_GROUP["ai-group"] ??
+    membersByGroup[groupId.value] ??
+    membersByGroup["ai-group"] ??
     []
   );
 });

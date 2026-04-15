@@ -231,6 +231,36 @@ function isCorrect(
   return { ok: false, earned: 0 };
 }
 
+/** 有离散选项的题型：用于报告里标出正确项与错选项 */
+function optionIndicesForQuestion(
+  q: QuizQuestion,
+  raw: unknown,
+): { user: number[]; correct: number[] } | undefined {
+  if (q.type === "single" || q.type === "text_figure_choice" || q.type === "image_stem") {
+    const correct = [q.correctIndex];
+    const user = typeof raw === "number" ? [raw] : [];
+    return { user, correct };
+  }
+  if (q.type === "image_pick") {
+    const correct = [q.correctIndex];
+    const user = typeof raw === "number" ? [raw] : [];
+    return { user, correct };
+  }
+  if (q.type === "multi") {
+    const correct = [...q.correctIndices].sort((a, b) => a - b);
+    const user = Array.isArray(raw)
+      ? [...(raw as number[])].sort((a, b) => a - b)
+      : [];
+    return { user, correct };
+  }
+  if (q.type === "truefalse") {
+    const correct = [q.correct ? 0 : 1];
+    const user = typeof raw === "boolean" ? [raw ? 0 : 1] : [];
+    return { user, correct };
+  }
+  return undefined;
+}
+
 export function gradeQuiz(
   questions: QuizQuestion[],
   answers: Record<string, unknown>,
@@ -248,6 +278,7 @@ export function gradeQuiz(
       "explanation" in q && typeof q.explanation === "string"
         ? q.explanation.trim() || undefined
         : undefined;
+    const indices = optionIndicesForQuestion(q, raw);
     details.push({
       questionId: q.id,
       prompt: q.prompt,
@@ -259,6 +290,12 @@ export function gradeQuiz(
       earnedPoints: earned,
       maxPoints: q.points,
       ...choiceDetailFields(q),
+      ...(indices
+        ? {
+            userOptionIndices: indices.user,
+            correctOptionIndices: indices.correct,
+          }
+        : {}),
     });
   }
 

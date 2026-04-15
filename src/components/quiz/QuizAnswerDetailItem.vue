@@ -27,6 +27,55 @@ const showTextOptions = computed(
     (props.detail.optionLines?.length ?? 0) > 0 &&
     !(props.detail.imageOptionUrls?.length ?? 0),
 );
+
+/** 有存档的选项下标时，在选项列表中标出「正确 / 错选」 */
+function optionRowKind(oi: number): "correct" | "wrong" | "neutral" {
+  const c = props.detail.correctOptionIndices;
+  const u = props.detail.userOptionIndices;
+  if (!c?.length) return "neutral";
+  const isCor = c.includes(oi);
+  const userPicked = u?.includes(oi) ?? false;
+  if (userPicked && !isCor) return "wrong";
+  if (isCor) return "correct";
+  return "neutral";
+}
+
+function textOptionRowClass(oi: number): string {
+  const k = optionRowKind(oi);
+  if (k === "correct") {
+    return "border border-emerald-400 bg-emerald-50";
+  }
+  if (k === "wrong") {
+    return "border border-red-400 bg-red-50";
+  }
+  return "border border-transparent bg-transparent";
+}
+
+/** 选项正文：正确答案绿色，错选红色 */
+function textOptionLineClass(oi: number): string {
+  const k = optionRowKind(oi);
+  if (k === "correct") return "text-emerald-700";
+  if (k === "wrong") return "text-red-600";
+  return "text-slate-800";
+}
+
+function imageOptionWrapClass(oi: number): string {
+  const k = optionRowKind(oi);
+  if (k === "correct") {
+    return "ring-2 ring-emerald-500 ring-offset-1 ring-offset-slate-50";
+  }
+  if (k === "wrong") {
+    return "ring-2 ring-red-500 ring-offset-1 ring-offset-slate-50";
+  }
+  return "";
+}
+
+function imageOptionCaptionClass(oi: number): string {
+  const k = optionRowKind(oi);
+  if (k === "correct") return "text-emerald-700";
+  if (k === "wrong") return "text-red-600";
+  return "text-slate-600";
+}
 </script>
 
 <template>
@@ -128,13 +177,28 @@ const showTextOptions = computed(
       <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
         选项
       </p>
-      <ul class="space-y-1 rounded-lg border border-slate-200/80 bg-white/90 px-3 py-2">
+      <ul class="space-y-1.5 rounded-lg border border-slate-200/80 bg-white/90 px-3 py-2">
         <li
           v-for="(line, oi) in detail.optionLines"
           :key="oi"
-          class="text-[13px] leading-snug text-slate-800"
+          class="flex items-start gap-2 rounded-md px-2 py-1.5 text-[13px] leading-snug"
+          :class="textOptionRowClass(oi)"
         >
-          {{ line }}
+          <span
+            v-if="optionRowKind(oi) === 'correct'"
+            class="mt-0.5 shrink-0 rounded bg-emerald-600/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800"
+            >正确</span
+          >
+          <span
+            v-else-if="optionRowKind(oi) === 'wrong'"
+            class="mt-0.5 shrink-0 rounded bg-red-600/20 px-1.5 py-0.5 text-[10px] font-bold text-red-700"
+            >错选</span
+          >
+          <span
+            class="min-w-0 flex-1 font-medium"
+            :class="textOptionLineClass(oi)"
+            >{{ line }}</span
+          >
         </li>
       </ul>
     </div>
@@ -158,6 +222,7 @@ const showTextOptions = computed(
           v-for="(url, ii) in detail.imageOptionUrls"
           :key="`${url}-${ii}`"
           class="overflow-hidden rounded-lg border border-slate-200 bg-white"
+          :class="imageOptionWrapClass(ii)"
         >
           <div
             class="flex aspect-square items-center justify-center bg-slate-50 p-1"
@@ -172,9 +237,22 @@ const showTextOptions = computed(
             />
           </div>
           <p
-            class="border-t border-slate-100 bg-white py-1 text-center text-[11px] font-medium text-slate-600"
+            class="flex items-center justify-center gap-1.5 border-t border-slate-100 bg-white py-1 text-center text-[11px] font-medium"
           >
-            选项 {{ detail.imageOptionLabels?.[ii] ?? String.fromCharCode(65 + ii) }}
+            <span
+              v-if="optionRowKind(ii) === 'correct'"
+              class="rounded bg-emerald-600/20 px-1 py-0.5 text-[10px] font-bold text-emerald-800"
+              >正确</span
+            >
+            <span
+              v-else-if="optionRowKind(ii) === 'wrong'"
+              class="rounded bg-red-600/20 px-1 py-0.5 text-[10px] font-bold text-red-700"
+              >错选</span
+            >
+            <span
+              :class="imageOptionCaptionClass(ii)"
+              >选项 {{ detail.imageOptionLabels?.[ii] ?? String.fromCharCode(65 + ii) }}</span
+            >
           </p>
         </li>
       </ul>
@@ -185,11 +263,19 @@ const showTextOptions = computed(
     >
       <p>
         <span class="font-medium text-slate-500">{{ answerLabel }}</span>
-        <span class="text-slate-800">：{{ detail.userAnswer }}</span>
+        <span
+          class="font-medium"
+          :class="detail.isCorrect ? 'text-emerald-700' : 'text-red-600'"
+          >：{{ detail.userAnswer }}</span
+        >
       </p>
       <p>
         <span class="font-medium text-slate-500">参考答案</span>
-        <span class="text-slate-800">：{{ detail.correctAnswer }}</span>
+        <span
+          class="font-medium"
+          :class="detail.correctOptionIndices?.length ? 'text-emerald-700' : 'text-slate-800'"
+          >：{{ detail.correctAnswer }}</span
+        >
       </p>
       <p v-if="explanation?.trim()">
         <span class="font-medium text-slate-500">题解析</span>

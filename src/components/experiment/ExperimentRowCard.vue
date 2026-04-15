@@ -57,7 +57,7 @@ const overallCompleted = computed(
       aria-hidden="true"
     >
       <div
-        class="absolute inset-0 bg-gradient-to-br from-sky-200 via-[#38bdf8] to-[#1d4ed8] shadow-[2px_2px_10px_rgba(29,78,216,0.35)]"
+        class="absolute inset-0 bg-gradient-to-br from-[#dff4ff] via-[#7dd3fc] via-58% to-[#2563eb] shadow-[2px_2px_12px_rgba(37,99,235,0.24)]"
         style="clip-path: polygon(100% 0, 100% 100%, 0 0)"
       />
       <span

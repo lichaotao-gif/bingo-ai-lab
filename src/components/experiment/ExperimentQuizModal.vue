@@ -270,6 +270,7 @@ function tryShowSavedResult(): boolean {
   const saved = getLatestQuizReportForExperimentAndGrade(
     props.experimentId,
     props.gradeLabel,
+    STUDENT_NAME,
   );
   if (!saved) {
     return false;

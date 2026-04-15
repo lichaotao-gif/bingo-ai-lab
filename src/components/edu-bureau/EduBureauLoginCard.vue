@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onUnmounted, ref } from "vue";
 import {
   EDU_BUREAU_DEMO_CODE,
   EDU_BUREAU_DEMO_PASSWORD,
@@ -77,6 +77,13 @@ function submit() {
 function onClose() {
   emit("close");
 }
+
+onUnmounted(() => {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+});
 </script>
 
 <template>

@@ -71,7 +71,11 @@ const labDataRev = ref(0);
 
 function isQuizCompletedForRow(experimentId: string): boolean {
   void labDataRev.value;
-  return hasQuizReportForExperimentAndGrade(experimentId, listHeading.value);
+  return hasQuizReportForExperimentAndGrade(
+    experimentId,
+    listHeading.value,
+    CURRENT_STUDENT_NAME,
+  );
 }
 
 function isExperimentSubmitCompletedForRow(experimentId: string): boolean {

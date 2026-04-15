@@ -13,9 +13,12 @@ import {
   type LabPackageOption,
 } from "@/data/labPackages";
 import {
-  INITIAL_MEMBERS_BY_GROUP,
   type GroupMember,
 } from "@/data/groupMembers";
+import {
+  loadGroupMembersByGroup,
+  removeGroupMember,
+} from "@/utils/groupMembersStorage";
 
 const router = useRouter();
 
@@ -67,7 +70,7 @@ const membersModalOpen = ref(false);
 const membersGroupId = ref<string | null>(null);
 
 const membersByGroup = ref<Record<string, GroupMember[]>>(
-  structuredClone(INITIAL_MEMBERS_BY_GROUP),
+  loadGroupMembersByGroup(),
 );
 
 const membersModalTitle = computed(() =>
@@ -109,8 +112,8 @@ function onDeleteGroupMember(memberId: string) {
   if (!gid) {
     return;
   }
-  const list = membersByGroup.value[gid] ?? [];
-  membersByGroup.value[gid] = list.filter((m) => m.id !== memberId);
+  removeGroupMember(gid, memberId);
+  membersByGroup.value = loadGroupMembersByGroup();
 }
 
 function onRenameGroup() {

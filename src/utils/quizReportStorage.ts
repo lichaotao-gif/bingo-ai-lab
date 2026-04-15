@@ -25,9 +25,13 @@ export function saveQuizReport(report: QuizReport): void {
 export function hasQuizReportForExperimentAndGrade(
   experimentId: string,
   gradeLabel: string,
+  studentName?: string,
 ): boolean {
   return loadQuizReports().some(
-    (r) => r.experimentId === experimentId && r.gradeLabel === gradeLabel,
+    (r) =>
+      r.experimentId === experimentId &&
+      r.gradeLabel === gradeLabel &&
+      (studentName == null || r.studentName === studentName),
   );
 }
 
@@ -35,9 +39,13 @@ export function hasQuizReportForExperimentAndGrade(
 export function getLatestQuizReportForExperimentAndGrade(
   experimentId: string,
   gradeLabel: string,
+  studentName?: string,
 ): QuizReport | undefined {
   const list = loadQuizReports().filter(
-    (r) => r.experimentId === experimentId && r.gradeLabel === gradeLabel,
+    (r) =>
+      r.experimentId === experimentId &&
+      r.gradeLabel === gradeLabel &&
+      (studentName == null || r.studentName === studentName),
   );
   if (list.length === 0) {
     return undefined;
