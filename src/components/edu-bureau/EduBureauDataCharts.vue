@@ -66,7 +66,7 @@ const trend = computed(() => {
     >
       <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h3 class="text-[14px] font-semibold text-slate-900">
-          学生双项完成人数趋势
+          学生完成人数趋势
         </h3>
         <span class="text-[11px] text-slate-400">演示 · 按周次累计</span>
       </div>
@@ -160,7 +160,7 @@ const trend = computed(() => {
         <h3 class="text-[14px] font-semibold text-slate-900">
           {{ barTitle }}
         </h3>
-        <span class="text-[11px] text-slate-400">双项均满人数占比</span>
+        <span class="text-[11px] text-slate-400">占比</span>
       </div>
       <div
         v-if="barRows.length === 0"

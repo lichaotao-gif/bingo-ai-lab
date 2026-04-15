@@ -91,22 +91,21 @@ const filteredStudents = computed((): BureauStudent[] => {
   return studentsForClassIds(ids);
 });
 
-/** 每人应完成项数（演示）：用于将完成度折算为人次完成数 */
-const EXPERIMENT_ITEMS_PER_STUDENT = 10;
-const QUIZ_ITEMS_PER_STUDENT = 8;
+/** 课程内实验个数（演示）：实验与测验均按此数量折算人次完成项 */
+const EXPERIMENTS_PER_STUDENT = 10;
 
 function experimentDoneCount(s: BureauStudent): number {
-  return Math.round((s.experimentPct / 100) * EXPERIMENT_ITEMS_PER_STUDENT);
+  return Math.round((s.experimentPct / 100) * EXPERIMENTS_PER_STUDENT);
 }
 
 function quizDoneCount(s: BureauStudent): number {
-  return Math.round((s.quizPct / 100) * QUIZ_ITEMS_PER_STUDENT);
+  return Math.round((s.quizPct / 100) * EXPERIMENTS_PER_STUDENT);
 }
 
 function isExperimentAndQuizFullyDone(s: BureauStudent): boolean {
   return (
-    experimentDoneCount(s) === EXPERIMENT_ITEMS_PER_STUDENT &&
-    quizDoneCount(s) === QUIZ_ITEMS_PER_STUDENT
+    experimentDoneCount(s) === EXPERIMENTS_PER_STUDENT &&
+    quizDoneCount(s) === EXPERIMENTS_PER_STUDENT
   );
 }
 
@@ -122,13 +121,18 @@ function aggregateDoneForStudents(stu: BureauStudent[]) {
     }
   }
   const n = stu.length;
-  const expExpected = n * EXPERIMENT_ITEMS_PER_STUDENT;
-  const quizExpected = n * QUIZ_ITEMS_PER_STUDENT;
+  const expExpected = n * EXPERIMENTS_PER_STUDENT;
+  const quizExpected = n * EXPERIMENTS_PER_STUDENT;
+  const totalDone = expDone + quizDone;
+  const totalExpected = expExpected + quizExpected;
+  const completionPct =
+    totalExpected > 0
+      ? Math.min(100, Math.round((totalDone / totalExpected) * 100))
+      : 0;
   return {
-    expDone,
-    expExpected,
-    quizDone,
-    quizExpected,
+    totalDone,
+    totalExpected,
+    completionPct,
     fullyDoneCount,
     n,
   };
@@ -154,20 +158,24 @@ const kpi = computed(() => {
     }
   }
   const studentCount = studs.length;
-  const experimentExpectedSum = studentCount * EXPERIMENT_ITEMS_PER_STUDENT;
-  const quizExpectedSum = studentCount * QUIZ_ITEMS_PER_STUDENT;
+  const experimentExpectedSum = studentCount * EXPERIMENTS_PER_STUDENT;
+  const quizExpectedSum = studentCount * EXPERIMENTS_PER_STUDENT;
   const totalItemsCompleted = experimentCompletedSum + quizCompletedSum;
   const totalItemsExpected = experimentExpectedSum + quizExpectedSum;
+  const completionPct =
+    totalItemsExpected > 0
+      ? Math.min(
+          100,
+          Math.round((totalItemsCompleted / totalItemsExpected) * 100),
+        )
+      : 0;
   return {
     schoolCount: schoolsInScope.size,
     classCount: classesInScope.size,
     studentCount,
-    experimentCompletedSum,
-    quizCompletedSum,
-    experimentExpectedSum,
-    quizExpectedSum,
     totalItemsCompleted,
     totalItemsExpected,
+    completionPct,
     fullyCompletedStudentCount,
   };
 });
@@ -202,7 +210,7 @@ const progressTiles = computed(() => {
   });
 });
 
-/** 演示：当前筛选下「双项均满」人数，按周次平滑爬升曲线 */
+/** 演示：当前筛选下「实验+测验均完成」人数，按周次平滑爬升曲线 */
 const completionTrendPoints = computed(() => {
   const end = kpi.value.fullyCompletedStudentCount;
   const weeks = 8;
@@ -220,13 +228,13 @@ const completionTrendPoints = computed(() => {
 const barChartRows = computed(() =>
   progressTiles.value.map((row) => ({
     label: row.label,
-    pct: row.n ? Math.min(100, Math.round((row.fullyDoneCount / row.n) * 100)) : 0,
-    sub: `${row.fullyDoneCount}/${row.n} 人`,
+    pct: row.completionPct,
+    sub: `${row.totalDone}/${row.totalExpected} 项`,
   })),
 );
 
 const barChartTitle = computed(() =>
-  schoolId.value ? "各班级完成率" : "各学校完成率",
+  schoolId.value ? "各班级项完成率（%）" : "各学校项完成率（%）",
 );
 
 /** 省 / 市 / 区：合并为一个级联下拉 */
@@ -529,20 +537,22 @@ onUnmounted(() => {
       <div
         class="flex flex-col rounded-2xl border border-indigo-200/70 bg-gradient-to-br from-indigo-50/95 via-white to-violet-50/40 p-4 shadow-sm sm:p-5 lg:col-span-7"
       >
-        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <p class="text-[13px] font-semibold text-indigo-950">
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <p class="min-w-0 text-[13px] font-semibold text-indigo-950">
             实验 &amp; 测验 · 完成情况
           </p>
-          <span
-            class="rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-medium text-indigo-700 ring-1 ring-indigo-100"
-          >项数累计</span>
+          <p
+            class="shrink-0 text-right text-[11px] leading-snug text-slate-500"
+          >
+            项（实验+测验）
+          </p>
         </div>
 
         <div
           class="grid flex-1 gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:gap-5"
         >
           <div class="tabular-nums">
-            <p class="text-[11px] text-indigo-900/70">总完成 / 应完成</p>
+            <p class="text-[11px] text-indigo-900/70">实验与测验 · 累计完成 / 应完成</p>
             <p class="mt-1 flex flex-wrap items-baseline gap-1">
               <span class="text-3xl font-bold tracking-tight text-indigo-800 sm:text-[2.1rem]">{{
                 kpi.totalItemsCompleted
@@ -554,48 +564,39 @@ onUnmounted(() => {
               <span class="text-[12px] text-slate-500">项</span>
             </p>
             <div
-              class="mt-3 h-2 overflow-hidden rounded-full bg-indigo-100/90"
-              role="presentation"
+              class="mt-3 flex items-center gap-2"
             >
               <div
-                class="h-full rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 transition-[width]"
-                :style="{
-                  width: `${
-                    kpi.totalItemsExpected > 0
-                      ? Math.min(
-                          100,
-                          (kpi.totalItemsCompleted / kpi.totalItemsExpected) * 100,
-                        )
-                      : 0
-                  }%`,
-                }"
-              />
+                class="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-indigo-100/90"
+                role="presentation"
+              >
+                <div
+                  class="h-full rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 transition-[width]"
+                  :style="{
+                    width: `${
+                      kpi.totalItemsExpected > 0
+                        ? Math.min(
+                            100,
+                            (kpi.totalItemsCompleted / kpi.totalItemsExpected) * 100,
+                          )
+                        : 0
+                    }%`,
+                  }"
+                />
+              </div>
+              <span
+                class="shrink-0 min-w-[2.75rem] text-right text-[13px] font-bold tabular-nums text-indigo-800"
+              >{{ kpi.completionPct }}%</span>
             </div>
           </div>
 
           <div
             class="flex flex-col justify-center gap-2 rounded-xl border border-white/80 bg-white/60 p-3 text-[12px] shadow-sm ring-1 ring-indigo-100/60"
           >
-            <div class="flex items-center justify-between gap-2 tabular-nums">
-              <span class="text-slate-600">实验</span>
-              <span>
-                <span class="font-semibold text-sky-700">{{ kpi.experimentCompletedSum }}</span>
-                <span class="text-slate-400">/</span>
-                <span class="text-slate-600">{{ kpi.experimentExpectedSum }}</span>
-              </span>
-            </div>
-            <div class="flex items-center justify-between gap-2 border-t border-slate-100/90 pt-2 tabular-nums">
-              <span class="text-slate-600">测验</span>
-              <span>
-                <span class="font-semibold text-violet-700">{{ kpi.quizCompletedSum }}</span>
-                <span class="text-slate-400">/</span>
-                <span class="text-slate-600">{{ kpi.quizExpectedSum }}</span>
-              </span>
-            </div>
             <div
-              class="flex items-center justify-between gap-2 border-t border-indigo-100/90 pt-2 tabular-nums"
+              class="flex items-center justify-between gap-2 border-b border-indigo-100/80 pb-2 tabular-nums"
             >
-              <span class="font-medium text-indigo-900/90">双项均满</span>
+              <span class="font-medium text-indigo-900/90">完成</span>
               <span>
                 <span class="text-base font-bold text-indigo-800">{{
                   kpi.fullyCompletedStudentCount
@@ -605,6 +606,9 @@ onUnmounted(() => {
                 <span class="text-slate-400">人</span>
               </span>
             </div>
+            <p class="text-[11px] leading-relaxed text-slate-500">
+              备注：为「一名学生实验与测验均已完成」的人数
+            </p>
           </div>
         </div>
       </div>
@@ -612,12 +616,19 @@ onUnmounted(() => {
 
     <!-- 数据视图（在辖区进度卡片之上） -->
     <section>
-      <div class="mb-3">
-        <h3 class="text-[15px] font-semibold text-slate-900">
-          数据视图
-        </h3>
-        <p class="mt-0.5 text-[12px] text-slate-500">
-          趋势为演示累计曲线；柱状为当前筛选下各校/各班双项完成率
+      <div class="mb-3 flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <h3 class="text-[15px] font-semibold text-slate-900">
+            数据视图
+          </h3>
+          <p class="mt-0.5 text-[12px] text-slate-500">
+            趋势为演示累计曲线；柱状为各校/各班项完成率（%）
+          </p>
+        </div>
+        <p
+          class="shrink-0 text-right text-[11px] leading-snug text-slate-500"
+        >
+          项（实验+测验）
         </p>
       </div>
       <EduBureauDataCharts
@@ -629,12 +640,19 @@ onUnmounted(() => {
 
     <!-- 辖区进度 -->
     <section>
-      <div class="mb-3">
-        <h3 class="text-[15px] font-semibold text-slate-900">
-          辖区{{ schoolId ? "班级" : "学校" }}统计进度
-        </h3>
-        <p class="mt-0.5 text-[12px] text-slate-500">
-          {{ schoolId ? "当前学校下各班级" : "按学校汇总" }} · 实验/测验为项数；合计为双项均满人数
+      <div class="mb-3 flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <h3 class="text-[15px] font-semibold text-slate-900">
+            辖区{{ schoolId ? "班级" : "学校" }}统计进度
+          </h3>
+          <p class="mt-0.5 text-[12px] text-slate-500">
+            {{ schoolId ? "当前学校下各班级" : "按学校汇总" }} · 实验与测验合并为累计项；百分比为项完成率；「完成」为实验与测验均满项人数
+          </p>
+        </div>
+        <p
+          class="shrink-0 text-right text-[11px] leading-snug text-slate-500"
+        >
+          项（实验+测验）
         </p>
       </div>
       <ul
@@ -652,26 +670,34 @@ onUnmounted(() => {
             {{ row.label }}
           </p>
           <p class="mt-2 text-[11px] text-slate-400">{{ row.n }} 人</p>
-          <dl class="mt-2 space-y-1 border-t border-slate-100 pt-2 text-[12px]">
+          <div class="mt-2 space-y-2 border-t border-slate-100 pt-2 text-[12px]">
             <div class="flex justify-between gap-2 tabular-nums">
-              <dt class="text-slate-500">实验</dt>
-              <dd class="font-semibold text-sky-700">
-                {{ row.expDone }} / {{ row.expExpected }} 项
-              </dd>
+              <span class="text-slate-600">实验与测验</span>
+              <span class="font-semibold text-indigo-800">
+                {{ row.totalDone }} / {{ row.totalExpected }} 项
+              </span>
             </div>
-            <div class="flex justify-between gap-2 tabular-nums">
-              <dt class="text-slate-500">测验</dt>
-              <dd class="font-semibold text-violet-700">
-                {{ row.quizDone }} / {{ row.quizExpected }} 项
-              </dd>
+            <div class="flex items-center gap-2">
+              <div
+                class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-100"
+                role="presentation"
+              >
+                <div
+                  class="h-full rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 transition-[width]"
+                  :style="{ width: `${row.completionPct}%` }"
+                />
+              </div>
+              <span class="shrink-0 text-[11px] font-bold tabular-nums text-indigo-800"
+                >{{ row.completionPct }}%</span
+              >
             </div>
-            <div class="flex justify-between gap-2 border-t border-slate-50 pt-1 tabular-nums">
-              <dt class="text-slate-600">完成</dt>
-              <dd class="font-bold text-indigo-700">
+            <div class="flex justify-between gap-2 border-t border-slate-50 pt-1.5 tabular-nums">
+              <span class="text-slate-600">完成</span>
+              <span class="font-bold text-indigo-700">
                 {{ row.fullyDoneCount }} / {{ row.n }} 人
-              </dd>
+              </span>
             </div>
-          </dl>
+          </div>
         </li>
       </ul>
     </section>
