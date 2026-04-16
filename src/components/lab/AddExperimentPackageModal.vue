@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { computed, onUnmounted, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import type { LabPackageOption } from "@/data/labPackages";
-import { LAB_PACKAGE_OPTIONS } from "@/data/labPackages";
+import {
+  LAB_PACKAGE_OPTIONS,
+  PACKAGE_APPLICATION_TIME_OPTIONS,
+  type PackageApplicationTimeId,
+  type PackageApplicationTimeSelectId,
+} from "@/data/labPackages";
 
 const props = defineProps<{
   open: boolean;
@@ -15,10 +20,17 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "update:open": [value: boolean];
-  add: [payload: { classId: string; packageId: string }];
+  add: [
+    payload: {
+      classId: string;
+      packageId: string;
+      applicationTimeId: PackageApplicationTimeId;
+    },
+  ];
 }>();
 
 function close() {
+  pendingPackage.value = null;
   emit("update:open", false);
 }
 
@@ -30,11 +42,49 @@ function isAdded(packageId: string): boolean {
   return (props.addedByClass[id] ?? []).includes(packageId);
 }
 
-function onAdd(pkg: LabPackageOption) {
+/** 待确认添加的包（弹出应用时间选择） */
+const pendingPackage = ref<LabPackageOption | null>(null);
+/** 下拉仅含具体时间；跳过稍后配置用「跳过，稍后配置」写入 pending */
+const selectedApplicationTimeId = ref<PackageApplicationTimeSelectId>("unlimited");
+
+function openConfirm(pkg: LabPackageOption) {
   if (!props.classId || isAdded(pkg.id)) {
     return;
   }
-  emit("add", { classId: props.classId, packageId: pkg.id });
+  pendingPackage.value = pkg;
+  selectedApplicationTimeId.value = "unlimited";
+}
+
+function cancelConfirm() {
+  pendingPackage.value = null;
+}
+
+function confirmAdd() {
+  const pkg = pendingPackage.value;
+  const cid = props.classId;
+  if (!cid || !pkg || isAdded(pkg.id)) {
+    return;
+  }
+  emit("add", {
+    classId: cid,
+    packageId: pkg.id,
+    applicationTimeId: selectedApplicationTimeId.value,
+  });
+  pendingPackage.value = null;
+}
+
+function skipAndAddLater() {
+  const pkg = pendingPackage.value;
+  const cid = props.classId;
+  if (!cid || !pkg || isAdded(pkg.id)) {
+    return;
+  }
+  emit("add", {
+    classId: cid,
+    packageId: pkg.id,
+    applicationTimeId: "pending",
+  });
+  pendingPackage.value = null;
 }
 
 const list = computed(() => LAB_PACKAGE_OPTIONS);
@@ -43,6 +93,9 @@ watch(
   () => props.open,
   (v) => {
     document.body.style.overflow = v ? "hidden" : "";
+    if (!v) {
+      pendingPackage.value = null;
+    }
   },
 );
 
@@ -126,7 +179,7 @@ onUnmounted(() => {
                   v-if="!isAdded(pkg.id)"
                   type="button"
                   class="rounded-lg border-2 border-primary bg-white px-3 py-1.5 text-[13px] font-medium text-primary transition hover:bg-primary-muted"
-                  @click="onAdd(pkg)"
+                  @click="openConfirm(pkg)"
                 >
                   添加实验包
                 </button>
@@ -142,6 +195,86 @@ onUnmounted(() => {
             </li>
           </ul>
         </div>
+
+        <!-- 确认添加：选择应用时间 -->
+        <Transition
+          enter-active-class="transition-opacity duration-200"
+          leave-active-class="transition-opacity duration-150"
+          enter-from-class="opacity-0"
+          leave-to-class="opacity-0"
+        >
+          <div
+            v-if="pendingPackage"
+            class="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-pkg-confirm-title"
+            @click.self="cancelConfirm"
+          >
+            <div
+              class="w-full max-w-md rounded-2xl bg-surface p-5 shadow-popover ring-1 ring-black/[0.06]"
+              @click.stop
+            >
+              <h3
+                id="add-pkg-confirm-title"
+                class="text-[16px] font-semibold text-black"
+              >
+                确认添加实验包
+              </h3>
+              <p class="mt-2 text-[13px] leading-relaxed text-fg-muted">
+                将为
+                <span class="font-medium text-fg-soft">{{ classTitle }}</span>
+                添加「<span class="font-medium text-black">{{
+                  pendingPackage.title
+                }}</span>」。应用时间可下拉选择，也可跳过稍后在「AI实验管理」中配置。
+              </p>
+
+              <label
+                class="mb-1 mt-4 block text-[12px] font-medium text-fg-muted"
+                for="add-pkg-app-time"
+              >应用时间</label>
+              <select
+                id="add-pkg-app-time"
+                v-model="selectedApplicationTimeId"
+                class="w-full rounded-xl border border-border-subtle bg-white px-3 py-2.5 text-[14px] text-black outline-none ring-primary/30 focus:border-primary/50 focus:ring-2"
+              >
+                <option
+                  v-for="opt in PACKAGE_APPLICATION_TIME_OPTIONS"
+                  :key="opt.id"
+                  :value="opt.id"
+                >
+                  {{ opt.label }}
+                </option>
+              </select>
+
+              <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  class="self-start text-[13px] font-medium text-primary underline-offset-2 hover:underline"
+                  @click="skipAndAddLater"
+                >
+                  跳过，稍后配置
+                </button>
+                <div class="flex w-full justify-end gap-2 sm:w-auto">
+                  <button
+                    type="button"
+                    class="rounded-xl px-4 py-2 text-[14px] font-medium text-fg-muted transition hover:bg-card-inner hover:text-black"
+                    @click="cancelConfirm"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-xl bg-primary px-4 py-2 text-[14px] font-medium text-white shadow-sm transition hover:opacity-95"
+                    @click="confirmAdd"
+                  >
+                    确定添加
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Transition>
       </div>
     </Transition>
   </Teleport>

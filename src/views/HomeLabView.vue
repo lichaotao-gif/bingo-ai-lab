@@ -11,6 +11,8 @@ import AiExperimentManageModal from "@/components/lab/AiExperimentManageModal.vu
 import {
   LAB_PACKAGE_OPTIONS,
   type LabPackageOption,
+  type PackageApplicationTimeId,
+  type PackageApplicationTimeSelectId,
 } from "@/data/labPackages";
 import {
   type GroupMember,
@@ -43,6 +45,15 @@ const addedByClass = ref<Record<string, string[]>>({
   "ai-class-1": ["pkg-demo-g2"],
 });
 
+/** 各班级下每个实验包的应用时间（与 addedByClass 对应） */
+const packageApplicationTimeByClass = ref<
+  Record<string, Record<string, PackageApplicationTimeId>>
+>({
+  "ai-group": { "pkg-demo-g2": "unlimited" },
+  "grade3-2": {},
+  "ai-class-1": { "pkg-demo-g2": "unlimited" },
+});
+
 function resolvedPackages(classId: string): LabPackageOption[] {
   const ids = addedByClass.value[classId] ?? [];
   return ids
@@ -55,8 +66,12 @@ function openAddModal(classId: string) {
   modalOpen.value = true;
 }
 
-function onAddPackage(payload: { classId: string; packageId: string }) {
-  const { classId, packageId } = payload;
+function onAddPackage(payload: {
+  classId: string;
+  packageId: string;
+  applicationTimeId: PackageApplicationTimeId;
+}) {
+  const { classId, packageId, applicationTimeId } = payload;
   const next = { ...addedByClass.value };
   const arr = [...(next[classId] ?? [])];
   if (!arr.includes(packageId)) {
@@ -64,6 +79,12 @@ function onAddPackage(payload: { classId: string; packageId: string }) {
   }
   next[classId] = arr;
   addedByClass.value = next;
+
+  const metaNext = { ...packageApplicationTimeByClass.value };
+  const row = { ...(metaNext[classId] ?? {}) };
+  row[packageId] = applicationTimeId;
+  metaNext[classId] = row;
+  packageApplicationTimeByClass.value = metaNext;
 }
 
 const membersModalOpen = ref(false);
@@ -144,6 +165,36 @@ function onRemovePackageFromManage(payload: {
   const next = { ...addedByClass.value };
   next[groupId] = (next[groupId] ?? []).filter((id) => id !== packageId);
   addedByClass.value = next;
+
+  const metaNext = { ...packageApplicationTimeByClass.value };
+  const row = { ...(metaNext[groupId] ?? {}) };
+  delete row[packageId];
+  metaNext[groupId] = row;
+  packageApplicationTimeByClass.value = metaNext;
+}
+
+const manageModalApplicationTimeIds = computed((): Record<
+  string,
+  PackageApplicationTimeId
+> => {
+  const gid = manageGroupId.value;
+  if (!gid) {
+    return {};
+  }
+  return { ...(packageApplicationTimeByClass.value[gid] ?? {}) };
+});
+
+function onUpdateApplicationTimeFromManage(payload: {
+  groupId: string;
+  packageId: string;
+  applicationTimeId: PackageApplicationTimeSelectId;
+}) {
+  const { groupId, packageId, applicationTimeId } = payload;
+  const metaNext = { ...packageApplicationTimeByClass.value };
+  const row = { ...(metaNext[groupId] ?? {}) };
+  row[packageId] = applicationTimeId;
+  metaNext[groupId] = row;
+  packageApplicationTimeByClass.value = metaNext;
 }
 
 function onDissolveGroup(groupId: string) {
@@ -331,8 +382,10 @@ function openExperimentPackageDetail(pkg: LabPackageOption, groupId: string) {
       :open="manageModalOpen"
       :group-id="manageGroupId"
       :packages="manageModalPackages"
+      :application-time-id-by-package-id="manageModalApplicationTimeIds"
       @update:open="manageModalOpen = $event"
       @remove-package="onRemovePackageFromManage"
+      @update-application-time="onUpdateApplicationTimeFromManage"
       @view-package-detail="
         (pkg) => openExperimentPackageDetail(pkg, manageGroupId || 'ai-group')
       "

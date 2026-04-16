@@ -2,17 +2,31 @@
 import { computed, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import type { LabPackageOption } from "@/data/labPackages";
+import {
+  PACKAGE_APPLICATION_TIME_OPTIONS,
+  type PackageApplicationTimeId,
+  type PackageApplicationTimeSelectId,
+} from "@/data/labPackages";
 
 const props = defineProps<{
   open: boolean;
   packages: LabPackageOption[];
   groupId: string | null;
+  /** 实验包 id → 应用时间（含 pending 表示稍后配置、待补全） */
+  applicationTimeIdByPackageId?: Record<string, PackageApplicationTimeId>;
 }>();
 
 const emit = defineEmits<{
   "update:open": [value: boolean];
   removePackage: [payload: { groupId: string; packageId: string }];
   viewPackageDetail: [pkg: LabPackageOption];
+  updateApplicationTime: [
+    payload: {
+      groupId: string;
+      packageId: string;
+      applicationTimeId: PackageApplicationTimeSelectId;
+    },
+  ];
 }>();
 
 const router = useRouter();
@@ -49,6 +63,40 @@ function onDelete(pkg: LabPackageOption) {
     return;
   }
   emit("removePackage", { groupId: gid, packageId: pkg.id });
+}
+
+function timeIdForPackage(packageId: string): PackageApplicationTimeId {
+  return props.applicationTimeIdByPackageId?.[packageId] ?? "pending";
+}
+
+function isTimePending(packageId: string): boolean {
+  const id = timeIdForPackage(packageId);
+  return id === "pending";
+}
+
+/** 下拉绑定：待配置时用空串，对应「请选择」占位 */
+function selectModelForPackage(packageId: string): PackageApplicationTimeSelectId | "" {
+  const id = timeIdForPackage(packageId);
+  if (id === "pending") {
+    return "";
+  }
+  return id;
+}
+
+function onApplicationTimeChange(pkg: LabPackageOption, e: Event) {
+  const gid = props.groupId;
+  if (!gid) {
+    return;
+  }
+  const raw = (e.target as HTMLSelectElement).value;
+  if (!raw) {
+    return;
+  }
+  emit("updateApplicationTime", {
+    groupId: gid,
+    packageId: pkg.id,
+    applicationTimeId: raw as PackageApplicationTimeSelectId,
+  });
 }
 
 watch(
@@ -121,45 +169,88 @@ onUnmounted(() => {
               <li
                 v-for="pkg in packages"
                 :key="pkg.id"
-                class="flex items-center gap-3 rounded-xl border border-border-subtle bg-white p-3 shadow-sm"
+                class="rounded-xl border border-border-subtle bg-white p-3 shadow-sm"
               >
-                <button
-                  type="button"
-                  class="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left transition hover:bg-card-inner/80"
-                  @click="onViewPackageDetail(pkg)"
-                >
+                <div class="flex items-start gap-3">
+                  <button
+                    type="button"
+                    class="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left transition hover:bg-card-inner/80"
+                    @click="onViewPackageDetail(pkg)"
+                  >
+                    <div
+                      class="size-[72px] shrink-0 overflow-hidden rounded-lg bg-card-inner ring-1 ring-black/[0.06]"
+                    >
+                      <img
+                        :src="pkg.cover"
+                        alt=""
+                        class="size-full object-cover"
+                        loading="lazy"
+                        referrerpolicy="no-referrer"
+                      />
+                    </div>
+                    <span
+                      class="min-w-0 flex-1 text-[14px] font-medium leading-snug text-black"
+                    >
+                      {{ pkg.title }}
+                    </span>
+                  </button>
                   <div
-                    class="size-[72px] shrink-0 overflow-hidden rounded-lg bg-card-inner ring-1 ring-black/[0.06]"
+                    class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center"
                   >
-                    <img
-                      :src="pkg.cover"
-                      alt=""
-                      class="size-full object-cover"
-                      loading="lazy"
-                      referrerpolicy="no-referrer"
-                    />
+                    <button
+                      type="button"
+                      class="rounded-lg border-2 border-primary bg-white px-3 py-1.5 text-[13px] font-medium text-primary transition hover:bg-primary-muted"
+                      @click="onViewStats(pkg)"
+                    >
+                      查看统计
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-lg border-2 border-red-500 bg-white px-3 py-1.5 text-[13px] font-medium text-red-500 transition hover:bg-red-50"
+                      @click="onDelete(pkg)"
+                    >
+                      删除
+                    </button>
                   </div>
-                  <span
-                    class="min-w-0 flex-1 text-[14px] font-medium leading-snug text-black"
+                </div>
+
+                <div
+                  class="mt-3 border-t border-border-subtle/80 pt-3"
+                  @click.stop
+                >
+                  <label
+                    class="mb-1 block text-[12px] font-medium text-fg-muted"
+                    :for="`ai-manage-app-time-${pkg.id}`"
+                  >应用时间</label>
+                  <select
+                    :id="`ai-manage-app-time-${pkg.id}`"
+                    class="w-full rounded-xl border border-border-subtle bg-white px-3 py-2 text-[14px] text-black outline-none ring-primary/30 focus:border-primary/50 focus:ring-2"
+                    :value="selectModelForPackage(pkg.id)"
+                    @change="onApplicationTimeChange(pkg, $event)"
                   >
-                    {{ pkg.title }}
-                  </span>
-                </button>
-                <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-                  <button
-                    type="button"
-                    class="rounded-lg border-2 border-primary bg-white px-3 py-1.5 text-[13px] font-medium text-primary transition hover:bg-primary-muted"
-                    @click="onViewStats(pkg)"
+                    <option value="" disabled>
+                      请选择应用时间（未配置）
+                    </option>
+                    <option
+                      v-for="opt in PACKAGE_APPLICATION_TIME_OPTIONS"
+                      :key="opt.id"
+                      :value="opt.id"
+                    >
+                      {{ opt.label }}
+                    </option>
+                  </select>
+                  <p
+                    v-if="isTimePending(pkg.id)"
+                    class="mt-1.5 text-[12px] leading-snug text-amber-800/90"
                   >
-                    查看统计
-                  </button>
-                  <button
-                    type="button"
-                    class="rounded-lg border-2 border-red-500 bg-white px-3 py-1.5 text-[13px] font-medium text-red-500 transition hover:bg-red-50"
-                    @click="onDelete(pkg)"
+                    尚未配置：请在下拉中选择应用时间（稍后添加的包需在此补全）。
+                  </p>
+                  <p
+                    v-else
+                    class="mt-1.5 text-[12px] text-fg-muted"
                   >
-                    删除
-                  </button>
+                    已配置应用时间，可随时在下拉中修改。
+                  </p>
                 </div>
               </li>
             </ul>

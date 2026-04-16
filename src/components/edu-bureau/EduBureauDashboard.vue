@@ -548,67 +548,42 @@ onUnmounted(() => {
           </p>
         </div>
 
-        <div
-          class="grid flex-1 gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:gap-5"
-        >
-          <div class="tabular-nums">
-            <p class="text-[11px] text-indigo-900/70">实验与测验 · 累计完成 / 应完成</p>
-            <p class="mt-1 flex flex-wrap items-baseline gap-1">
-              <span class="text-3xl font-bold tracking-tight text-indigo-800 sm:text-[2.1rem]">{{
-                kpi.totalItemsCompleted
-              }}</span>
-              <span class="text-lg text-indigo-300">/</span>
-              <span class="text-xl font-semibold text-slate-700">{{
-                kpi.totalItemsExpected
-              }}</span>
-              <span class="text-[12px] text-slate-500">项</span>
-            </p>
-            <div
-              class="mt-3 flex items-center gap-2"
-            >
-              <div
-                class="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-indigo-100/90"
-                role="presentation"
-              >
-                <div
-                  class="h-full rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 transition-[width]"
-                  :style="{
-                    width: `${
-                      kpi.totalItemsExpected > 0
-                        ? Math.min(
-                            100,
-                            (kpi.totalItemsCompleted / kpi.totalItemsExpected) * 100,
-                          )
-                        : 0
-                    }%`,
-                  }"
-                />
-              </div>
-              <span
-                class="shrink-0 min-w-[2.75rem] text-right text-[13px] font-bold tabular-nums text-indigo-800"
-              >{{ kpi.completionPct }}%</span>
-            </div>
-          </div>
-
+        <div class="flex-1 tabular-nums">
+          <p class="text-[11px] text-indigo-900/70">实验与测验 · 累计完成 / 应完成</p>
+          <p class="mt-1 flex flex-wrap items-baseline gap-1">
+            <span class="text-3xl font-bold tracking-tight text-indigo-800 sm:text-[2.1rem]">{{
+              kpi.totalItemsCompleted
+            }}</span>
+            <span class="text-lg text-indigo-300">/</span>
+            <span class="text-xl font-semibold text-slate-700">{{
+              kpi.totalItemsExpected
+            }}</span>
+            <span class="text-[12px] text-slate-500">项</span>
+          </p>
           <div
-            class="flex flex-col justify-center gap-2 rounded-xl border border-white/80 bg-white/60 p-3 text-[12px] shadow-sm ring-1 ring-indigo-100/60"
+            class="mt-3 flex items-center gap-2"
           >
             <div
-              class="flex items-center justify-between gap-2 border-b border-indigo-100/80 pb-2 tabular-nums"
+              class="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-indigo-100/90"
+              role="presentation"
             >
-              <span class="font-medium text-indigo-900/90">完成</span>
-              <span>
-                <span class="text-base font-bold text-indigo-800">{{
-                  kpi.fullyCompletedStudentCount
-                }}</span>
-                <span class="text-slate-400">/</span>
-                <span class="font-medium text-slate-700">{{ kpi.studentCount }}</span>
-                <span class="text-slate-400">人</span>
-              </span>
+              <div
+                class="h-full rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 transition-[width]"
+                :style="{
+                  width: `${
+                    kpi.totalItemsExpected > 0
+                      ? Math.min(
+                          100,
+                          (kpi.totalItemsCompleted / kpi.totalItemsExpected) * 100,
+                        )
+                      : 0
+                  }%`,
+                }"
+              />
             </div>
-            <p class="text-[11px] leading-relaxed text-slate-500">
-              备注：为「一名学生实验与测验均已完成」的人数
-            </p>
+            <span
+              class="shrink-0 min-w-[2.75rem] text-right text-[13px] font-bold tabular-nums text-indigo-800"
+            >{{ kpi.completionPct }}%</span>
           </div>
         </div>
       </div>
@@ -646,7 +621,7 @@ onUnmounted(() => {
             辖区{{ schoolId ? "班级" : "学校" }}统计进度
           </h3>
           <p class="mt-0.5 text-[12px] text-slate-500">
-            {{ schoolId ? "当前学校下各班级" : "按学校汇总" }} · 实验与测验合并为累计项；百分比为项完成率；「完成」为实验与测验均满项人数
+            {{ schoolId ? "当前学校下各班级" : "按学校汇总" }} · 实验与测验合并为累计项；百分比为项完成率
           </p>
         </div>
         <p
@@ -690,12 +665,6 @@ onUnmounted(() => {
               <span class="shrink-0 text-[11px] font-bold tabular-nums text-indigo-800"
                 >{{ row.completionPct }}%</span
               >
-            </div>
-            <div class="flex justify-between gap-2 border-t border-slate-50 pt-1.5 tabular-nums">
-              <span class="text-slate-600">完成</span>
-              <span class="font-bold text-indigo-700">
-                {{ row.fullyDoneCount }} / {{ row.n }} 人
-              </span>
             </div>
           </div>
         </li>
