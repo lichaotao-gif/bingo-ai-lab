@@ -40,7 +40,8 @@ const modalClassTitle = computed(() =>
 
 /** 各班级已添加的实验包 id（演示状态，可对接接口） */
 const addedByClass = ref<Record<string, string[]>>({
-  "ai-group": ["pkg-demo-g2"],
+  /** 第一个小组：挂两个包，便于看列表与「AI实验管理」多行效果 */
+  "ai-group": ["pkg-demo-g2", "pkg-g5-up"],
   "grade3-2": [],
   "ai-class-1": ["pkg-demo-g2"],
 });
@@ -49,7 +50,11 @@ const addedByClass = ref<Record<string, string[]>>({
 const packageApplicationTimeByClass = ref<
   Record<string, Record<string, PackageApplicationTimeId>>
 >({
-  "ai-group": { "pkg-demo-g2": "unlimited" },
+  "ai-group": {
+    "pkg-demo-g2": "unlimited",
+    /** 第二个包：待配置，用于演示琥珀色状态与「修改」弹窗 */
+    "pkg-g5-up": "pending",
+  },
   "grade3-2": {},
   "ai-class-1": { "pkg-demo-g2": "unlimited" },
 });
