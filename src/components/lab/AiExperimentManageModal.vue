@@ -13,7 +13,7 @@ const props = defineProps<{
   open: boolean;
   packages: LabPackageOption[];
   groupId: string | null;
-  /** 实验包 id → 应用时间（含 pending 表示稍后配置、待补全） */
+  /** 实验包 id → 应用时间 */
   applicationTimeIdByPackageId?: Record<string, PackageApplicationTimeId>;
 }>();
 
@@ -67,12 +67,7 @@ function onDelete(pkg: LabPackageOption) {
 }
 
 function timeIdForPackage(packageId: string): PackageApplicationTimeId {
-  return props.applicationTimeIdByPackageId?.[packageId] ?? "pending";
-}
-
-function isTimePending(packageId: string): boolean {
-  const id = timeIdForPackage(packageId);
-  return id === "pending";
+  return props.applicationTimeIdByPackageId?.[packageId] ?? "unlimited";
 }
 
 function statusLabelForPackage(packageId: string): string {
@@ -81,12 +76,11 @@ function statusLabelForPackage(packageId: string): string {
 
 /** 修改应用时间子弹窗 */
 const editTimeTarget = ref<LabPackageOption | null>(null);
-const editTimeDraft = ref<PackageApplicationTimeSelectId | "">("");
+const editTimeDraft = ref<PackageApplicationTimeSelectId>("unlimited");
 
 function openEditTime(pkg: LabPackageOption) {
   editTimeTarget.value = pkg;
-  const id = timeIdForPackage(pkg.id);
-  editTimeDraft.value = id === "pending" ? "" : id;
+  editTimeDraft.value = timeIdForPackage(pkg.id);
 }
 
 function closeEditTime() {
@@ -96,14 +90,13 @@ function closeEditTime() {
 function confirmEditTime() {
   const pkg = editTimeTarget.value;
   const gid = props.groupId;
-  const raw = editTimeDraft.value;
-  if (!pkg || !gid || !raw) {
+  if (!pkg || !gid) {
     return;
   }
   emit("updateApplicationTime", {
     groupId: gid,
     packageId: pkg.id,
-    applicationTimeId: raw,
+    applicationTimeId: editTimeDraft.value,
   });
   closeEditTime();
 }
@@ -189,11 +182,11 @@ onUnmounted(() => {
                 <div class="flex items-start gap-3">
                   <button
                     type="button"
-                    class="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left transition hover:bg-card-inner/80"
+                    class="shrink-0 overflow-hidden rounded-lg transition hover:opacity-90"
                     @click="onViewPackageDetail(pkg)"
                   >
                     <div
-                      class="size-[72px] shrink-0 overflow-hidden rounded-lg bg-card-inner ring-1 ring-black/[0.06]"
+                      class="size-[72px] overflow-hidden bg-card-inner ring-1 ring-black/[0.06]"
                     >
                       <img
                         :src="pkg.cover"
@@ -203,12 +196,32 @@ onUnmounted(() => {
                         referrerpolicy="no-referrer"
                       />
                     </div>
-                    <span
-                      class="min-w-0 flex-1 text-[14px] font-medium leading-snug text-black"
+                  </button>
+                  <div class="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      class="block w-full rounded-lg text-left text-[14px] font-medium leading-snug text-black transition hover:bg-card-inner/80"
+                      @click="onViewPackageDetail(pkg)"
                     >
                       {{ pkg.title }}
-                    </span>
-                  </button>
+                    </button>
+                    <div
+                      class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1"
+                      @click.stop
+                    >
+                      <span class="text-[12px] text-fg-muted">应用时间</span>
+                      <span
+                        class="text-[14px] font-medium tabular-nums text-black"
+                      >{{ statusLabelForPackage(pkg.id) }}</span>
+                      <button
+                        type="button"
+                        class="rounded-md border border-slate-300 bg-white px-2 py-0.5 text-[12px] font-medium text-slate-800 transition hover:border-primary hover:bg-primary-muted hover:text-primary"
+                        @click="openEditTime(pkg)"
+                      >
+                        修改
+                      </button>
+                    </div>
+                  </div>
                   <div
                     class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center"
                   >
@@ -227,38 +240,6 @@ onUnmounted(() => {
                       删除
                     </button>
                   </div>
-                </div>
-
-                <div
-                  class="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-border-subtle/80 pt-3"
-                  @click.stop
-                >
-                  <div class="min-w-0 flex-1">
-                    <p class="text-[12px] font-medium text-fg-muted">
-                      应用时间
-                    </p>
-                    <p
-                      class="mt-0.5 text-[14px] font-medium leading-snug"
-                      :class="
-                        isTimePending(pkg.id)
-                          ? 'text-amber-800'
-                          : 'text-black'
-                      "
-                    >
-                      {{ statusLabelForPackage(pkg.id) }}
-                      <span
-                        v-if="isTimePending(pkg.id)"
-                        class="ml-1 text-[12px] font-normal text-amber-700/90"
-                      >（待配置）</span>
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    class="shrink-0 rounded-lg border-2 border-slate-300 bg-white px-3 py-1.5 text-[13px] font-medium text-slate-800 transition hover:border-primary hover:bg-primary-muted hover:text-primary"
-                    @click="openEditTime(pkg)"
-                  >
-                    修改
-                  </button>
                 </div>
               </li>
             </ul>
@@ -304,9 +285,6 @@ onUnmounted(() => {
                 v-model="editTimeDraft"
                 class="w-full rounded-xl border border-border-subtle bg-white px-3 py-2.5 text-[14px] text-black outline-none ring-primary/30 focus:border-primary/50 focus:ring-2"
               >
-                <option value="" disabled>
-                  请选择应用时间
-                </option>
                 <option
                   v-for="opt in PACKAGE_APPLICATION_TIME_OPTIONS"
                   :key="opt.id"
@@ -326,8 +304,7 @@ onUnmounted(() => {
                 </button>
                 <button
                   type="button"
-                  class="rounded-xl bg-primary px-4 py-2 text-[14px] font-medium text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
-                  :disabled="!editTimeDraft"
+                  class="rounded-xl bg-primary px-4 py-2 text-[14px] font-medium text-white shadow-sm transition hover:opacity-95"
                   @click="confirmEditTime"
                 >
                   确定

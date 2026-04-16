@@ -44,18 +44,13 @@ export const LAB_PACKAGE_OPTIONS: LabPackageOption[] = [
   },
 ];
 
-/** 向实验组添加实验包时可选的应用时间（演示，可对接接口） */
+/** 向实验组添加实验包时可选的应用时间（演示，可对接接口）。跳过添加视为「不限」。 */
 export type PackageApplicationTimeId =
-  | "pending"
   | "unlimited"
   | "2025-s1-sep"
   | "2026-s2-feb";
 
-/** 下拉可选的应用时间（「稍后配置」仅通过跳过按钮写入 pending，不出现在下拉中） */
-export type PackageApplicationTimeSelectId = Exclude<
-  PackageApplicationTimeId,
-  "pending"
->;
+export type PackageApplicationTimeSelectId = PackageApplicationTimeId;
 
 export interface PackageApplicationTimeOption {
   id: PackageApplicationTimeSelectId;
@@ -72,9 +67,6 @@ export const PACKAGE_APPLICATION_TIME_OPTIONS: PackageApplicationTimeOption[] =
 export function packageApplicationTimeLabel(
   id: PackageApplicationTimeId,
 ): string {
-  if (id === "pending") {
-    return "稍后配置";
-  }
   return (
     PACKAGE_APPLICATION_TIME_OPTIONS.find((o) => o.id === id)?.label ?? "不限"
   );

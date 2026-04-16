@@ -52,8 +52,8 @@ const packageApplicationTimeByClass = ref<
 >({
   "ai-group": {
     "pkg-demo-g2": "unlimited",
-    /** 第二个包：待配置，用于演示琥珀色状态与「修改」弹窗 */
-    "pkg-g5-up": "pending",
+    /** 第二个包：演示多包列表（同为不限，可在管理中改为其它学期） */
+    "pkg-g5-up": "unlimited",
   },
   "grade3-2": {},
   "ai-class-1": { "pkg-demo-g2": "unlimited" },

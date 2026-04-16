@@ -30,7 +30,7 @@ const emit = defineEmits<{
 }>();
 
 function close() {
-  pendingPackage.value = null;
+  confirmPackage.value = null;
   emit("update:open", false);
 }
 
@@ -43,24 +43,23 @@ function isAdded(packageId: string): boolean {
 }
 
 /** 待确认添加的包（弹出应用时间选择） */
-const pendingPackage = ref<LabPackageOption | null>(null);
-/** 下拉仅含具体时间；跳过稍后配置用「跳过，稍后配置」写入 pending */
+const confirmPackage = ref<LabPackageOption | null>(null);
 const selectedApplicationTimeId = ref<PackageApplicationTimeSelectId>("unlimited");
 
 function openConfirm(pkg: LabPackageOption) {
   if (!props.classId || isAdded(pkg.id)) {
     return;
   }
-  pendingPackage.value = pkg;
+  confirmPackage.value = pkg;
   selectedApplicationTimeId.value = "unlimited";
 }
 
 function cancelConfirm() {
-  pendingPackage.value = null;
+  confirmPackage.value = null;
 }
 
 function confirmAdd() {
-  const pkg = pendingPackage.value;
+  const pkg = confirmPackage.value;
   const cid = props.classId;
   if (!cid || !pkg || isAdded(pkg.id)) {
     return;
@@ -70,11 +69,12 @@ function confirmAdd() {
     packageId: pkg.id,
     applicationTimeId: selectedApplicationTimeId.value,
   });
-  pendingPackage.value = null;
+  confirmPackage.value = null;
 }
 
-function skipAndAddLater() {
-  const pkg = pendingPackage.value;
+/** 跳过即按「不限」记录应用时间 */
+function skipAsUnlimited() {
+  const pkg = confirmPackage.value;
   const cid = props.classId;
   if (!cid || !pkg || isAdded(pkg.id)) {
     return;
@@ -82,9 +82,9 @@ function skipAndAddLater() {
   emit("add", {
     classId: cid,
     packageId: pkg.id,
-    applicationTimeId: "pending",
+    applicationTimeId: "unlimited",
   });
-  pendingPackage.value = null;
+  confirmPackage.value = null;
 }
 
 const list = computed(() => LAB_PACKAGE_OPTIONS);
@@ -94,7 +94,7 @@ watch(
   (v) => {
     document.body.style.overflow = v ? "hidden" : "";
     if (!v) {
-      pendingPackage.value = null;
+      confirmPackage.value = null;
     }
   },
 );
@@ -204,7 +204,7 @@ onUnmounted(() => {
           leave-to-class="opacity-0"
         >
           <div
-            v-if="pendingPackage"
+            v-if="confirmPackage"
             class="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]"
             role="dialog"
             aria-modal="true"
@@ -225,8 +225,8 @@ onUnmounted(() => {
                 将为
                 <span class="font-medium text-fg-soft">{{ classTitle }}</span>
                 添加「<span class="font-medium text-black">{{
-                  pendingPackage.title
-                }}</span>」。应用时间可下拉选择，也可跳过稍后在「AI实验管理」中配置。
+                  confirmPackage.title
+                }}</span>」。应用时间可下拉选择；跳过则按「不限」添加，之后可在「AI实验管理」中修改。
               </p>
 
               <label
@@ -251,9 +251,9 @@ onUnmounted(() => {
                 <button
                   type="button"
                   class="self-start text-[13px] font-medium text-primary underline-offset-2 hover:underline"
-                  @click="skipAndAddLater"
+                  @click="skipAsUnlimited"
                 >
-                  跳过，稍后配置
+                  跳过（不限）
                 </button>
                 <div class="flex w-full justify-end gap-2 sm:w-auto">
                   <button
