@@ -23,7 +23,6 @@ const provinceId = ref<string | "">("");
 const cityId = ref<string | "">("");
 const districtId = ref<string | "">("");
 const schoolId = ref<string | "">("");
-const classId = ref<string | "">("");
 /** 全部学期为空字符串 */
 const semesterId = ref<string | "">("");
 
@@ -31,22 +30,15 @@ watch(provinceId, () => {
   cityId.value = "";
   districtId.value = "";
   schoolId.value = "";
-  classId.value = "";
 });
 
 watch(cityId, () => {
   districtId.value = "";
   schoolId.value = "";
-  classId.value = "";
 });
 
 watch(districtId, () => {
   schoolId.value = "";
-  classId.value = "";
-});
-
-watch(schoolId, () => {
-  classId.value = "";
 });
 
 const cityOptions = computed(() => {
@@ -75,14 +67,6 @@ const schoolOptions = computed(() =>
   schoolsForScope(provinceId.value, cityId.value, districtId.value),
 );
 
-const classOptions = computed(() => {
-  if (schoolId.value) {
-    return classesForSchool(schoolId.value);
-  }
-  const schIds = new Set(schoolOptions.value.map((s) => s.id));
-  return BUREAU_CLASSES.filter((c) => schIds.has(c.schoolId));
-});
-
 function filterStudentsBySemester(stu: BureauStudent[]): BureauStudent[] {
   if (!semesterId.value) {
     return stu;
@@ -94,7 +78,6 @@ const filteredStudents = computed((): BureauStudent[] => {
   const ids = classIdsForFilters(
     districtId.value,
     schoolId.value,
-    classId.value,
     cityId.value,
     provinceId.value,
   );
@@ -316,36 +299,68 @@ const progressTiles = computed(() => {
   });
 });
 
-const TREND_WEEK_COUNT = 8;
+/** 数据视图时间轴：最近 14 天（每日一个点） */
+const DATA_VIEW_DAY_COUNT = 14;
 
-/** 按周次平滑爬升曲线（终点为当前筛选下该维度全完成人数） */
-function buildWeeklySmoothTrend(end: number): { label: string; value: number }[] {
-  const weeks = TREND_WEEK_COUNT;
-  const out: { label: string; value: number }[] = [];
-  const last = weeks - 1;
-  for (let i = 0; i < weeks; i++) {
+/** 按日平滑爬升（末日为当前筛选下该维度「全完成」人数） */
+function buildDailySmoothTrend(
+  end: number,
+): { label: string; value: number; hint: string }[] {
+  const days = DATA_VIEW_DAY_COUNT;
+  const out: { label: string; value: number; hint: string }[] = [];
+  const last = days - 1;
+  for (let i = 0; i < days; i++) {
     const t = last === 0 ? 1 : i / last;
-    const start = Math.max(0, Math.round(end * 0.22));
-    const v = Math.round(start + (end - start) * (t * t));
-    out.push({ label: `第${i + 1}周`, value: i === last ? end : v });
+    const start = Math.max(0, Math.round(end * 0.18));
+    const v =
+      i === last ? end : Math.round(start + (end - start) * (t * t));
+    const n = i + 1;
+    out.push({
+      label: `${n}`,
+      hint: `第 ${n} 天`,
+      value: v,
+    });
   }
   return out;
 }
 
+/** 各校（班）14 天内已完 / 应开课时演示曲线（末日与辖区卡片一致） */
+function buildDailyLessonHours(
+  totalHours: number,
+  completedHours: number,
+  days: number,
+): { completed: number; total: number }[] {
+  const last = days - 1;
+  const series: { completed: number; total: number }[] = [];
+  for (let i = 0; i < days; i++) {
+    const t = last === 0 ? 1 : i / last;
+    const startC = Math.max(0, Math.round(completedHours * 0.26));
+    const c =
+      i === last
+        ? completedHours
+        : Math.round(startC + (completedHours - startC) * (t * t));
+    series.push({ completed: c, total: totalHours });
+  }
+  return series;
+}
+
 const experimentStudentTrendPoints = computed(() =>
-  buildWeeklySmoothTrend(kpi.value.experimentFullyDoneStudentCount),
+  buildDailySmoothTrend(kpi.value.experimentFullyDoneStudentCount),
 );
 
 const quizStudentTrendPoints = computed(() =>
-  buildWeeklySmoothTrend(kpi.value.quizFullyDoneStudentCount),
+  buildDailySmoothTrend(kpi.value.quizFullyDoneStudentCount),
 );
 
-const schoolLessonChartRows = computed(() =>
+const schoolLessonDailyRows = computed(() =>
   progressTiles.value.map((row) => ({
     label: row.label,
-    totalLessonHours: row.totalLessonHours,
-    completedLessonHours: row.completedLessonHours,
     completionPct: row.lessonHoursCompletionPct,
+    series: buildDailyLessonHours(
+      row.totalLessonHours,
+      row.completedLessonHours,
+      DATA_VIEW_DAY_COUNT,
+    ),
   })),
 );
 
@@ -407,7 +422,7 @@ onUnmounted(() => {
 
 <template>
   <div class="edu-viz flex min-h-0 flex-col gap-6 pb-8 text-slate-800">
-    <!-- 筛选：省市区 + 学期 + 学校 + 班级 -->
+    <!-- 筛选：省市区 + 学期 + 学校 -->
     <div
       class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm"
     >
@@ -607,22 +622,6 @@ onUnmounted(() => {
               :value="s.id"
             >
               {{ s.name }}
-            </option>
-          </select>
-        </div>
-        <div class="min-w-[120px] flex-1 sm:max-w-[180px]">
-          <label class="mb-1 block text-[11px] text-slate-500">班级</label>
-          <select
-            v-model="classId"
-            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-slate-800 outline-none ring-primary/30 focus:ring-2"
-          >
-            <option value="">全部班级</option>
-            <option
-              v-for="c in classOptions"
-              :key="c.id"
-              :value="c.id"
-            >
-              {{ c.name }}
             </option>
           </select>
         </div>
@@ -829,14 +828,14 @@ onUnmounted(() => {
             数据视图
           </h3>
           <p class="mt-0.5 text-[12px] text-slate-500">
-            左：实验与测验全完成人数分维度按周趋势；右：各校（班）开课课时与完成率
+            左：各校（班）开课课时最近 14 天走势；右：实验与测验全完成人数最近 14 天走势
           </p>
         </div>
       </div>
       <EduBureauDataCharts
         :experiment-trend-points="experimentStudentTrendPoints"
         :quiz-trend-points="quizStudentTrendPoints"
-        :school-lesson-rows="schoolLessonChartRows"
+        :school-lesson-daily-rows="schoolLessonDailyRows"
         :school-lesson-title="schoolLessonChartTitle"
       />
     </section>
@@ -849,7 +848,7 @@ onUnmounted(() => {
             辖区{{ schoolId ? "班级" : "学校" }}统计进度
           </h3>
           <p class="mt-0.5 text-[12px] text-slate-500">
-            {{ schoolId ? "当前学校下各班级" : "按学校汇总" }} · 卡片：开课课时（班）、实验与测验（学生）
+            {{ schoolId ? "当前学校下各班级" : "按学校汇总" }} · 卡片：开课课时（班）、实验与测验（学生）；上方数据视图为最近 14 天折线
           </p>
         </div>
       </div>

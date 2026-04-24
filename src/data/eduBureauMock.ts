@@ -238,7 +238,6 @@ export function classesForSchool(schoolId: string | ""): BureauClass[] {
 export function classIdsForFilters(
   districtId: string | "",
   schoolId: string | "",
-  classId: string | "",
   cityId: string | "",
   provinceId: string | "",
 ): Set<string> {
@@ -251,9 +250,6 @@ export function classIdsForFilters(
   let classes = BUREAU_CLASSES.filter((c) => schoolIds.has(c.schoolId));
   if (schoolId) {
     classes = classes.filter((c) => c.schoolId === schoolId);
-  }
-  if (classId) {
-    return new Set([classId]);
   }
   return new Set(classes.map((c) => c.id));
 }
