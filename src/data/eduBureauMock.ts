@@ -30,10 +30,38 @@ export interface BureauClass {
   name: string;
 }
 
+/** 学年学期（演示：与班级绑定，筛选时按学生所属学期过滤） */
+export interface BureauSemester {
+  id: string;
+  label: string;
+}
+
+export const BUREAU_SEMESTERS: BureauSemester[] = [
+  { id: "sem-2425-2", label: "2024–2025 学年第二学期" },
+  { id: "sem-2526-1", label: "2025–2026 学年第一学期" },
+];
+
+/** 班级默认所属学期（演示数据） */
+const SEMESTER_BY_CLASS_ID: Record<string, string> = {
+  c1: "sem-2425-2",
+  c2: "sem-2526-1",
+  c3: "sem-2425-2",
+  c4: "sem-2526-1",
+  c5: "sem-2425-2",
+  c6: "sem-2526-1",
+  c7: "sem-2425-2",
+};
+
+function semesterForClass(classId: string): string {
+  return SEMESTER_BY_CLASS_ID[classId] ?? BUREAU_SEMESTERS[0]!.id;
+}
+
 export interface BureauStudent {
   id: string;
   classId: string;
   name: string;
+  /** 所属学期 id，与 BUREAU_SEMESTERS 对应 */
+  semesterId: string;
   /** 实验完成度 0～100 */
   experimentPct: number;
   /** 测验完成度 0～100 */
@@ -85,6 +113,7 @@ export const BUREAU_STUDENTS: BureauStudent[] = [
     id: `st-c1-${i}`,
     classId: "c1",
     name: `学生${i + 1}`,
+    semesterId: semesterForClass("c1"),
     experimentPct: pick(i, 62),
     quizPct: pick(i + 3, 58),
   })),
@@ -92,6 +121,7 @@ export const BUREAU_STUDENTS: BureauStudent[] = [
     id: `st-c2-${i}`,
     classId: "c2",
     name: `学生${i + 1}`,
+    semesterId: semesterForClass("c2"),
     experimentPct: pick(i + 1, 70),
     quizPct: pick(i + 2, 65),
   })),
@@ -99,6 +129,7 @@ export const BUREAU_STUDENTS: BureauStudent[] = [
     id: `st-c3-${i}`,
     classId: "c3",
     name: `学生${i + 1}`,
+    semesterId: semesterForClass("c3"),
     experimentPct: pick(i + 4, 55),
     quizPct: pick(i, 72),
   })),
@@ -106,6 +137,7 @@ export const BUREAU_STUDENTS: BureauStudent[] = [
     id: `st-c4-${i}`,
     classId: "c4",
     name: `学生${i + 1}`,
+    semesterId: semesterForClass("c4"),
     experimentPct: pick(i + 2, 68),
     quizPct: pick(i + 5, 60),
   })),
@@ -113,6 +145,7 @@ export const BUREAU_STUDENTS: BureauStudent[] = [
     id: `st-c5-${i}`,
     classId: "c5",
     name: `学生${i + 1}`,
+    semesterId: semesterForClass("c5"),
     experimentPct: pick(i, 75),
     quizPct: pick(i + 1, 78),
   })),
@@ -120,6 +153,7 @@ export const BUREAU_STUDENTS: BureauStudent[] = [
     id: `st-c6-${i}`,
     classId: "c6",
     name: `学生${i + 1}`,
+    semesterId: semesterForClass("c6"),
     experimentPct: pick(i + 3, 50),
     quizPct: pick(i + 4, 48),
   })),
@@ -127,6 +161,7 @@ export const BUREAU_STUDENTS: BureauStudent[] = [
     id: `st-c7-${i}`,
     classId: "c7",
     name: `学生${i + 1}`,
+    semesterId: semesterForClass("c7"),
     experimentPct: pick(i + 6, 66),
     quizPct: pick(i + 2, 63),
   })),

@@ -6,6 +6,7 @@ import {
   BUREAU_CITIES,
   BUREAU_PROVINCES,
   BUREAU_REGIONS,
+  BUREAU_SEMESTERS,
   classById,
   classIdsForFilters,
   classesForSchool,
@@ -23,6 +24,8 @@ const cityId = ref<string | "">("");
 const districtId = ref<string | "">("");
 const schoolId = ref<string | "">("");
 const classId = ref<string | "">("");
+/** 全部学期为空字符串 */
+const semesterId = ref<string | "">("");
 
 watch(provinceId, () => {
   cityId.value = "";
@@ -80,6 +83,13 @@ const classOptions = computed(() => {
   return BUREAU_CLASSES.filter((c) => schIds.has(c.schoolId));
 });
 
+function filterStudentsBySemester(stu: BureauStudent[]): BureauStudent[] {
+  if (!semesterId.value) {
+    return stu;
+  }
+  return stu.filter((s) => s.semesterId === semesterId.value);
+}
+
 const filteredStudents = computed((): BureauStudent[] => {
   const ids = classIdsForFilters(
     districtId.value,
@@ -88,7 +98,7 @@ const filteredStudents = computed((): BureauStudent[] => {
     cityId.value,
     provinceId.value,
   );
-  return studentsForClassIds(ids);
+  return filterStudentsBySemester(studentsForClassIds(ids));
 });
 
 /** 课程内实验个数：实验与测验均按此数量折算人次完成量 */
@@ -286,7 +296,9 @@ const progressTiles = computed(() => {
       return [];
     }
     return classesForSchool(schoolId.value).map((c) => {
-      const stu = studentsForClassIds(new Set([c.id]));
+      const stu = filterStudentsBySemester(
+        studentsForClassIds(new Set([c.id])),
+      );
       return buildProgressTileRow(c.name, stu, 1);
     });
   }
@@ -298,7 +310,7 @@ const progressTiles = computed(() => {
     const cids = new Set(
       BUREAU_CLASSES.filter((c) => c.schoolId === sch.id).map((c) => c.id),
     );
-    const stu = studentsForClassIds(cids);
+    const stu = filterStudentsBySemester(studentsForClassIds(cids));
     const classCountForLessons = classesForSchool(sch.id).length;
     return buildProgressTileRow(sch.name, stu, classCountForLessons);
   });
@@ -395,7 +407,7 @@ onUnmounted(() => {
 
 <template>
   <div class="edu-viz flex min-h-0 flex-col gap-6 pb-8 text-slate-800">
-    <!-- 筛选：省市区 + 学校 + 班级 -->
+    <!-- 筛选：省市区 + 学期 + 学校 + 班级 -->
     <div
       class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm"
     >
@@ -565,6 +577,22 @@ onUnmounted(() => {
               </button>
             </div>
           </div>
+        </div>
+        <div class="min-w-[min(100%,200px)] flex-1 sm:max-w-[240px]">
+          <label class="mb-1 block text-[11px] text-slate-500">学期</label>
+          <select
+            v-model="semesterId"
+            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-slate-800 outline-none ring-primary/30 focus:ring-2"
+          >
+            <option value="">全部学期</option>
+            <option
+              v-for="sem in BUREAU_SEMESTERS"
+              :key="sem.id"
+              :value="sem.id"
+            >
+              {{ sem.label }}
+            </option>
+          </select>
         </div>
         <div class="min-w-[140px] flex-1 sm:max-w-[200px]">
           <label class="mb-1 block text-[11px] text-slate-500">学校</label>
