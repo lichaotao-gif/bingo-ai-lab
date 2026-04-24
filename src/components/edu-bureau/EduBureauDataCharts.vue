@@ -193,14 +193,14 @@ const dualTrend = computed(() => {
       </div>
       <ul
         v-else
-        class="edu-bar-scroll max-h-[220px] space-y-3 overflow-y-auto pr-1"
+        class="edu-bar-scroll max-h-[220px] space-y-3.5 overflow-y-auto pr-1"
       >
         <li
           v-for="(row, i) in schoolLessonRows"
           :key="i"
-          class="min-w-0"
+          class="min-w-0 rounded-xl border border-slate-100 bg-slate-50/40 px-3 py-2.5 transition-colors hover:border-slate-200/80 hover:bg-slate-50/80"
         >
-          <div class="mb-1 flex items-center justify-between gap-2 text-[12px]">
+          <div class="mb-2 flex items-center justify-between gap-2 text-[12px]">
             <span
               class="min-w-0 truncate font-medium text-slate-800"
               :title="row.label"
@@ -212,14 +212,16 @@ const dualTrend = computed(() => {
               总 {{ row.totalLessonHours }} 课时 · 已 {{ row.completedLessonHours }}
             </span>
           </div>
-          <div class="h-2.5 w-full overflow-hidden rounded-full bg-amber-100/90">
+          <div
+            class="h-2 w-full overflow-hidden rounded-full bg-slate-200/70 ring-1 ring-inset ring-slate-200/40"
+          >
             <div
-              class="h-full rounded-full bg-gradient-to-r from-amber-500 to-teal-600 transition-[width] duration-500"
+              class="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-500 transition-[width] duration-500"
               :style="{ width: `${Math.min(100, row.completionPct)}%` }"
             />
           </div>
-          <p class="mt-0.5 text-right text-[11px] tabular-nums text-slate-500">
-            完成率 {{ row.completionPct }}%
+          <p class="mt-1.5 text-right text-[11px] tabular-nums text-slate-500">
+            完成率 <span class="font-semibold text-sky-700">{{ row.completionPct }}%</span>
           </p>
         </li>
       </ul>

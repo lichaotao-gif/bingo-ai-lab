@@ -826,71 +826,149 @@ onUnmounted(() => {
         </div>
       </div>
       <ul
-        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+        class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
       >
         <li
           v-for="(row, i) in progressTiles"
           :key="i"
-          class="flex max-w-full flex-col rounded-2xl border border-slate-200/90 bg-white p-4 shadow-md ring-1 ring-black/[0.03] sm:p-5"
+          class="flex max-w-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50/90 shadow-sm ring-1 ring-slate-900/[0.03] transition-shadow duration-200 hover:border-slate-300/80 hover:shadow-md"
         >
-          <p
-            class="line-clamp-2 text-[15px] font-semibold leading-snug text-slate-900 sm:text-base"
-            :title="row.label"
+          <div
+            class="border-b border-slate-100/90 bg-white/80 px-4 pb-3 pt-4 sm:px-5 sm:pb-3.5 sm:pt-5"
           >
-            {{ row.label }}
-          </p>
-          <p class="mt-2 text-[12px] text-slate-500">
-            <span class="tabular-nums">{{ row.n }}</span> 人
-            <template v-if="!schoolId">
-              <span class="text-slate-300"> · </span>
-              <span class="tabular-nums">{{ row.classCountForLessons }}</span>
-              个班
-            </template>
-          </p>
-
-          <div class="mt-4 space-y-4 border-t border-slate-100 pt-4 text-[12px]">
-            <div>
-              <p class="text-[11px] font-semibold text-amber-900/90">
-                开课课时（班）
-              </p>
-              <div
-                class="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 tabular-nums text-slate-700"
+            <p
+              class="line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-slate-900 sm:text-base"
+              :title="row.label"
+            >
+              {{ row.label }}
+            </p>
+            <div class="mt-2.5 flex flex-wrap items-center gap-2">
+              <span
+                class="inline-flex items-center rounded-full bg-slate-100/90 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 tabular-nums"
               >
-                <span>总 <strong class="text-slate-900">{{ row.totalLessonHours }}</strong> 课时</span>
-                <span>已完成 <strong class="text-teal-800">{{ row.completedLessonHours }}</strong> 课时</span>
-                <span class="text-slate-500"
-                  >完成率 <strong class="text-rose-800">{{ row.lessonHoursCompletionPct }}%</strong></span
-                >
+                {{ row.n }} 人
+              </span>
+              <span
+                v-if="!schoolId"
+                class="inline-flex items-center rounded-full bg-sky-50 px-2.5 py-0.5 text-[11px] font-medium text-sky-700/90 tabular-nums ring-1 ring-sky-100"
+              >
+                {{ row.classCountForLessons }} 个班
+              </span>
+            </div>
+          </div>
+
+          <div class="flex flex-1 flex-col gap-2.5 p-3 sm:gap-3 sm:p-4">
+            <div
+              class="rounded-xl border border-sky-100/80 bg-sky-50/35 p-2.5 ring-1 ring-sky-900/[0.04] sm:p-3"
+            >
+              <div class="mb-1.5 flex items-center gap-2">
+                <span
+                  class="size-1.5 shrink-0 rounded-full bg-sky-500 shadow-sm shadow-sky-200"
+                  aria-hidden="true"
+                />
+                <p class="text-[11px] font-semibold text-slate-700">
+                  开课课时（班）
+                </p>
+              </div>
+              <div
+                class="grid grid-cols-3 gap-1.5 tabular-nums sm:gap-2"
+              >
+                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                  <p class="text-[10px] leading-none text-slate-500">总</p>
+                  <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
+                    <span class="text-[13px] font-semibold text-slate-900 sm:text-sm">{{ row.totalLessonHours }}</span>
+                    <span class="text-[10px] font-normal text-slate-400">课时</span>
+                  </p>
+                </div>
+                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                  <p class="text-[10px] leading-none text-slate-500">已完</p>
+                  <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
+                    <span class="text-[13px] font-semibold text-sky-800 sm:text-sm">{{ row.completedLessonHours }}</span>
+                    <span class="text-[10px] font-normal text-slate-400">课时</span>
+                  </p>
+                </div>
+                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                  <p class="text-[10px] leading-none text-slate-500">完成率</p>
+                  <p class="mt-1 text-[13px] font-semibold leading-none text-sky-700 sm:text-sm">
+                    {{ row.lessonHoursCompletionPct }}%
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div>
-              <p class="text-[11px] font-semibold text-indigo-900/90">
-                实验（学生）
-              </p>
+            <div
+              class="rounded-xl border border-violet-100/80 bg-violet-50/30 p-2.5 ring-1 ring-violet-900/[0.04] sm:p-3"
+            >
+              <div class="mb-1.5 flex items-center gap-2">
+                <span
+                  class="size-1.5 shrink-0 rounded-full bg-violet-500 shadow-sm shadow-violet-200"
+                  aria-hidden="true"
+                />
+                <p class="text-[11px] font-semibold text-slate-700">
+                  实验（学生）
+                </p>
+              </div>
               <div
-                class="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 tabular-nums text-slate-700"
+                class="grid grid-cols-3 gap-1.5 tabular-nums sm:gap-2"
               >
-                <span>总 <strong class="text-slate-900">{{ row.experimentTotalCount }}</strong> 个</span>
-                <span>已完成 <strong class="text-cyan-800">{{ row.experimentCompletedCount }}</strong> 个</span>
-                <span class="text-slate-500"
-                  >完成率 <strong class="text-fuchsia-800">{{ row.experimentCompletionPct }}%</strong></span
-                >
+                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                  <p class="text-[10px] leading-none text-slate-500">总</p>
+                  <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
+                    <span class="text-[13px] font-semibold text-slate-900 sm:text-sm">{{ row.experimentTotalCount }}</span>
+                    <span class="text-[10px] font-normal text-slate-400">个</span>
+                  </p>
+                </div>
+                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                  <p class="text-[10px] leading-none text-slate-500">已完</p>
+                  <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
+                    <span class="text-[13px] font-semibold text-violet-800 sm:text-sm">{{ row.experimentCompletedCount }}</span>
+                    <span class="text-[10px] font-normal text-slate-400">个</span>
+                  </p>
+                </div>
+                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                  <p class="text-[10px] leading-none text-slate-500">完成率</p>
+                  <p class="mt-1 text-[13px] font-semibold leading-none text-violet-700 sm:text-sm">
+                    {{ row.experimentCompletionPct }}%
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div>
-              <p class="text-[11px] font-semibold text-orange-900/90">
-                测验（学生）
-              </p>
+            <div
+              class="rounded-xl border border-emerald-100/80 bg-emerald-50/30 p-2.5 ring-1 ring-emerald-900/[0.04] sm:p-3"
+            >
+              <div class="mb-1.5 flex items-center gap-2">
+                <span
+                  class="size-1.5 shrink-0 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200"
+                  aria-hidden="true"
+                />
+                <p class="text-[11px] font-semibold text-slate-700">
+                  测验（学生）
+                </p>
+              </div>
               <div
-                class="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 tabular-nums text-slate-700"
+                class="grid grid-cols-3 gap-1.5 tabular-nums sm:gap-2"
               >
-                <span>总 <strong class="text-slate-900">{{ row.quizTotalCount }}</strong> 个</span>
-                <span>已完成 <strong class="text-amber-800">{{ row.quizCompletedCount }}</strong> 个</span>
-                <span class="text-slate-500"
-                  >完成率 <strong class="text-orange-800">{{ row.quizCompletionPct }}%</strong></span
-                >
+                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                  <p class="text-[10px] leading-none text-slate-500">总</p>
+                  <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
+                    <span class="text-[13px] font-semibold text-slate-900 sm:text-sm">{{ row.quizTotalCount }}</span>
+                    <span class="text-[10px] font-normal text-slate-400">个</span>
+                  </p>
+                </div>
+                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                  <p class="text-[10px] leading-none text-slate-500">已完</p>
+                  <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
+                    <span class="text-[13px] font-semibold text-emerald-800 sm:text-sm">{{ row.quizCompletedCount }}</span>
+                    <span class="text-[10px] font-normal text-slate-400">个</span>
+                  </p>
+                </div>
+                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                  <p class="text-[10px] leading-none text-slate-500">完成率</p>
+                  <p class="mt-1 text-[13px] font-semibold leading-none text-emerald-700 sm:text-sm">
+                    {{ row.quizCompletionPct }}%
+                  </p>
+                </div>
               </div>
             </div>
           </div>

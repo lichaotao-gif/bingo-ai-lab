@@ -427,23 +427,9 @@ onUnmounted(() => {
       <button
         v-if="showClassOverviewEntry"
         type="button"
-        class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border-subtle bg-white px-3 py-2 text-[13px] font-medium text-primary shadow-sm transition hover:bg-primary-muted"
+        class="inline-flex shrink-0 items-center rounded-xl border border-border-subtle bg-white px-3 py-2 text-[13px] font-medium text-primary shadow-sm transition hover:bg-primary-muted"
         @click="classOverviewOpen = true"
       >
-        <svg
-          class="size-[18px] shrink-0 opacity-90"
-          viewBox="0 0 24 24"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path
-            stroke="currentColor"
-            stroke-width="1.75"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M4 20V10M12 20V4M20 20v-7"
-          />
-        </svg>
         <span class="whitespace-nowrap">整体统计</span>
       </button>
     </header>
@@ -478,7 +464,7 @@ onUnmounted(() => {
           >
             <button
               type="button"
-              class="mb-1 flex w-full gap-2 rounded-xl border px-2.5 py-2.5 text-left transition"
+              class="mb-1 flex w-full rounded-xl border px-2.5 py-2.5 text-left transition"
               :class="
                 selectedExpIndex === i
                   ? 'border-blue-500 bg-blue-600 text-white shadow-sm'
@@ -486,16 +472,6 @@ onUnmounted(() => {
               "
               @click="selectedExpIndex = i"
             >
-              <div
-                class="size-14 shrink-0 overflow-hidden rounded-lg bg-slate-100 ring-1 ring-black/[0.06]"
-              >
-                <img
-                  :src="ex.cover"
-                  alt=""
-                  class="size-full object-cover"
-                  loading="lazy"
-                />
-              </div>
               <div class="min-w-0 flex-1">
                 <p
                   class="text-[13px] font-medium leading-snug"
