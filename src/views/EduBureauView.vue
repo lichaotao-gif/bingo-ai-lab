@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import LogoMark from "@/components/brand/LogoMark.vue";
 import EduBureauLoginCard from "@/components/edu-bureau/EduBureauLoginCard.vue";
 import EduBureauDashboard from "@/components/edu-bureau/EduBureauDashboard.vue";
 import {
@@ -41,11 +40,8 @@ function logout() {
     >
       <RouterLink
         to="/"
-        class="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg outline-none ring-primary/30 focus-visible:ring-2 sm:gap-3"
+        class="flex min-w-0 flex-1 items-center rounded-lg outline-none ring-primary/30 focus-visible:ring-2"
       >
-        <div class="size-8 shrink-0">
-          <LogoMark />
-        </div>
         <h1
           class="truncate text-[15px] font-semibold tracking-tight text-slate-900 sm:text-[16px]"
         >
