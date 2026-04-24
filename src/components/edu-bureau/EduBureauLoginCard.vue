@@ -44,7 +44,7 @@ function sendCode() {
         timer = null;
       }
     }, 1000);
-    window.alert(`验证码已发送（演示）：${EDU_BUREAU_DEMO_CODE}`);
+    window.alert(`验证码已发送：${EDU_BUREAU_DEMO_CODE}`);
   }, 400);
 }
 
@@ -57,12 +57,12 @@ function submit() {
   }
   if (mode.value === "password") {
     if (!validatePasswordLogin(p, password.value)) {
-      error.value = `手机号或密码错误（演示密码：${EDU_BUREAU_DEMO_PASSWORD}）`;
+      error.value = `手机号或密码错误（默认密码：${EDU_BUREAU_DEMO_PASSWORD}）`;
       return;
     }
   } else {
     if (!validateCodeLogin(p, code.value)) {
-      error.value = `手机号或验证码错误（演示验证码：${EDU_BUREAU_DEMO_CODE}）`;
+      error.value = `手机号或验证码错误（默认验证码：${EDU_BUREAU_DEMO_CODE}）`;
       return;
     }
   }
@@ -103,14 +103,9 @@ onUnmounted(() => {
 
     <div class="p-6 pt-12 sm:p-8 sm:pt-14">
       <div class="mb-6 pr-6 text-center sm:pr-8">
-        <p
-          class="inline-block rounded-full bg-primary-muted px-2.5 py-0.5 text-[11px] font-medium text-primary"
-        >
-          演示环境
-        </p>
         <h2
           id="edu-bureau-login-heading"
-          class="mt-3 text-xl font-semibold tracking-tight text-black"
+          class="text-xl font-semibold tracking-tight text-black"
         >
           管理员登录
         </h2>
@@ -223,7 +218,7 @@ onUnmounted(() => {
       </button>
 
       <p class="mt-4 text-center text-[12px] leading-relaxed text-fg-muted">
-        已预填演示手机号与密码/验证码，可直接点击「登录」
+        已预填手机号与密码/验证码，可直接点击「登录」
       </p>
     </div>
   </div>

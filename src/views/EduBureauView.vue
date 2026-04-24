@@ -49,7 +49,7 @@ function logout() {
         <h1
           class="truncate text-[15px] font-semibold tracking-tight text-slate-900 sm:text-[16px]"
         >
-          缤果AI实验室融合看板
+          人工智能教育综合看板
         </h1>
       </RouterLink>
       <div

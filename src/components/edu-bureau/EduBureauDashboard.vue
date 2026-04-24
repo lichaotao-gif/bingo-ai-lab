@@ -91,8 +91,11 @@ const filteredStudents = computed((): BureauStudent[] => {
   return studentsForClassIds(ids);
 });
 
-/** 课程内实验个数（演示）：实验与测验均按此数量折算人次完成项 */
+/** 课程内实验个数：实验与测验均按此数量折算人次完成量 */
 const EXPERIMENTS_PER_STUDENT = 10;
+
+/** 每班开课总课时（与顶部「开课情况统计」一致） */
+const LESSON_HOURS_PER_CLASS = 40;
 
 function experimentDoneCount(s: BureauStudent): number {
   return Math.round((s.experimentPct / 100) * EXPERIMENTS_PER_STUDENT);
@@ -129,12 +132,58 @@ function aggregateDoneForStudents(stu: BureauStudent[]) {
     totalExpected > 0
       ? Math.min(100, Math.round((totalDone / totalExpected) * 100))
       : 0;
+  const experimentCompletionPct =
+    expExpected > 0
+      ? Math.min(100, Math.round((expDone / expExpected) * 100))
+      : 0;
+  const quizCompletionPct =
+    quizExpected > 0
+      ? Math.min(100, Math.round((quizDone / quizExpected) * 100))
+      : 0;
   return {
     totalDone,
     totalExpected,
     completionPct,
     fullyDoneCount,
     n,
+    experimentTotalCount: expExpected,
+    experimentCompletedCount: expDone,
+    experimentCompletionPct,
+    quizTotalCount: quizExpected,
+    quizCompletedCount: quizDone,
+    quizCompletionPct,
+  };
+}
+
+function buildProgressTileRow(
+  label: string,
+  stu: BureauStudent[],
+  /** 用于折算开课总课时（学校为该校班级数，班级为 1） */
+  classCountForLessons: number,
+) {
+  const agg = aggregateDoneForStudents(stu);
+  const totalLessonHours = classCountForLessons * LESSON_HOURS_PER_CLASS;
+  const completedLessonHours =
+    totalLessonHours > 0
+      ? Math.min(
+          totalLessonHours,
+          Math.round((totalLessonHours * agg.completionPct) / 100),
+        )
+      : 0;
+  const lessonHoursCompletionPct =
+    totalLessonHours > 0
+      ? Math.min(
+          100,
+          Math.round((completedLessonHours / totalLessonHours) * 100),
+        )
+      : 0;
+  return {
+    label,
+    classCountForLessons,
+    totalLessonHours,
+    completedLessonHours,
+    lessonHoursCompletionPct,
+    ...agg,
   };
 }
 
@@ -144,7 +193,8 @@ const kpi = computed(() => {
   const classesInScope = new Set<string>();
   let experimentCompletedSum = 0;
   let quizCompletedSum = 0;
-  let fullyCompletedStudentCount = 0;
+  let experimentFullyDoneStudentCount = 0;
+  let quizFullyDoneStudentCount = 0;
   for (const st of studs) {
     const cl = classById(st.classId);
     if (cl) {
@@ -153,8 +203,11 @@ const kpi = computed(() => {
     }
     experimentCompletedSum += experimentDoneCount(st);
     quizCompletedSum += quizDoneCount(st);
-    if (isExperimentAndQuizFullyDone(st)) {
-      fullyCompletedStudentCount += 1;
+    if (experimentDoneCount(st) === EXPERIMENTS_PER_STUDENT) {
+      experimentFullyDoneStudentCount += 1;
+    }
+    if (quizDoneCount(st) === EXPERIMENTS_PER_STUDENT) {
+      quizFullyDoneStudentCount += 1;
     }
   }
   const studentCount = studs.length;
@@ -169,6 +222,20 @@ const kpi = computed(() => {
           Math.round((totalItemsCompleted / totalItemsExpected) * 100),
         )
       : 0;
+  const experimentCompletionPct =
+    experimentExpectedSum > 0
+      ? Math.min(
+          100,
+          Math.round((experimentCompletedSum / experimentExpectedSum) * 100),
+        )
+      : 0;
+  const quizCompletionPct =
+    quizExpectedSum > 0
+      ? Math.min(
+          100,
+          Math.round((quizCompletedSum / quizExpectedSum) * 100),
+        )
+      : 0;
   return {
     schoolCount: schoolsInScope.size,
     classCount: classesInScope.size,
@@ -176,7 +243,39 @@ const kpi = computed(() => {
     totalItemsCompleted,
     totalItemsExpected,
     completionPct,
-    fullyCompletedStudentCount,
+    experimentFullyDoneStudentCount,
+    quizFullyDoneStudentCount,
+    experimentTotalCount: experimentExpectedSum,
+    experimentCompletedCount: experimentCompletedSum,
+    experimentCompletionPct,
+    quizTotalCount: quizExpectedSum,
+    quizCompletedCount: quizCompletedSum,
+    quizCompletionPct,
+  };
+});
+
+/** 总课时 = 当前筛选范围内班级数 × 每班课时；已完成与完成率与实验/测验整体进度联动 */
+const regionOpeningLessonStats = computed(() => {
+  const totalLessonHours = kpi.value.classCount * LESSON_HOURS_PER_CLASS;
+  const pct = kpi.value.completionPct;
+  const completedLessonHours =
+    totalLessonHours > 0
+      ? Math.min(
+          totalLessonHours,
+          Math.round((totalLessonHours * pct) / 100),
+        )
+      : 0;
+  const lessonHoursCompletionPct =
+    totalLessonHours > 0
+      ? Math.min(
+          100,
+          Math.round((completedLessonHours / totalLessonHours) * 100),
+        )
+      : 0;
+  return {
+    totalLessonHours,
+    completedLessonHours,
+    lessonHoursCompletionPct,
   };
 });
 
@@ -188,10 +287,7 @@ const progressTiles = computed(() => {
     }
     return classesForSchool(schoolId.value).map((c) => {
       const stu = studentsForClassIds(new Set([c.id]));
-      return {
-        label: c.name,
-        ...aggregateDoneForStudents(stu),
-      };
+      return buildProgressTileRow(c.name, stu, 1);
     });
   }
   return schoolsForScope(
@@ -203,17 +299,16 @@ const progressTiles = computed(() => {
       BUREAU_CLASSES.filter((c) => c.schoolId === sch.id).map((c) => c.id),
     );
     const stu = studentsForClassIds(cids);
-    return {
-      label: sch.name,
-      ...aggregateDoneForStudents(stu),
-    };
+    const classCountForLessons = classesForSchool(sch.id).length;
+    return buildProgressTileRow(sch.name, stu, classCountForLessons);
   });
 });
 
-/** 演示：当前筛选下「实验+测验均完成」人数，按周次平滑爬升曲线 */
-const completionTrendPoints = computed(() => {
-  const end = kpi.value.fullyCompletedStudentCount;
-  const weeks = 8;
+const TREND_WEEK_COUNT = 8;
+
+/** 按周次平滑爬升曲线（终点为当前筛选下该维度全完成人数） */
+function buildWeeklySmoothTrend(end: number): { label: string; value: number }[] {
+  const weeks = TREND_WEEK_COUNT;
   const out: { label: string; value: number }[] = [];
   const last = weeks - 1;
   for (let i = 0; i < weeks; i++) {
@@ -223,18 +318,27 @@ const completionTrendPoints = computed(() => {
     out.push({ label: `第${i + 1}周`, value: i === last ? end : v });
   }
   return out;
-});
+}
 
-const barChartRows = computed(() =>
+const experimentStudentTrendPoints = computed(() =>
+  buildWeeklySmoothTrend(kpi.value.experimentFullyDoneStudentCount),
+);
+
+const quizStudentTrendPoints = computed(() =>
+  buildWeeklySmoothTrend(kpi.value.quizFullyDoneStudentCount),
+);
+
+const schoolLessonChartRows = computed(() =>
   progressTiles.value.map((row) => ({
     label: row.label,
-    pct: row.completionPct,
-    sub: `${row.totalDone}/${row.totalExpected} 项`,
+    totalLessonHours: row.totalLessonHours,
+    completedLessonHours: row.completedLessonHours,
+    completionPct: row.lessonHoursCompletionPct,
   })),
 );
 
-const barChartTitle = computed(() =>
-  schoolId.value ? "各班级项完成率（%）" : "各学校项完成率（%）",
+const schoolLessonChartTitle = computed(() =>
+  schoolId.value ? "各班级开课情况" : "各学校开课情况",
 );
 
 /** 省 / 市 / 区：合并为一个级联下拉 */
@@ -497,96 +601,196 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 管辖概览 + 实验&测验完成数：同一行（大屏并排） -->
-    <div
-      class="grid gap-4 lg:grid-cols-12 lg:items-stretch"
-    >
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5">
+      <p class="mb-3 text-[12px] font-medium text-slate-500">
+        管辖范围概览
+      </p>
       <div
-        class="flex flex-col rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5 lg:col-span-5"
+        class="grid grid-cols-3 gap-2 rounded-xl bg-slate-50/80 p-3 sm:gap-3 sm:p-4"
       >
-        <p class="mb-3 text-[12px] font-medium text-slate-500">
-          管辖范围概览
+        <div class="min-w-0 text-center sm:text-left">
+          <p
+            class="text-[10px] font-medium leading-snug text-sky-800/85 sm:text-[11px]"
+          >
+            开通学校数量
+          </p>
+          <p class="mt-1 text-2xl font-bold tabular-nums text-sky-950 sm:text-3xl">
+            {{ kpi.schoolCount }}
+          </p>
+          <p class="text-[11px] text-slate-400">所</p>
+        </div>
+        <div
+          class="min-w-0 border-x border-slate-200/80 px-2 text-center sm:px-3 sm:text-left"
+        >
+          <p
+            class="text-[10px] font-medium leading-snug text-violet-800/85 sm:text-[11px]"
+          >
+            使用班级数量
+          </p>
+          <p class="mt-1 text-2xl font-bold tabular-nums text-violet-950 sm:text-3xl">
+            {{ kpi.classCount }}
+          </p>
+          <p class="text-[11px] text-slate-400">个</p>
+        </div>
+        <div class="min-w-0 text-center sm:text-left">
+          <p
+            class="text-[10px] font-medium leading-snug text-emerald-800/85 sm:text-[11px]"
+          >
+            学生数量
+          </p>
+          <p class="mt-1 text-2xl font-bold tabular-nums text-emerald-950 sm:text-3xl">
+            {{ kpi.studentCount }}
+          </p>
+          <p class="text-[11px] text-slate-400">人</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 开课 + 实验/测验统计（md+ 同一行、紧凑） -->
+    <div class="grid gap-3 md:grid-cols-2 md:items-stretch md:gap-4">
+      <section
+        class="flex min-h-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-3 shadow-sm sm:p-4"
+      >
+        <h3 class="text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm">
+          开课情况统计（班）
+        </h3>
+        <p class="mt-0.5 text-[11px] leading-snug text-slate-500">
+          筛选范围内 · 每班 {{ LESSON_HOURS_PER_CLASS }} 课时
         </p>
         <div
-          class="grid flex-1 grid-cols-3 gap-2 rounded-xl bg-slate-50/80 p-3 sm:gap-3 sm:p-4"
+          class="mt-2 grid flex-1 grid-cols-3 gap-1.5 rounded-lg bg-slate-50/90 p-2 sm:gap-2 sm:p-2.5"
         >
-          <div class="text-center sm:text-left">
-            <p class="text-[11px] text-sky-800/85">学校</p>
-            <p class="mt-1 text-2xl font-bold tabular-nums text-sky-950 sm:text-3xl">
-              {{ kpi.schoolCount }}
+          <div class="min-w-0 text-center sm:text-left">
+            <p class="text-[9px] font-medium leading-tight text-amber-900/85 sm:text-[10px]">
+              总课时数
             </p>
-            <p class="text-[11px] text-slate-400">所</p>
-          </div>
-          <div class="border-x border-slate-200/80 px-2 text-center sm:px-3 sm:text-left">
-            <p class="text-[11px] text-violet-800/85">班级</p>
-            <p class="mt-1 text-2xl font-bold tabular-nums text-violet-950 sm:text-3xl">
-              {{ kpi.classCount }}
-            </p>
-            <p class="text-[11px] text-slate-400">个</p>
-          </div>
-          <div class="text-center sm:text-left">
-            <p class="text-[11px] text-emerald-800/85">学生</p>
-            <p class="mt-1 text-2xl font-bold tabular-nums text-emerald-950 sm:text-3xl">
-              {{ kpi.studentCount }}
-            </p>
-            <p class="text-[11px] text-slate-400">人</p>
-          </div>
-        </div>
-      </div>
-
-      <div
-        class="flex flex-col rounded-2xl border border-indigo-200/70 bg-gradient-to-br from-indigo-50/95 via-white to-violet-50/40 p-4 shadow-sm sm:p-5 lg:col-span-7"
-      >
-        <div class="mb-3 flex items-start justify-between gap-3">
-          <p class="min-w-0 text-[13px] font-semibold text-indigo-950">
-            实验 &amp; 测验 · 完成情况
-          </p>
-          <p
-            class="shrink-0 text-right text-[11px] leading-snug text-slate-500"
-          >
-            项（实验+测验）
-          </p>
-        </div>
-
-        <div class="flex-1 tabular-nums">
-          <p class="text-[11px] text-indigo-900/70">实验与测验 · 累计完成 / 应完成</p>
-          <p class="mt-1 flex flex-wrap items-baseline gap-1">
-            <span class="text-3xl font-bold tracking-tight text-indigo-800 sm:text-[2.1rem]">{{
-              kpi.totalItemsCompleted
-            }}</span>
-            <span class="text-lg text-indigo-300">/</span>
-            <span class="text-xl font-semibold text-slate-700">{{
-              kpi.totalItemsExpected
-            }}</span>
-            <span class="text-[12px] text-slate-500">项</span>
-          </p>
-          <div
-            class="mt-3 flex items-center gap-2"
-          >
-            <div
-              class="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-indigo-100/90"
-              role="presentation"
+            <p
+              class="mt-0.5 text-xl font-bold tabular-nums leading-none text-amber-950 sm:text-2xl"
             >
-              <div
-                class="h-full rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 transition-[width]"
-                :style="{
-                  width: `${
-                    kpi.totalItemsExpected > 0
-                      ? Math.min(
-                          100,
-                          (kpi.totalItemsCompleted / kpi.totalItemsExpected) * 100,
-                        )
-                      : 0
-                  }%`,
-                }"
-              />
-            </div>
-            <span
-              class="shrink-0 min-w-[2.75rem] text-right text-[13px] font-bold tabular-nums text-indigo-800"
-            >{{ kpi.completionPct }}%</span>
+              {{ regionOpeningLessonStats.totalLessonHours }}
+            </p>
+            <p class="mt-0.5 text-[10px] text-slate-400">课时</p>
+          </div>
+          <div
+            class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+          >
+            <p class="text-[9px] font-medium leading-tight text-teal-900/85 sm:text-[10px]">
+              已完成课时数
+            </p>
+            <p
+              class="mt-0.5 text-xl font-bold tabular-nums leading-none text-teal-950 sm:text-2xl"
+            >
+              {{ regionOpeningLessonStats.completedLessonHours }}
+            </p>
+            <p class="mt-0.5 text-[10px] text-slate-400">课时</p>
+          </div>
+          <div
+            class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+          >
+            <p class="text-[9px] font-medium leading-tight text-rose-900/80 sm:text-[10px]">
+              完成率
+            </p>
+            <p
+              class="mt-0.5 text-xl font-bold tabular-nums leading-none text-rose-950 sm:text-2xl"
+            >
+              {{ regionOpeningLessonStats.lessonHoursCompletionPct }}%
+            </p>
           </div>
         </div>
-      </div>
+      </section>
+
+      <section
+        class="flex min-h-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-3 shadow-sm sm:p-4"
+      >
+        <h3 class="text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm">
+          实验情况统计（学生）
+        </h3>
+        <p class="mt-0.5 text-[11px] leading-snug text-slate-500">
+          筛选范围内 · 每人各 {{ EXPERIMENTS_PER_STUDENT }} 个实验与测验
+        </p>
+        <div
+          class="mt-2 space-y-1.5 rounded-lg bg-slate-50/90 p-2 sm:space-y-2 sm:p-2.5"
+        >
+          <div class="grid grid-cols-3 gap-1.5 sm:gap-2">
+            <div class="min-w-0 text-center sm:text-left">
+              <p class="text-[9px] font-medium leading-tight text-indigo-900/85 sm:text-[10px]">
+                总实验数
+              </p>
+              <p
+                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-indigo-950 sm:text-2xl"
+              >
+                {{ kpi.experimentTotalCount }}
+              </p>
+              <p class="mt-0.5 text-[10px] text-slate-400">个</p>
+            </div>
+            <div
+              class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+            >
+              <p class="text-[9px] font-medium leading-tight text-cyan-900/85 sm:text-[10px]">
+                已完成实验数
+              </p>
+              <p
+                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-cyan-950 sm:text-2xl"
+              >
+                {{ kpi.experimentCompletedCount }}
+              </p>
+              <p class="mt-0.5 text-[10px] text-slate-400">个</p>
+            </div>
+            <div
+              class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+            >
+              <p class="text-[9px] font-medium leading-tight text-fuchsia-900/80 sm:text-[10px]">
+                实验完成率
+              </p>
+              <p
+                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-fuchsia-950 sm:text-2xl"
+              >
+                {{ kpi.experimentCompletionPct }}%
+              </p>
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-3 gap-1.5 border-t border-slate-200/70 pt-1.5 sm:gap-2 sm:pt-2"
+          >
+            <div class="min-w-0 text-center sm:text-left">
+              <p class="text-[9px] font-medium leading-tight text-orange-900/85 sm:text-[10px]">
+                测验数
+              </p>
+              <p
+                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-orange-950 sm:text-2xl"
+              >
+                {{ kpi.quizTotalCount }}
+              </p>
+              <p class="mt-0.5 text-[10px] text-slate-400">个</p>
+            </div>
+            <div
+              class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+            >
+              <p class="text-[9px] font-medium leading-tight text-amber-900/85 sm:text-[10px]">
+                测验完成数
+              </p>
+              <p
+                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-amber-950 sm:text-2xl"
+              >
+                {{ kpi.quizCompletedCount }}
+              </p>
+              <p class="mt-0.5 text-[10px] text-slate-400">个</p>
+            </div>
+            <div
+              class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+            >
+              <p class="text-[9px] font-medium leading-tight text-violet-900/85 sm:text-[10px]">
+                测验完成率
+              </p>
+              <p
+                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-violet-950 sm:text-2xl"
+              >
+                {{ kpi.quizCompletionPct }}%
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- 数据视图（在辖区进度卡片之上） -->
@@ -597,19 +801,15 @@ onUnmounted(() => {
             数据视图
           </h3>
           <p class="mt-0.5 text-[12px] text-slate-500">
-            趋势为演示累计曲线；柱状为各校/各班项完成率（%）
+            左：实验与测验全完成人数分维度按周趋势；右：各校（班）开课课时与完成率
           </p>
         </div>
-        <p
-          class="shrink-0 text-right text-[11px] leading-snug text-slate-500"
-        >
-          项（实验+测验）
-        </p>
       </div>
       <EduBureauDataCharts
-        :trend-points="completionTrendPoints"
-        :bar-rows="barChartRows"
-        :bar-title="barChartTitle"
+        :experiment-trend-points="experimentStudentTrendPoints"
+        :quiz-trend-points="quizStudentTrendPoints"
+        :school-lesson-rows="schoolLessonChartRows"
+        :school-lesson-title="schoolLessonChartTitle"
       />
     </section>
 
@@ -621,50 +821,77 @@ onUnmounted(() => {
             辖区{{ schoolId ? "班级" : "学校" }}统计进度
           </h3>
           <p class="mt-0.5 text-[12px] text-slate-500">
-            {{ schoolId ? "当前学校下各班级" : "按学校汇总" }} · 实验与测验合并为累计项；百分比为项完成率
+            {{ schoolId ? "当前学校下各班级" : "按学校汇总" }} · 卡片：开课课时（班）、实验与测验（学生）
           </p>
         </div>
-        <p
-          class="shrink-0 text-right text-[11px] leading-snug text-slate-500"
-        >
-          项（实验+测验）
-        </p>
       </div>
       <ul
-        class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
       >
         <li
           v-for="(row, i) in progressTiles"
           :key="i"
-          class="flex max-w-full flex-col rounded-xl border border-slate-200/90 bg-white p-3 shadow-sm ring-1 ring-black/[0.02]"
+          class="flex max-w-full flex-col rounded-2xl border border-slate-200/90 bg-white p-4 shadow-md ring-1 ring-black/[0.03] sm:p-5"
         >
           <p
-            class="line-clamp-2 min-h-[2.5rem] text-[13px] font-medium leading-snug text-slate-900"
+            class="line-clamp-2 text-[15px] font-semibold leading-snug text-slate-900 sm:text-base"
             :title="row.label"
           >
             {{ row.label }}
           </p>
-          <p class="mt-2 text-[11px] text-slate-400">{{ row.n }} 人</p>
-          <div class="mt-2 space-y-2 border-t border-slate-100 pt-2 text-[12px]">
-            <div class="flex justify-between gap-2 tabular-nums">
-              <span class="text-slate-600">实验与测验</span>
-              <span class="font-semibold text-indigo-800">
-                {{ row.totalDone }} / {{ row.totalExpected }} 项
-              </span>
-            </div>
-            <div class="flex items-center gap-2">
+          <p class="mt-2 text-[12px] text-slate-500">
+            <span class="tabular-nums">{{ row.n }}</span> 人
+            <template v-if="!schoolId">
+              <span class="text-slate-300"> · </span>
+              <span class="tabular-nums">{{ row.classCountForLessons }}</span>
+              个班
+            </template>
+          </p>
+
+          <div class="mt-4 space-y-4 border-t border-slate-100 pt-4 text-[12px]">
+            <div>
+              <p class="text-[11px] font-semibold text-amber-900/90">
+                开课课时（班）
+              </p>
               <div
-                class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-100"
-                role="presentation"
+                class="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 tabular-nums text-slate-700"
               >
-                <div
-                  class="h-full rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 transition-[width]"
-                  :style="{ width: `${row.completionPct}%` }"
-                />
+                <span>总 <strong class="text-slate-900">{{ row.totalLessonHours }}</strong> 课时</span>
+                <span>已完成 <strong class="text-teal-800">{{ row.completedLessonHours }}</strong> 课时</span>
+                <span class="text-slate-500"
+                  >完成率 <strong class="text-rose-800">{{ row.lessonHoursCompletionPct }}%</strong></span
+                >
               </div>
-              <span class="shrink-0 text-[11px] font-bold tabular-nums text-indigo-800"
-                >{{ row.completionPct }}%</span
+            </div>
+
+            <div>
+              <p class="text-[11px] font-semibold text-indigo-900/90">
+                实验（学生）
+              </p>
+              <div
+                class="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 tabular-nums text-slate-700"
               >
+                <span>总 <strong class="text-slate-900">{{ row.experimentTotalCount }}</strong> 个</span>
+                <span>已完成 <strong class="text-cyan-800">{{ row.experimentCompletedCount }}</strong> 个</span>
+                <span class="text-slate-500"
+                  >完成率 <strong class="text-fuchsia-800">{{ row.experimentCompletionPct }}%</strong></span
+                >
+              </div>
+            </div>
+
+            <div>
+              <p class="text-[11px] font-semibold text-orange-900/90">
+                测验（学生）
+              </p>
+              <div
+                class="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 tabular-nums text-slate-700"
+              >
+                <span>总 <strong class="text-slate-900">{{ row.quizTotalCount }}</strong> 个</span>
+                <span>已完成 <strong class="text-amber-800">{{ row.quizCompletedCount }}</strong> 个</span>
+                <span class="text-slate-500"
+                  >完成率 <strong class="text-orange-800">{{ row.quizCompletionPct }}%</strong></span
+                >
+              </div>
             </div>
           </div>
         </li>

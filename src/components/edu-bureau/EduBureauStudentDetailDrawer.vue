@@ -65,7 +65,7 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
             class="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-5 py-4"
           >
             <div class="min-w-0">
-              <p class="text-[12px] text-slate-500">学生档案（演示）</p>
+              <p class="text-[12px] text-slate-500">学生档案</p>
               <h2
                 id="stu-detail-title"
                 class="mt-0.5 truncate text-lg font-semibold text-slate-900"

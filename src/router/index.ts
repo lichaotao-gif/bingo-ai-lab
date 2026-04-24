@@ -21,7 +21,7 @@ const router = createRouter({
       path: "/edu-bureau",
       name: "edu-bureau",
       component: () => import("@/views/EduBureauView.vue"),
-      meta: { title: "缤果AI实验室融合看板" },
+      meta: { title: "人工智能教育综合看板" },
     },
     {
       path: "/",
@@ -91,7 +91,7 @@ router.afterEach((to) => {
     return;
   }
   if (to.name === "edu-bureau") {
-    document.title = "缤果AI实验室融合看板";
+    document.title = "人工智能教育综合看板";
     return;
   }
   const page = (to.meta.title as string) ?? "首页";

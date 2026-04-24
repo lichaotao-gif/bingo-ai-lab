@@ -16,7 +16,7 @@ const route = useRoute();
 const router = useRouter();
 const { avatarUrl } = useCartoonAvatar();
 
-/** 新标签页打开区域统计（独立看板页） */
+/** 新标签页打开综合看板（独立页） */
 const eduBureauHref = router.resolve({ name: "edu-bureau" }).href;
 
 /** 从首页「我的 AI 实验」进入实验列表 / 统计时携带，用于侧栏保持「我的AI实验」高亮 */
@@ -261,7 +261,7 @@ function openBingoAiLab() {
                   />
                 </svg>
               </span>
-              区域统计
+              统计
             </a>
           </div>
         </div>

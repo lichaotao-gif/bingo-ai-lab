@@ -2,59 +2,62 @@
 import { computed } from "vue";
 
 const props = defineProps<{
-  trendPoints: { label: string; value: number }[];
-  barRows: { label: string; pct: number; sub: string }[];
-  barTitle: string;
+  experimentTrendPoints: { label: string; value: number }[];
+  quizTrendPoints: { label: string; value: number }[];
+  schoolLessonRows: {
+    label: string;
+    totalLessonHours: number;
+    completedLessonHours: number;
+    completionPct: number;
+  }[];
+  schoolLessonTitle: string;
 }>();
 
-const trend = computed(() => {
-  const pts = props.trendPoints;
+const dualTrend = computed(() => {
+  const exp = props.experimentTrendPoints;
+  const quiz = props.quizTrendPoints;
   const W = 400;
-  const H = 112;
-  const padL = 40;
-  const padR = 16;
+  const H = 124;
+  const padL = 42;
+  const padR = 12;
   const padT = 12;
-  const padB = 8;
-  if (!pts.length) {
+  const padB = 10;
+  if (!exp.length || !quiz.length || exp.length !== quiz.length) {
     return {
-      lineD: "",
-      areaD: "",
-      coords: [] as { x: number; y: number }[],
-      maxY: 1,
+      kind: "empty" as const,
       W,
       H,
-      padL,
-      padT,
-      innerW: W - padL - padR,
-      innerH: H - padT - padB,
     };
   }
-  const maxY = Math.max(1, ...pts.map((p) => p.value));
+  const maxY = Math.max(1, ...exp.map((p) => p.value), ...quiz.map((p) => p.value));
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
-  const n = pts.length;
-  const coords = pts.map((p, i) => {
-    const x = padL + (n === 1 ? innerW / 2 : (i / (n - 1)) * innerW);
-    const y = padT + innerH - (p.value / maxY) * innerH;
-    return { x, y };
-  });
-  const lineD = coords
-    .map((c, i) => `${i === 0 ? "M" : "L"} ${c.x} ${c.y}`)
-    .join(" ");
-  const first = coords[0]!;
-  const last = coords[coords.length - 1]!;
-  const areaD = `${lineD} L ${last.x} ${padT + innerH} L ${first.x} ${padT + innerH} Z`;
+  const n = exp.length;
+  function toCoords(pts: typeof exp) {
+    return pts.map((p, i) => {
+      const x =
+        padL + (n === 1 ? innerW / 2 : (i / Math.max(1, n - 1)) * innerW);
+      const y = padT + innerH - (p.value / maxY) * innerH;
+      return { x, y };
+    });
+  }
+  const expCoords = toCoords(exp);
+  const quizCoords = toCoords(quiz);
+  const lineD = (coords: { x: number; y: number }[]) =>
+    coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x} ${c.y}`).join(" ");
   return {
-    lineD,
-    areaD,
-    coords,
+    kind: "ok" as const,
     maxY,
     W,
     H,
     padL,
     padT,
-    innerW,
     innerH,
+    expLineD: lineD(expCoords),
+    quizLineD: lineD(quizCoords),
+    expCoords,
+    quizCoords,
+    weekLabels: exp.map((p) => p.label),
   };
 });
 </script>
@@ -64,14 +67,32 @@ const trend = computed(() => {
     <div
       class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5"
     >
-      <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+      <div class="mb-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <h3 class="text-[14px] font-semibold text-slate-900">
-          学生完成人数趋势
+          学生实验与测验完成人数
         </h3>
-        <span class="text-[11px] text-slate-400">演示 · 按周次累计</span>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-600">
+          <span class="inline-flex items-center gap-1.5">
+            <span
+              class="size-2 shrink-0 rounded-full bg-sky-600"
+              aria-hidden="true"
+            />
+            实验全完成人数
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <span
+              class="size-2 shrink-0 rounded-full bg-amber-600"
+              aria-hidden="true"
+            />
+            测验全完成人数
+          </span>
+        </div>
       </div>
+      <p class="mb-2 text-[11px] text-slate-400">
+        按周次累计；折线终点为当前筛选下实验、测验分别「全完成」人数
+      </p>
       <div
-        v-if="trendPoints.length === 0"
+        v-if="dualTrend.kind === 'empty'"
         class="flex h-[200px] items-center justify-center text-[13px] text-slate-400"
       >
         暂无数据
@@ -79,58 +100,50 @@ const trend = computed(() => {
       <div v-else>
         <svg
           class="w-full text-slate-800"
-          :viewBox="`0 0 ${trend.W} ${trend.H}`"
+          :viewBox="`0 0 ${dualTrend.W} ${dualTrend.H}`"
           preserveAspectRatio="xMidYMid meet"
           aria-hidden="true"
         >
-          <defs>
-            <linearGradient
-              id="edu-trend-fill"
-              x1="0"
-              y1="0"
-              x2="0"
-              y2="1"
-            >
-              <stop offset="0%" stop-color="rgb(14 165 233)" stop-opacity="0.32" />
-              <stop offset="100%" stop-color="rgb(14 165 233)" stop-opacity="0.02" />
-            </linearGradient>
-          </defs>
           <text
-            :x="trend.padL - 6"
-            :y="trend.padT + 4"
+            :x="dualTrend.padL - 6"
+            :y="dualTrend.padT + 4"
             class="fill-slate-400 text-[9px]"
             text-anchor="end"
-            >{{ trend.maxY }}</text
+            >{{ dualTrend.maxY }}</text
           >
           <text
-            :x="trend.padL - 6"
-            :y="trend.padT + trend.innerH / 2 + 4"
+            :x="dualTrend.padL - 6"
+            :y="dualTrend.padT + dualTrend.innerH / 2 + 4"
             class="fill-slate-400 text-[9px]"
             text-anchor="end"
-            >{{ Math.round(trend.maxY / 2) }}</text
+            >{{ Math.round(dualTrend.maxY / 2) }}</text
           >
           <text
-            :x="trend.padL - 6"
-            :y="trend.padT + trend.innerH + 4"
+            :x="dualTrend.padL - 6"
+            :y="dualTrend.padT + dualTrend.innerH + 4"
             class="fill-slate-400 text-[9px]"
             text-anchor="end"
             >0</text
           >
           <path
-            :d="trend.areaD"
-            fill="url(#edu-trend-fill)"
-          />
-          <path
-            :d="trend.lineD"
+            :d="dualTrend.expLineD"
             fill="none"
             stroke="rgb(2 132 199)"
             stroke-width="2.5"
             stroke-linecap="round"
             stroke-linejoin="round"
           />
+          <path
+            :d="dualTrend.quizLineD"
+            fill="none"
+            stroke="rgb(217 119 6)"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
           <circle
-            v-for="(c, i) in trend.coords"
-            :key="i"
+            v-for="(c, i) in dualTrend.expCoords"
+            :key="`e-${i}`"
             :cx="c.x"
             :cy="c.y"
             r="3.5"
@@ -138,16 +151,26 @@ const trend = computed(() => {
             stroke="rgb(2 132 199)"
             stroke-width="2"
           />
+          <circle
+            v-for="(c, i) in dualTrend.quizCoords"
+            :key="`q-${i}`"
+            :cx="c.x"
+            :cy="c.y"
+            r="3.5"
+            fill="white"
+            stroke="rgb(217 119 6)"
+            stroke-width="2"
+          />
         </svg>
         <div
           class="mt-1 flex justify-between gap-1 border-t border-slate-100 pt-2 text-[10px] text-slate-500"
         >
           <span
-            v-for="(p, i) in trendPoints"
+            v-for="(lab, i) in dualTrend.weekLabels"
             :key="i"
             class="min-w-0 flex-1 truncate text-center"
-            :title="p.label"
-            >{{ p.label }}</span
+            :title="lab"
+            >{{ lab }}</span
           >
         </div>
       </div>
@@ -158,12 +181,12 @@ const trend = computed(() => {
     >
       <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h3 class="text-[14px] font-semibold text-slate-900">
-          {{ barTitle }}
+          {{ schoolLessonTitle }}
         </h3>
-        <span class="text-[11px] text-slate-400">占比</span>
+        <span class="text-[11px] text-slate-400">班 · 课时完成率</span>
       </div>
       <div
-        v-if="barRows.length === 0"
+        v-if="schoolLessonRows.length === 0"
         class="flex h-[200px] items-center justify-center text-[13px] text-slate-400"
       >
         暂无数据
@@ -173,7 +196,7 @@ const trend = computed(() => {
         class="edu-bar-scroll max-h-[220px] space-y-3 overflow-y-auto pr-1"
       >
         <li
-          v-for="(row, i) in barRows"
+          v-for="(row, i) in schoolLessonRows"
           :key="i"
           class="min-w-0"
         >
@@ -183,16 +206,20 @@ const trend = computed(() => {
               :title="row.label"
               >{{ row.label }}</span
             >
-            <span class="shrink-0 tabular-nums text-slate-500">{{ row.sub }}</span>
+            <span
+              class="shrink-0 tabular-nums text-[11px] text-slate-500"
+            >
+              总 {{ row.totalLessonHours }} 课时 · 已 {{ row.completedLessonHours }}
+            </span>
           </div>
-          <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div class="h-2.5 w-full overflow-hidden rounded-full bg-amber-100/90">
             <div
-              class="h-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 transition-[width] duration-500"
-              :style="{ width: `${Math.min(100, row.pct)}%` }"
+              class="h-full rounded-full bg-gradient-to-r from-amber-500 to-teal-600 transition-[width] duration-500"
+              :style="{ width: `${Math.min(100, row.completionPct)}%` }"
             />
           </div>
-          <p class="mt-0.5 text-right text-[11px] tabular-nums text-slate-400">
-            {{ row.pct }}%
+          <p class="mt-0.5 text-right text-[11px] tabular-nums text-slate-500">
+            完成率 {{ row.completionPct }}%
           </p>
         </li>
       </ul>
