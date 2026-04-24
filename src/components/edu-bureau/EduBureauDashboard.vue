@@ -628,12 +628,12 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5">
-      <p class="mb-3 text-[12px] font-medium text-slate-500">
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-sm sm:p-4">
+      <p class="mb-2 text-[12px] font-medium text-slate-500">
         管辖范围概览
       </p>
       <div
-        class="grid grid-cols-3 gap-2 rounded-xl bg-slate-50/80 p-3 sm:gap-3 sm:p-4"
+        class="grid grid-cols-3 gap-2 rounded-xl bg-slate-50/80 p-2 sm:gap-3 sm:p-3"
       >
         <div class="min-w-0 text-center sm:text-left">
           <p
@@ -641,10 +641,10 @@ onUnmounted(() => {
           >
             开通学校数量
           </p>
-          <p class="mt-1 text-2xl font-bold tabular-nums text-sky-950 sm:text-3xl">
+          <p class="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-sky-950 sm:text-3xl">
             {{ kpi.schoolCount }}
+            <span class="align-baseline text-[11px] font-medium text-slate-400 sm:text-[12px]">所</span>
           </p>
-          <p class="text-[11px] text-slate-400">所</p>
         </div>
         <div
           class="min-w-0 border-x border-slate-200/80 px-2 text-center sm:px-3 sm:text-left"
@@ -654,10 +654,10 @@ onUnmounted(() => {
           >
             使用班级数量
           </p>
-          <p class="mt-1 text-2xl font-bold tabular-nums text-violet-950 sm:text-3xl">
+          <p class="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-violet-950 sm:text-3xl">
             {{ kpi.classCount }}
+            <span class="align-baseline text-[11px] font-medium text-slate-400 sm:text-[12px]">个</span>
           </p>
-          <p class="text-[11px] text-slate-400">个</p>
         </div>
         <div class="min-w-0 text-center sm:text-left">
           <p
@@ -665,18 +665,18 @@ onUnmounted(() => {
           >
             学生数量
           </p>
-          <p class="mt-1 text-2xl font-bold tabular-nums text-emerald-950 sm:text-3xl">
+          <p class="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-emerald-950 sm:text-3xl">
             {{ kpi.studentCount }}
+            <span class="align-baseline text-[11px] font-medium text-slate-400 sm:text-[12px]">人</span>
           </p>
-          <p class="text-[11px] text-slate-400">人</p>
         </div>
       </div>
     </div>
 
     <!-- 开课 + 实验/测验统计（md+ 同一行、紧凑） -->
-    <div class="grid gap-3 md:grid-cols-2 md:items-stretch md:gap-4">
+    <div class="grid gap-2 md:grid-cols-2 md:items-stretch md:gap-3">
       <section
-        class="flex min-h-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-3 shadow-sm sm:p-4"
+        class="flex min-h-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-sm sm:p-3"
       >
         <h3 class="text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm">
           开课情况统计（班）
@@ -685,18 +685,18 @@ onUnmounted(() => {
           筛选范围内 · 每班 {{ LESSON_HOURS_PER_CLASS }} 课时
         </p>
         <div
-          class="mt-2 grid flex-1 grid-cols-3 gap-1.5 rounded-lg bg-slate-50/90 p-2 sm:gap-2 sm:p-2.5"
+          class="mt-1.5 grid flex-1 grid-cols-3 gap-1.5 rounded-lg bg-slate-50/90 p-1.5 sm:gap-2 sm:p-2"
         >
           <div class="min-w-0 text-center sm:text-left">
             <p class="text-[9px] font-medium leading-tight text-amber-900/85 sm:text-[10px]">
               总课时数
             </p>
             <p
-              class="mt-0.5 text-xl font-bold tabular-nums leading-none text-amber-950 sm:text-2xl"
+              class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-amber-950 sm:text-2xl"
             >
               {{ regionOpeningLessonStats.totalLessonHours }}
+              <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">课时</span>
             </p>
-            <p class="mt-0.5 text-[10px] text-slate-400">课时</p>
           </div>
           <div
             class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
@@ -705,11 +705,11 @@ onUnmounted(() => {
               已完成课时数
             </p>
             <p
-              class="mt-0.5 text-xl font-bold tabular-nums leading-none text-teal-950 sm:text-2xl"
+              class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-teal-950 sm:text-2xl"
             >
               {{ regionOpeningLessonStats.completedLessonHours }}
+              <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">课时</span>
             </p>
-            <p class="mt-0.5 text-[10px] text-slate-400">课时</p>
           </div>
           <div
             class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
@@ -727,7 +727,7 @@ onUnmounted(() => {
       </section>
 
       <section
-        class="flex min-h-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-3 shadow-sm sm:p-4"
+        class="flex min-h-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-sm sm:p-3"
       >
         <h3 class="text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm">
           实验情况统计（学生）
@@ -736,7 +736,7 @@ onUnmounted(() => {
           筛选范围内 · 每人各 {{ EXPERIMENTS_PER_STUDENT }} 个实验与测验
         </p>
         <div
-          class="mt-2 space-y-1.5 rounded-lg bg-slate-50/90 p-2 sm:space-y-2 sm:p-2.5"
+          class="mt-1.5 space-y-1 rounded-lg bg-slate-50/90 p-1.5 sm:p-2"
         >
           <div class="grid grid-cols-3 gap-1.5 sm:gap-2">
             <div class="min-w-0 text-center sm:text-left">
@@ -744,11 +744,11 @@ onUnmounted(() => {
                 总实验数
               </p>
               <p
-                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-indigo-950 sm:text-2xl"
+                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-indigo-950 sm:text-2xl"
               >
                 {{ kpi.experimentTotalCount }}
+                <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">个</span>
               </p>
-              <p class="mt-0.5 text-[10px] text-slate-400">个</p>
             </div>
             <div
               class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
@@ -757,11 +757,11 @@ onUnmounted(() => {
                 已完成实验数
               </p>
               <p
-                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-cyan-950 sm:text-2xl"
+                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-cyan-950 sm:text-2xl"
               >
                 {{ kpi.experimentCompletedCount }}
+                <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">个</span>
               </p>
-              <p class="mt-0.5 text-[10px] text-slate-400">个</p>
             </div>
             <div
               class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
@@ -777,18 +777,18 @@ onUnmounted(() => {
             </div>
           </div>
           <div
-            class="grid grid-cols-3 gap-1.5 border-t border-slate-200/70 pt-1.5 sm:gap-2 sm:pt-2"
+            class="grid grid-cols-3 gap-1.5 border-t border-slate-200/70 pt-1 sm:gap-2"
           >
             <div class="min-w-0 text-center sm:text-left">
               <p class="text-[9px] font-medium leading-tight text-orange-900/85 sm:text-[10px]">
                 测验数
               </p>
               <p
-                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-orange-950 sm:text-2xl"
+                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-orange-950 sm:text-2xl"
               >
                 {{ kpi.quizTotalCount }}
+                <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">个</span>
               </p>
-              <p class="mt-0.5 text-[10px] text-slate-400">个</p>
             </div>
             <div
               class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
@@ -797,11 +797,11 @@ onUnmounted(() => {
                 测验完成数
               </p>
               <p
-                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-amber-950 sm:text-2xl"
+                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-amber-950 sm:text-2xl"
               >
                 {{ kpi.quizCompletedCount }}
+                <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">个</span>
               </p>
-              <p class="mt-0.5 text-[10px] text-slate-400">个</p>
             </div>
             <div
               class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"

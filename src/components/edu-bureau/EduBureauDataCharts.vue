@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 type BureauTrendPoint = {
   label: string;
@@ -10,6 +10,18 @@ type BureauTrendPoint = {
 type BureauSchoolLessonDayPoint = {
   completed: number;
   total: number;
+};
+
+type SchoolLessonTooltip = {
+  x: number;
+  y: number;
+  label: string;
+  title: string;
+  dayText: string;
+  completed: number;
+  total: number;
+  completionPct: number;
+  color: string;
 };
 
 const props = defineProps<{
@@ -44,6 +56,30 @@ const TOTAL_STROKE_PALETTE = [
   "rgb(251 146 60)",
   "rgb(129 140 248)",
 ];
+
+const schoolLessonTooltip = ref<SchoolLessonTooltip | null>(null);
+
+function showSchoolLessonTooltip(
+  event: MouseEvent,
+  payload: Omit<SchoolLessonTooltip, "x" | "y">,
+) {
+  const target = event.currentTarget as SVGElement | null;
+  const svg = target?.ownerSVGElement;
+  const wrapper = svg?.parentElement;
+  const rect = wrapper?.getBoundingClientRect();
+  if (!rect) {
+    return;
+  }
+  schoolLessonTooltip.value = {
+    ...payload,
+    x: Math.min(rect.width - 12, Math.max(12, event.clientX - rect.left + 12)),
+    y: Math.min(rect.height - 12, Math.max(12, event.clientY - rect.top + 12)),
+  };
+}
+
+function hideSchoolLessonTooltip() {
+  schoolLessonTooltip.value = null;
+}
 
 /** 与 schoolLessonDailyChart 画布高度、上下留白一致，左右两图比例对齐 */
 const CHART_VIEW_H = 196;
@@ -99,22 +135,21 @@ const dualTrend = computed(() => {
   };
 });
 
-/** 各校（班）开课：14 天；曲线末端标注校名；整条线可悬停查看说明 */
+/** 各校（班）开课：14 天；校名通过 hover 浮层显示，不常驻占用曲线区域 */
 const schoolLessonDailyChart = computed(() => {
   const rows = props.schoolLessonDailyRows;
   const D = rows[0]?.series.length ?? 0;
   const padL = 46;
-  const padR = 10;
+  const padR = 16;
   const padT = CHART_PAD_T;
   const padB = CHART_PAD_B;
-  const labelColumn = 102;
   const H = CHART_VIEW_H;
+  const W = 440;
   if (!rows.length || D === 0) {
-    return { kind: "empty" as const, W: 440, H: CHART_VIEW_H };
+    return { kind: "empty" as const, W, H: CHART_VIEW_H };
   }
-  const plotInnerW = Math.max(200, (D - 1) * 22);
+  const plotInnerW = W - padL - padR;
   const plotRight = padL + plotInnerW;
-  const W = plotRight + labelColumn + padR;
   let maxY = 1;
   for (const r of rows) {
     for (const p of r.series) {
@@ -140,13 +175,18 @@ const schoolLessonDailyChart = computed(() => {
     strokeDone: string;
     strokeTotal: string;
     lastCoord: { x: number; y: number };
-    doneCoords: { x: number; y: number }[];
-    dayPointTitles: string[];
+    donePoints: {
+      x: number;
+      y: number;
+      dayText: string;
+      completed: number;
+      total: number;
+    }[];
     hoverTitleDone: string;
     hoverTitleTotal: string;
-    labelX: number;
-    labelY: number;
-    leaderX2: number;
+    lastCompleted: number;
+    lastTotal: number;
+    completionPct: number;
   };
   const schools: Sch[] = rows.map((row, si) => {
     const totalCoords = row.series.map((p, i) => ({
@@ -159,9 +199,16 @@ const schoolLessonDailyChart = computed(() => {
     }));
     const lastPt = row.series[D - 1]!;
     const lastCoord = doneCoords[D - 1]!;
-    const dayPointTitles = row.series.map((p, di) => {
+    const donePoints = row.series.map((p, di) => {
       const dn = di + 1;
-      return `${row.label} · 第 ${dn} 天｜已完 ${p.completed} 课时，应开 ${p.total} 课时，完成率 ${row.completionPct}%`;
+      const c = doneCoords[di]!;
+      return {
+        x: c.x,
+        y: c.y,
+        dayText: `第 ${dn} 天`,
+        completed: p.completed,
+        total: p.total,
+      };
     });
     const hoverTitleDone = `${row.label}（已完课时走势）｜第 ${D} 天已完 ${lastPt.completed}、应开 ${lastPt.total} 课时，完成率 ${row.completionPct}%`;
     const hoverTitleTotal = `${row.label}（应开总课时计划）｜${lastPt.total} 课时（14 天内为水平计划线）`;
@@ -172,46 +219,14 @@ const schoolLessonDailyChart = computed(() => {
       strokeDone: DONE_STROKE_PALETTE[si % DONE_STROKE_PALETTE.length]!,
       strokeTotal: TOTAL_STROKE_PALETTE[si % TOTAL_STROKE_PALETTE.length]!,
       lastCoord,
-      doneCoords,
-      dayPointTitles,
+      donePoints,
       hoverTitleDone,
       hoverTitleTotal,
-      labelX: W - padR - 4,
-      labelY: lastCoord.y,
-      leaderX2: W - padR - labelColumn + 4,
+      lastCompleted: lastPt.completed,
+      lastTotal: lastPt.total,
+      completionPct: row.completionPct,
     };
   });
-  /** 末端校名纵坐标避让，避免重叠 */
-  const order = schools
-    .map((s, i) => ({ i, y: s.lastCoord.y }))
-    .sort((a, b) => a.y - b.y);
-  const minGap = Math.max(11, Math.min(14, Math.floor(innerH / (schools.length + 2))));
-  let prev = padT + 4;
-  const labelYByI = new Map<number, number>();
-  for (const { i, y } of order) {
-    let ly = Math.max(y, prev + minGap * 0.35);
-    if (ly < prev + minGap) {
-      ly = prev + minGap;
-    }
-    labelYByI.set(i, ly);
-    prev = ly;
-  }
-  const yMax = H - padB - 6;
-  let maxLabelY = 0;
-  for (const { i } of order) {
-    maxLabelY = Math.max(maxLabelY, labelYByI.get(i) ?? 0);
-  }
-  const overflow = maxLabelY - yMax;
-  if (overflow > 0) {
-    for (const { i } of order) {
-      labelYByI.set(i, (labelYByI.get(i) ?? 0) - overflow);
-    }
-  }
-  for (let si = 0; si < schools.length; si++) {
-    const s = schools[si]!;
-    s.labelY = labelYByI.get(si) ?? s.lastCoord.y;
-    s.leaderX2 = Math.min(s.lastCoord.x + 28, s.labelX - 14);
-  }
   const dayLabels = Array.from({ length: D }, (_, i) => `${i + 1}`);
   const dayHints = Array.from({ length: D }, (_, i) => `第 ${i + 1} 天`);
   return {
@@ -244,7 +259,7 @@ const schoolLessonDailyChart = computed(() => {
           {{ schoolLessonTitle }}
         </h3>
         <p class="min-w-0 flex-1 text-[11px] leading-snug text-slate-500">
-          横轴 1–14 为最近 14 天；右侧为校名。虚线＝应开总课时，实线＝已完课时。将鼠标移到<strong>彩色折线</strong>上可查看该校与课时说明；移到<strong>圆点</strong>上可查看对应天数。
+          横轴 1–14 为最近 14 天；虚线＝应开总课时，实线＝已完课时。将鼠标移到<strong>彩色折线或圆点</strong>上，浮层展示学校名称与课时数据。
         </p>
       </div>
       <div
@@ -258,12 +273,50 @@ const schoolLessonDailyChart = computed(() => {
         class="flex min-h-0 flex-1 flex-col"
       >
         <div class="chart-viewbox-slot w-full shrink-0">
+          <div
+            v-if="schoolLessonTooltip"
+            class="pointer-events-none absolute z-10 max-w-[220px] rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 text-[11px] shadow-lg ring-1 ring-slate-900/5 backdrop-blur"
+            :style="{
+              left: `${schoolLessonTooltip.x}px`,
+              top: `${schoolLessonTooltip.y}px`,
+              transform:
+                schoolLessonTooltip.x > 260
+                  ? 'translate(-100%, -50%)'
+                  : 'translate(0, -50%)',
+            }"
+          >
+            <div class="mb-1 flex items-center gap-1.5">
+              <span
+                class="size-2 shrink-0 rounded-full"
+                :style="{ backgroundColor: schoolLessonTooltip.color }"
+                aria-hidden="true"
+              />
+              <p class="truncate font-semibold text-slate-900">
+                {{ schoolLessonTooltip.label }}
+              </p>
+            </div>
+            <p class="font-medium text-slate-700">
+              {{ schoolLessonTooltip.title }}
+            </p>
+            <p class="mt-1 tabular-nums text-slate-500">
+              {{ schoolLessonTooltip.dayText }} · 已完
+              <span class="font-semibold text-slate-800">{{ schoolLessonTooltip.completed }}</span>
+              / 应开
+              <span class="font-semibold text-slate-800">{{ schoolLessonTooltip.total }}</span>
+              课时
+            </p>
+            <p class="mt-0.5 tabular-nums text-slate-500">
+              完成率
+              <span class="font-semibold text-sky-700">{{ schoolLessonTooltip.completionPct }}%</span>
+            </p>
+          </div>
           <svg
             class="h-full w-full text-slate-800"
             :viewBox="`0 0 ${schoolLessonDailyChart.W} ${schoolLessonDailyChart.H}`"
             preserveAspectRatio="xMidYMid meet"
             role="img"
-            :aria-label="schoolLessonTitle + '，最近 14 天，各校折线末端为校名'"
+            :aria-label="schoolLessonTitle + '，最近 14 天，鼠标悬停折线显示学校数据'"
+            @mouseleave="hideSchoolLessonTooltip"
           >
           <text
             :x="schoolLessonDailyChart.padL - 6"
@@ -286,16 +339,6 @@ const schoolLessonDailyChart = computed(() => {
             text-anchor="end"
             >0</text
           >
-          <line
-            :x1="schoolLessonDailyChart.plotRight"
-            :y1="schoolLessonDailyChart.padT"
-            :x2="schoolLessonDailyChart.plotRight"
-            :y2="schoolLessonDailyChart.padT + schoolLessonDailyChart.innerH"
-            class="stroke-slate-200/90"
-            stroke-width="1"
-            stroke-dasharray="3 3"
-            pointer-events="none"
-          />
           <!-- 可见折线 -->
           <g
             v-for="(sch, si) in schoolLessonDailyChart.schools"
@@ -334,6 +377,28 @@ const schoolLessonDailyChart = computed(() => {
               stroke-linecap="round"
               stroke-linejoin="round"
               pointer-events="stroke"
+              @mouseenter="
+                showSchoolLessonTooltip($event, {
+                  label: sch.label,
+                  title: '已完课时走势',
+                  dayText: '第 14 天',
+                  completed: sch.lastCompleted,
+                  total: sch.lastTotal,
+                  completionPct: sch.completionPct,
+                  color: sch.strokeDone,
+                })
+              "
+              @mousemove="
+                showSchoolLessonTooltip($event, {
+                  label: sch.label,
+                  title: '已完课时走势',
+                  dayText: '第 14 天',
+                  completed: sch.lastCompleted,
+                  total: sch.lastTotal,
+                  completionPct: sch.completionPct,
+                  color: sch.strokeDone,
+                })
+              "
             >
               <title>{{ sch.hoverTitleDone }}</title>
             </path>
@@ -345,6 +410,28 @@ const schoolLessonDailyChart = computed(() => {
               stroke-linecap="round"
               stroke-linejoin="round"
               pointer-events="stroke"
+              @mouseenter="
+                showSchoolLessonTooltip($event, {
+                  label: sch.label,
+                  title: '应开总课时计划',
+                  dayText: '最近 14 天',
+                  completed: sch.lastCompleted,
+                  total: sch.lastTotal,
+                  completionPct: sch.completionPct,
+                  color: sch.strokeTotal,
+                })
+              "
+              @mousemove="
+                showSchoolLessonTooltip($event, {
+                  label: sch.label,
+                  title: '应开总课时计划',
+                  dayText: '最近 14 天',
+                  completed: sch.lastCompleted,
+                  total: sch.lastTotal,
+                  completionPct: sch.completionPct,
+                  color: sch.strokeTotal,
+                })
+              "
             >
               <title>{{ sch.hoverTitleTotal }}</title>
             </path>
@@ -355,7 +442,7 @@ const schoolLessonDailyChart = computed(() => {
             :key="`mark-${si}`"
           >
             <circle
-              v-for="(dc, di) in sch.doneCoords"
+              v-for="(dc, di) in sch.donePoints"
               :key="`dc-${si}-${di}`"
               :cx="dc.x"
               :cy="dc.y"
@@ -364,35 +451,31 @@ const schoolLessonDailyChart = computed(() => {
               :stroke="sch.strokeDone"
               stroke-width="1.75"
               pointer-events="auto"
+              @mouseenter="
+                showSchoolLessonTooltip($event, {
+                  label: sch.label,
+                  title: '已完课时',
+                  dayText: dc.dayText,
+                  completed: dc.completed,
+                  total: dc.total,
+                  completionPct: sch.completionPct,
+                  color: sch.strokeDone,
+                })
+              "
+              @mousemove="
+                showSchoolLessonTooltip($event, {
+                  label: sch.label,
+                  title: '已完课时',
+                  dayText: dc.dayText,
+                  completed: dc.completed,
+                  total: dc.total,
+                  completionPct: sch.completionPct,
+                  color: sch.strokeDone,
+                })
+              "
             >
-              <title>{{ sch.dayPointTitles[di] }}</title>
+              <title>{{ sch.label }} · {{ dc.dayText }}｜已完 {{ dc.completed }} 课时，应开 {{ dc.total }} 课时，完成率 {{ sch.completionPct }}%</title>
             </circle>
-            <line
-              :x1="sch.lastCoord.x + 3"
-              :y1="sch.lastCoord.y"
-              :x2="sch.leaderX2"
-              :y2="sch.labelY"
-              fill="none"
-              :stroke="sch.strokeDone"
-              stroke-opacity="0.4"
-              stroke-width="1"
-              stroke-dasharray="3 2"
-              pointer-events="none"
-            />
-            <text
-              :x="sch.labelX"
-              :y="sch.labelY"
-              dominant-baseline="middle"
-              text-anchor="end"
-              class="text-[9px] font-semibold"
-              :fill="sch.strokeDone"
-              stroke="white"
-              stroke-width="3.5"
-              paint-order="stroke fill"
-              pointer-events="none"
-            >
-              {{ sch.label }}
-            </text>
           </g>
           </svg>
         </div>
@@ -544,6 +627,7 @@ const schoolLessonDailyChart = computed(() => {
 /* 左右图表区域统一外框比例（与右侧 viewBox 440×196 一致），画布垂直对齐 */
 .chart-viewbox-slot {
   aspect-ratio: 440 / 196;
+  position: relative;
 }
 .chart-panel-skeleton {
   aspect-ratio: 440 / 196;
