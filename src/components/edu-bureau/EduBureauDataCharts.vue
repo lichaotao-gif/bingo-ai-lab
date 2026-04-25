@@ -250,15 +250,15 @@ const schoolLessonDailyChart = computed(() => {
   <section class="grid gap-4 lg:grid-cols-2 lg:items-stretch">
     <!-- 左：各校开课 14 天 -->
     <div
-      class="flex h-full min-h-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5"
+      class="flex h-full min-h-0 flex-col rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-4 shadow-lg shadow-cyan-500/5 ring-1 ring-cyan-500/10 backdrop-blur-sm sm:p-5"
     >
       <div
         class="mb-3 flex min-h-[6.75rem] shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
       >
-        <h3 class="shrink-0 text-[14px] font-semibold text-slate-900">
+        <h3 class="shrink-0 text-[14px] font-semibold text-slate-100">
           {{ schoolLessonTitle }}
         </h3>
-        <p class="min-w-0 flex-1 text-[11px] leading-snug text-slate-500">
+        <p class="min-w-0 flex-1 text-[11px] leading-snug text-slate-400">
           横轴 1–14 为最近 14 天；虚线＝应开总课时，实线＝已完课时。将鼠标移到<strong>彩色折线或圆点</strong>上，浮层展示学校名称与课时数据。
         </p>
       </div>
@@ -275,7 +275,7 @@ const schoolLessonDailyChart = computed(() => {
         <div class="chart-viewbox-slot w-full shrink-0">
           <div
             v-if="schoolLessonTooltip"
-            class="pointer-events-none absolute z-10 max-w-[220px] rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 text-[11px] shadow-lg ring-1 ring-slate-900/5 backdrop-blur"
+            class="pointer-events-none absolute z-10 max-w-[220px] rounded-xl border border-cyan-500/25 bg-slate-900/95 px-3 py-2 text-[11px] text-slate-200 shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-500/20 backdrop-blur"
             :style="{
               left: `${schoolLessonTooltip.x}px`,
               top: `${schoolLessonTooltip.y}px`,
@@ -291,27 +291,27 @@ const schoolLessonDailyChart = computed(() => {
                 :style="{ backgroundColor: schoolLessonTooltip.color }"
                 aria-hidden="true"
               />
-              <p class="truncate font-semibold text-slate-900">
+              <p class="truncate font-semibold text-slate-100">
                 {{ schoolLessonTooltip.label }}
               </p>
             </div>
-            <p class="font-medium text-slate-700">
+            <p class="font-medium text-slate-300">
               {{ schoolLessonTooltip.title }}
             </p>
-            <p class="mt-1 tabular-nums text-slate-500">
+            <p class="mt-1 tabular-nums text-slate-400">
               {{ schoolLessonTooltip.dayText }} · 已完
-              <span class="font-semibold text-slate-800">{{ schoolLessonTooltip.completed }}</span>
+              <span class="font-semibold text-cyan-200">{{ schoolLessonTooltip.completed }}</span>
               / 应开
-              <span class="font-semibold text-slate-800">{{ schoolLessonTooltip.total }}</span>
+              <span class="font-semibold text-cyan-200">{{ schoolLessonTooltip.total }}</span>
               课时
             </p>
-            <p class="mt-0.5 tabular-nums text-slate-500">
+            <p class="mt-0.5 tabular-nums text-slate-400">
               完成率
-              <span class="font-semibold text-sky-700">{{ schoolLessonTooltip.completionPct }}%</span>
+              <span class="font-semibold text-cyan-300">{{ schoolLessonTooltip.completionPct }}%</span>
             </p>
           </div>
           <svg
-            class="h-full w-full text-slate-800"
+            class="h-full w-full text-slate-300"
             :viewBox="`0 0 ${schoolLessonDailyChart.W} ${schoolLessonDailyChart.H}`"
             preserveAspectRatio="xMidYMid meet"
             role="img"
@@ -321,21 +321,21 @@ const schoolLessonDailyChart = computed(() => {
           <text
             :x="schoolLessonDailyChart.padL - 6"
             :y="schoolLessonDailyChart.padT + 4"
-            class="fill-slate-400 text-[9px]"
+            class="fill-slate-500 text-[9px]"
             text-anchor="end"
             >{{ schoolLessonDailyChart.maxY }}</text
           >
           <text
             :x="schoolLessonDailyChart.padL - 6"
             :y="schoolLessonDailyChart.padT + schoolLessonDailyChart.innerH / 2 + 4"
-            class="fill-slate-400 text-[9px]"
+            class="fill-slate-500 text-[9px]"
             text-anchor="end"
             >{{ Math.round(schoolLessonDailyChart.maxY / 2) }}</text
           >
           <text
             :x="schoolLessonDailyChart.padL - 6"
             :y="schoolLessonDailyChart.padT + schoolLessonDailyChart.innerH + 4"
-            class="fill-slate-400 text-[9px]"
+            class="fill-slate-500 text-[9px]"
             text-anchor="end"
             >0</text
           >
@@ -447,7 +447,7 @@ const schoolLessonDailyChart = computed(() => {
               :cx="dc.x"
               :cy="dc.y"
               r="3.25"
-              fill="white"
+              fill="rgb(15 23 42)"
               :stroke="sch.strokeDone"
               stroke-width="1.75"
               pointer-events="auto"
@@ -480,7 +480,7 @@ const schoolLessonDailyChart = computed(() => {
           </svg>
         </div>
         <div
-          class="mt-1 flex justify-between gap-0 border-t border-slate-100 pt-2 text-[9px] text-slate-500"
+          class="mt-1 flex justify-between gap-0 border-t border-white/10 pt-2 text-[9px] text-slate-400"
         >
           <span
             v-for="(lab, i) in schoolLessonDailyChart.dayLabels"
@@ -495,7 +495,7 @@ const schoolLessonDailyChart = computed(() => {
 
     <!-- 右：实验 / 测验 14 天 -->
     <div
-      class="flex h-full min-h-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5"
+      class="flex h-full min-h-0 flex-col rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-4 shadow-lg shadow-cyan-500/5 ring-1 ring-cyan-500/10 backdrop-blur-sm sm:p-5"
     >
       <div
         class="mb-3 flex min-h-[6.75rem] shrink-0 flex-col gap-2"
@@ -503,10 +503,10 @@ const schoolLessonDailyChart = computed(() => {
         <div
           class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
         >
-          <h3 class="text-[14px] font-semibold text-slate-900">
+          <h3 class="text-[14px] font-semibold text-slate-100">
             学生实验与测验完成人数
           </h3>
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-600">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-300">
             <span class="inline-flex items-center gap-1.5">
               <span
                 class="size-2 shrink-0 rounded-full bg-[rgb(14,165,233)]"
@@ -523,7 +523,7 @@ const schoolLessonDailyChart = computed(() => {
             </span>
           </div>
         </div>
-        <p class="text-[11px] leading-snug text-slate-400">
+        <p class="text-[11px] leading-snug text-slate-500">
           最近 14 天、每日一点；折线终点为当前筛选下实验、测验分别「全完成」人数
         </p>
       </div>
@@ -539,7 +539,7 @@ const schoolLessonDailyChart = computed(() => {
       >
         <div class="chart-viewbox-slot w-full shrink-0">
           <svg
-            class="h-full w-full text-slate-800"
+            class="h-full w-full text-slate-300"
             :viewBox="`0 0 ${dualTrend.W} ${dualTrend.H}`"
             preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
@@ -547,21 +547,21 @@ const schoolLessonDailyChart = computed(() => {
           <text
             :x="dualTrend.padL - 6"
             :y="dualTrend.padT + 4"
-            class="fill-slate-400 text-[9px]"
+            class="fill-slate-500 text-[9px]"
             text-anchor="end"
             >{{ dualTrend.maxY }}</text
           >
           <text
             :x="dualTrend.padL - 6"
             :y="dualTrend.padT + dualTrend.innerH / 2 + 4"
-            class="fill-slate-400 text-[9px]"
+            class="fill-slate-500 text-[9px]"
             text-anchor="end"
             >{{ Math.round(dualTrend.maxY / 2) }}</text
           >
           <text
             :x="dualTrend.padL - 6"
             :y="dualTrend.padT + dualTrend.innerH + 4"
-            class="fill-slate-400 text-[9px]"
+            class="fill-slate-500 text-[9px]"
             text-anchor="end"
             >0</text
           >
@@ -587,7 +587,7 @@ const schoolLessonDailyChart = computed(() => {
             :cx="c.x"
             :cy="c.y"
             r="2.5"
-            fill="white"
+            fill="rgb(15 23 42)"
             stroke="rgb(14 165 233)"
             stroke-width="1.75"
           >
@@ -599,7 +599,7 @@ const schoolLessonDailyChart = computed(() => {
             :cx="c.x"
             :cy="c.y"
             r="2.5"
-            fill="white"
+            fill="rgb(15 23 42)"
             stroke="rgb(251 146 60)"
             stroke-width="1.75"
           >
@@ -608,7 +608,7 @@ const schoolLessonDailyChart = computed(() => {
           </svg>
         </div>
         <div
-          class="mt-1 flex justify-between gap-0 border-t border-slate-100 pt-2 text-[9px] text-slate-500"
+          class="mt-1 flex justify-between gap-0 border-t border-white/10 pt-2 text-[9px] text-slate-400"
         >
           <span
             v-for="(lab, i) in dualTrend.xLabels"

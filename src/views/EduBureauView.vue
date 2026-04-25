@@ -33,17 +33,25 @@ function logout() {
 
 <template>
   <div
-    class="edu-page flex h-full min-h-0 flex-col overflow-hidden bg-[#f0f4f9] text-slate-800"
+    class="edu-page relative flex h-full min-h-0 flex-col overflow-hidden bg-[#020617] text-slate-200"
   >
+    <div
+      class="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_55%_at_50%_-5%,rgba(6,182,212,0.12),transparent_60%),radial-gradient(50%_40%_at_100%_0%,rgba(59,130,246,0.1),transparent_55%)]"
+      aria-hidden="true"
+    />
+    <div
+      class="pointer-events-none absolute inset-0 opacity-[0.5] [background-size:32px_32px] [background-image:linear-gradient(rgba(148,163,184,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.06)_1px,transparent_1px)]"
+      aria-hidden="true"
+    />
     <header
-      class="z-20 flex shrink-0 items-center justify-between gap-3 border-b border-slate-200/90 bg-white px-4 py-3 shadow-sm sm:px-6"
+      class="relative z-20 flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-slate-900/50 px-4 py-3 shadow-lg shadow-cyan-500/5 backdrop-blur-xl sm:px-6"
     >
       <RouterLink
         to="/"
-        class="flex min-w-0 flex-1 items-center rounded-lg outline-none ring-primary/30 focus-visible:ring-2"
+        class="group flex min-w-0 flex-1 items-center rounded-lg outline-none ring-cyan-500/30 focus-visible:ring-2"
       >
         <h1
-          class="truncate text-[15px] font-semibold tracking-tight text-slate-900 sm:text-[16px]"
+          class="truncate bg-gradient-to-r from-cyan-100 via-cyan-50 to-slate-200 bg-clip-text text-[15px] font-semibold tracking-tight text-transparent sm:text-[16px]"
         >
           人工智能教育综合看板
         </h1>
@@ -53,16 +61,16 @@ function logout() {
         class="flex shrink-0 items-center gap-2 sm:gap-3"
       >
         <p
-          class="max-w-[min(42vw,200px)] truncate text-right text-[12px] text-slate-600 sm:max-w-none sm:text-[13px]"
+          class="max-w-[min(42vw,200px)] truncate text-right text-[12px] text-slate-300 sm:max-w-none sm:text-[13px]"
           :title="`${session.displayName} ${maskPhone(session.phone)}`"
         >
-          <span class="font-medium text-slate-800">{{ session.displayName }}</span>
-          <span class="text-slate-400"> · </span>
-          <span class="tabular-nums text-slate-500">{{ maskPhone(session.phone) }}</span>
+          <span class="font-medium text-slate-100">{{ session.displayName }}</span>
+          <span class="text-slate-500"> · </span>
+          <span class="tabular-nums text-slate-400">{{ maskPhone(session.phone) }}</span>
         </p>
         <button
           type="button"
-          class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 sm:text-[13px]"
+          class="rounded-xl border border-white/10 bg-slate-800/60 px-3 py-2 text-[12px] font-medium text-slate-200 shadow-sm transition hover:border-cyan-500/30 hover:bg-slate-800/90 sm:text-[13px]"
           @click="logout"
         >
           退出登录
@@ -70,12 +78,14 @@ function logout() {
       </div>
     </header>
 
-    <div class="relative min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f0f4f9_100%)]">
+    <div
+      class="relative z-0 min-h-0 flex-1 overflow-hidden"
+    >
       <!-- 未登录：顶栏下遮罩 + 登录卡片 -->
       <Transition name="edu-login-fade">
         <div
           v-if="!session"
-          class="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/25 p-4 backdrop-blur-[2px]"
+          class="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="edu-bureau-login-heading"
@@ -91,7 +101,7 @@ function logout() {
       <!-- 已登录：整区滚动看板 -->
       <div
         v-if="session"
-        class="h-full overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 lg:px-10"
+        class="h-full overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 lg:px-10"
       >
         <EduBureauDashboard />
       </div>

@@ -88,13 +88,17 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="relative mx-auto w-full max-w-[420px] rounded-2xl border border-border-subtle bg-white shadow-card"
+    class="relative mx-auto w-full max-w-[420px] overflow-hidden rounded-2xl border border-cyan-500/25 bg-slate-900/80 shadow-2xl shadow-cyan-500/10 ring-1 ring-white/5 backdrop-blur-2xl"
     role="document"
     @click.stop
   >
+    <div
+      class="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_50%_at_50%_-20%,rgba(6,182,212,0.2),transparent_60%)]"
+      aria-hidden="true"
+    />
     <button
       type="button"
-      class="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full text-black/40 transition hover:bg-slate-100 hover:text-black"
+      class="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-800/80 hover:text-slate-200"
       aria-label="关闭"
       @click="onClose"
     >
@@ -105,17 +109,17 @@ onUnmounted(() => {
       <div class="mb-6 pr-6 text-center sm:pr-8">
         <h2
           id="edu-bureau-login-heading"
-          class="text-xl font-semibold tracking-tight text-black"
+          class="text-xl font-semibold tracking-tight text-slate-100"
         >
           管理员登录
         </h2>
-        <p class="mt-1.5 text-[13px] text-fg-muted">
+        <p class="mt-1.5 text-[13px] text-slate-400">
           使用「账号密码」或「验证码」登录后查看管辖范围数据
         </p>
       </div>
 
       <div
-        class="mb-5 flex rounded-xl border border-border-subtle bg-slate-50/80 p-1"
+        class="mb-5 flex rounded-xl border border-white/10 bg-slate-950/50 p-1"
         role="tablist"
         aria-labelledby="edu-bureau-login-heading"
       >
@@ -126,8 +130,8 @@ onUnmounted(() => {
           class="flex-1 rounded-lg py-2.5 text-[13px] font-medium transition sm:text-[14px]"
           :class="
             mode === 'password'
-              ? 'bg-white text-primary shadow-sm'
-              : 'text-fg-muted hover:text-fg-soft'
+              ? 'bg-cyan-500/15 text-cyan-200 shadow-sm ring-1 ring-cyan-500/20'
+              : 'text-slate-500 hover:text-slate-300'
           "
           @click="mode = 'password'"
         >
@@ -140,8 +144,8 @@ onUnmounted(() => {
           class="flex-1 rounded-lg py-2.5 text-[13px] font-medium transition sm:text-[14px]"
           :class="
             mode === 'code'
-              ? 'bg-white text-primary shadow-sm'
-              : 'text-fg-muted hover:text-fg-soft'
+              ? 'bg-cyan-500/15 text-cyan-200 shadow-sm ring-1 ring-cyan-500/20'
+              : 'text-slate-500 hover:text-slate-300'
           "
           @click="mode = 'code'"
         >
@@ -149,7 +153,7 @@ onUnmounted(() => {
         </button>
       </div>
 
-      <label class="mb-1.5 block text-[13px] font-medium text-fg-soft"
+      <label class="mb-1.5 block text-[13px] font-medium text-slate-300"
         >手机号</label
       >
       <input
@@ -158,11 +162,11 @@ onUnmounted(() => {
         maxlength="11"
         autocomplete="tel"
         placeholder="11 位手机号"
-        class="mb-4 w-full rounded-xl border border-border-subtle bg-card-inner px-3 py-2.5 text-[14px] outline-none ring-primary focus:ring-2"
+        class="mb-4 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2.5 text-[14px] text-slate-200 outline-none ring-cyan-500/30 placeholder:text-slate-500 focus:ring-2"
       />
 
       <template v-if="mode === 'password'">
-        <label class="mb-1.5 block text-[13px] font-medium text-fg-soft"
+        <label class="mb-1.5 block text-[13px] font-medium text-slate-300"
           >密码</label
         >
         <input
@@ -170,13 +174,13 @@ onUnmounted(() => {
           type="password"
           autocomplete="current-password"
           placeholder="请输入密码"
-          class="mb-4 w-full rounded-xl border border-border-subtle bg-card-inner px-3 py-2.5 text-[14px] outline-none ring-primary focus:ring-2"
+          class="mb-4 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2.5 text-[14px] text-slate-200 outline-none ring-cyan-500/30 placeholder:text-slate-500 focus:ring-2"
           @keydown.enter="submit"
         />
       </template>
 
       <template v-else>
-        <label class="mb-1.5 block text-[13px] font-medium text-fg-soft"
+        <label class="mb-1.5 block text-[13px] font-medium text-slate-300"
           >验证码</label
         >
         <div class="mb-4 flex gap-2">
@@ -186,12 +190,12 @@ onUnmounted(() => {
             maxlength="6"
             inputmode="numeric"
             placeholder="6 位验证码"
-            class="min-w-0 flex-1 rounded-xl border border-border-subtle bg-card-inner px-3 py-2.5 text-[14px] outline-none ring-primary focus:ring-2"
+            class="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2.5 text-[14px] text-slate-200 outline-none ring-cyan-500/30 placeholder:text-slate-500 focus:ring-2"
             @keydown.enter="submit"
           />
           <button
             type="button"
-            class="shrink-0 rounded-xl border border-primary/30 bg-primary-muted px-3 text-[13px] font-medium text-primary transition enabled:hover:bg-primary/10 disabled:opacity-45"
+            class="shrink-0 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 text-[13px] font-medium text-cyan-200 transition enabled:hover:bg-cyan-500/20 disabled:opacity-45"
             :disabled="codeCooldown > 0 || codeSending"
             @click="sendCode"
           >
@@ -204,20 +208,20 @@ onUnmounted(() => {
 
       <p
         v-if="error"
-        class="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-[13px] text-rose-700"
+        class="mb-3 rounded-lg border border-rose-500/20 bg-rose-950/40 px-3 py-2 text-[13px] text-rose-200"
       >
         {{ error }}
       </p>
 
       <button
         type="button"
-        class="w-full rounded-xl bg-gradient-to-r from-slate-800 to-slate-700 py-3 text-[15px] font-medium text-white shadow-md transition hover:opacity-95"
+        class="w-full rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 py-3 text-[15px] font-medium text-slate-950 shadow-lg shadow-cyan-500/25 transition hover:brightness-110"
         @click="submit"
       >
         登录
       </button>
 
-      <p class="mt-4 text-center text-[12px] leading-relaxed text-fg-muted">
+      <p class="mt-4 text-center text-[12px] leading-relaxed text-slate-500">
         已预填手机号与密码/验证码，可直接点击「登录」
       </p>
     </div>

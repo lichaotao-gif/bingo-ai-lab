@@ -421,12 +421,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="edu-viz flex min-h-0 flex-col gap-6 pb-8 text-slate-800">
+  <div class="edu-viz flex min-h-0 flex-col gap-5 pb-6 text-slate-200">
     <!-- 筛选：省市区 + 学期 + 学校 -->
     <div
-      class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm"
+      class="rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-4 shadow-lg shadow-cyan-500/10 backdrop-blur-sm"
     >
-      <p class="mb-3 text-[12px] font-medium text-slate-500">筛选范围</p>
+      <p class="mb-2 text-[12px] font-medium text-slate-400">筛选范围</p>
       <div
         class="flex flex-wrap items-end gap-3"
       >
@@ -434,11 +434,11 @@ onUnmounted(() => {
           ref="regionCascaderRef"
           class="relative min-w-[min(100%,280px)] flex-1 sm:max-w-[420px]"
         >
-          <label class="mb-1 block text-[11px] text-slate-500">省 / 市 / 区（县）</label>
+          <label class="mb-1 block text-[11px] text-slate-400">省 / 市 / 区（县）</label>
           <button
             type="button"
-            class="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-[14px] text-slate-800 outline-none ring-primary/30 transition hover:border-slate-300 focus:ring-2"
-            :class="regionPanelOpen ? 'border-primary/40 ring-2 ring-primary/25' : ''"
+            class="flex w-full items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2.5 text-left text-[14px] text-slate-200 outline-none ring-cyan-500/30 transition hover:border-cyan-500/30 focus:ring-2"
+            :class="regionPanelOpen ? 'border-cyan-500/50 ring-2 ring-cyan-500/20' : ''"
             :aria-expanded="regionPanelOpen"
             aria-haspopup="listbox"
             @click.stop="regionPanelOpen = !regionPanelOpen"
@@ -446,7 +446,7 @@ onUnmounted(() => {
             <span
               class="min-w-0 flex-1 truncate"
               :class="
-                provinceId || cityId || districtId ? 'text-slate-900' : 'text-slate-400'
+                provinceId || cityId || districtId ? 'text-slate-100' : 'text-slate-500'
               "
             >{{ regionSummaryText }}</span>
             <span
@@ -458,15 +458,15 @@ onUnmounted(() => {
 
           <div
             v-show="regionPanelOpen"
-            class="absolute left-0 right-0 top-full z-[60] mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg ring-1 ring-black/[0.06] sm:right-auto sm:w-[min(100vw-2rem,520px)]"
+            class="absolute left-0 right-0 top-full z-[60] mt-1.5 overflow-hidden rounded-xl border border-cyan-500/20 bg-slate-900/95 shadow-2xl shadow-cyan-500/10 ring-1 ring-white/5 backdrop-blur-xl sm:right-auto sm:w-[min(100vw-2rem,520px)]"
             role="dialog"
             aria-label="选择省市区"
             @click.stop
           >
-            <div class="grid max-h-[min(70vh,280px)] grid-cols-3 divide-x divide-slate-100">
+            <div class="grid max-h-[min(70vh,280px)] grid-cols-3 divide-x divide-white/10">
               <!-- 省 -->
               <div class="flex min-h-0 min-w-0 flex-col">
-                <p class="shrink-0 border-b border-slate-100 bg-slate-50 px-2 py-1.5 text-[11px] font-medium text-slate-500">
+                <p class="shrink-0 border-b border-white/5 bg-slate-800/60 px-2 py-1.5 text-[11px] font-medium text-slate-400">
                   省
                 </p>
                 <ul class="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1">
@@ -477,7 +477,7 @@ onUnmounted(() => {
                       :class="
                         !provinceId
                           ? 'bg-primary/10 font-medium text-primary'
-                          : 'text-slate-700 hover:bg-slate-50'
+                          : 'text-slate-200 hover:bg-cyan-500/10'
                       "
                       @click="provinceId = ''"
                     >
@@ -494,7 +494,7 @@ onUnmounted(() => {
                       :class="
                         provinceId === p.id
                           ? 'bg-primary/10 font-medium text-primary'
-                          : 'text-slate-700 hover:bg-slate-50'
+                          : 'text-slate-200 hover:bg-cyan-500/10'
                       "
                       @click="provinceId = p.id"
                     >
@@ -505,7 +505,7 @@ onUnmounted(() => {
               </div>
               <!-- 市 -->
               <div class="flex min-h-0 min-w-0 flex-col">
-                <p class="shrink-0 border-b border-slate-100 bg-slate-50 px-2 py-1.5 text-[11px] font-medium text-slate-500">
+                <p class="shrink-0 border-b border-white/5 bg-slate-800/60 px-2 py-1.5 text-[11px] font-medium text-slate-400">
                   市
                 </p>
                 <ul class="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1">
@@ -516,7 +516,7 @@ onUnmounted(() => {
                       :class="
                         !cityId
                           ? 'bg-primary/10 font-medium text-primary'
-                          : 'text-slate-700 hover:bg-slate-50'
+                          : 'text-slate-200 hover:bg-cyan-500/10'
                       "
                       @click="cityId = ''"
                     >
@@ -533,7 +533,7 @@ onUnmounted(() => {
                       :class="
                         cityId === c.id
                           ? 'bg-primary/10 font-medium text-primary'
-                          : 'text-slate-700 hover:bg-slate-50'
+                          : 'text-slate-200 hover:bg-cyan-500/10'
                       "
                       @click="cityId = c.id"
                     >
@@ -544,7 +544,7 @@ onUnmounted(() => {
               </div>
               <!-- 区/县 -->
               <div class="flex min-h-0 min-w-0 flex-col">
-                <p class="shrink-0 border-b border-slate-100 bg-slate-50 px-2 py-1.5 text-[11px] font-medium text-slate-500">
+                <p class="shrink-0 border-b border-white/5 bg-slate-800/60 px-2 py-1.5 text-[11px] font-medium text-slate-400">
                   区/县
                 </p>
                 <ul class="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1">
@@ -555,7 +555,7 @@ onUnmounted(() => {
                       :class="
                         !districtId
                           ? 'bg-primary/10 font-medium text-primary'
-                          : 'text-slate-700 hover:bg-slate-50'
+                          : 'text-slate-200 hover:bg-cyan-500/10'
                       "
                       @click="districtId = ''; closeRegionPanel()"
                     >
@@ -572,7 +572,7 @@ onUnmounted(() => {
                       :class="
                         districtId === r.id
                           ? 'bg-primary/10 font-medium text-primary'
-                          : 'text-slate-700 hover:bg-slate-50'
+                          : 'text-slate-200 hover:bg-cyan-500/10'
                       "
                       @click="districtId = r.id; closeRegionPanel()"
                     >
@@ -582,10 +582,10 @@ onUnmounted(() => {
                 </ul>
               </div>
             </div>
-            <div class="flex justify-end border-t border-slate-100 bg-slate-50/90 px-2 py-2">
+            <div class="flex justify-end border-t border-white/5 bg-slate-800/30 px-2 py-2">
               <button
                 type="button"
-                class="rounded-lg px-3 py-1.5 text-[12px] font-medium text-primary transition hover:bg-primary/10"
+                class="rounded-lg px-3 py-1.5 text-[12px] font-medium text-cyan-300 transition hover:bg-cyan-500/10"
                 @click="closeRegionPanel"
               >
                 完成
@@ -594,10 +594,10 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="min-w-[min(100%,200px)] flex-1 sm:max-w-[240px]">
-          <label class="mb-1 block text-[11px] text-slate-500">学期</label>
+          <label class="mb-1 block text-[11px] text-slate-400">学期</label>
           <select
             v-model="semesterId"
-            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-slate-800 outline-none ring-primary/30 focus:ring-2"
+            class="w-full cursor-pointer rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2.5 text-[14px] text-slate-200 outline-none ring-cyan-500/20 focus:ring-2"
           >
             <option value="">全部学期</option>
             <option
@@ -610,10 +610,10 @@ onUnmounted(() => {
           </select>
         </div>
         <div class="min-w-[140px] flex-1 sm:max-w-[200px]">
-          <label class="mb-1 block text-[11px] text-slate-500">学校</label>
+          <label class="mb-1 block text-[11px] text-slate-400">学校</label>
           <select
             v-model="schoolId"
-            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-slate-800 outline-none ring-primary/30 focus:ring-2"
+            class="w-full cursor-pointer rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2.5 text-[14px] text-slate-200 outline-none ring-cyan-500/20 focus:ring-2"
           >
             <option value="">全部学校</option>
             <option
@@ -628,46 +628,46 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-sm sm:p-4">
-      <p class="mb-2 text-[12px] font-medium text-slate-500">
+    <div class="rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-3 shadow-lg shadow-cyan-500/10 backdrop-blur-sm sm:p-4">
+      <p class="mb-2 text-[12px] font-medium text-slate-400">
         管辖范围概览
       </p>
       <div
-        class="grid grid-cols-3 gap-2 rounded-xl bg-slate-50/80 p-2 sm:gap-3 sm:p-3"
+        class="grid grid-cols-3 gap-2 rounded-xl border border-white/5 bg-slate-800/40 p-2 sm:gap-3 sm:p-3"
       >
         <div class="min-w-0 text-center sm:text-left">
           <p
-            class="text-[10px] font-medium leading-snug text-sky-800/85 sm:text-[11px]"
+            class="text-[10px] font-medium leading-snug text-cyan-300/90 sm:text-[11px]"
           >
             开通学校数量
           </p>
-          <p class="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-sky-950 sm:text-3xl">
+          <p class="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-cyan-200 sm:text-3xl">
             {{ kpi.schoolCount }}
-            <span class="align-baseline text-[11px] font-medium text-slate-400 sm:text-[12px]">所</span>
+            <span class="align-baseline text-[11px] font-medium text-cyan-400/80 sm:text-[12px]">所</span>
           </p>
         </div>
         <div
-          class="min-w-0 border-x border-slate-200/80 px-2 text-center sm:px-3 sm:text-left"
+          class="min-w-0 border-x border-white/10 px-2 text-center sm:px-3 sm:text-left"
         >
           <p
-            class="text-[10px] font-medium leading-snug text-violet-800/85 sm:text-[11px]"
+            class="text-[10px] font-medium leading-snug text-violet-300/90 sm:text-[11px]"
           >
             使用班级数量
           </p>
-          <p class="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-violet-950 sm:text-3xl">
+          <p class="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-violet-200 sm:text-3xl">
             {{ kpi.classCount }}
-            <span class="align-baseline text-[11px] font-medium text-slate-400 sm:text-[12px]">个</span>
+            <span class="align-baseline text-[11px] font-medium text-violet-400/80 sm:text-[12px]">个</span>
           </p>
         </div>
         <div class="min-w-0 text-center sm:text-left">
           <p
-            class="text-[10px] font-medium leading-snug text-emerald-800/85 sm:text-[11px]"
+            class="text-[10px] font-medium leading-snug text-emerald-300/90 sm:text-[11px]"
           >
             学生数量
           </p>
-          <p class="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-emerald-950 sm:text-3xl">
+          <p class="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-emerald-200 sm:text-3xl">
             {{ kpi.studentCount }}
-            <span class="align-baseline text-[11px] font-medium text-slate-400 sm:text-[12px]">人</span>
+            <span class="align-baseline text-[11px] font-medium text-emerald-400/80 sm:text-[12px]">人</span>
           </p>
         </div>
       </div>
@@ -676,49 +676,49 @@ onUnmounted(() => {
     <!-- 开课 + 实验/测验统计（md+ 同一行、紧凑） -->
     <div class="grid gap-2 md:grid-cols-2 md:items-stretch md:gap-3">
       <section
-        class="flex min-h-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-sm sm:p-3"
+        class="flex min-h-0 flex-col rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-2.5 shadow-lg shadow-cyan-500/10 backdrop-blur-sm sm:p-3"
       >
-        <h3 class="text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm">
+        <h3 class="text-[13px] font-semibold leading-tight text-slate-100 sm:text-sm">
           开课情况统计（班）
         </h3>
-        <p class="mt-0.5 text-[11px] leading-snug text-slate-500">
+        <p class="mt-0.5 text-[11px] leading-snug text-slate-400">
           筛选范围内 · 每班 {{ LESSON_HOURS_PER_CLASS }} 课时
         </p>
         <div
-          class="mt-1.5 grid flex-1 grid-cols-3 gap-1.5 rounded-lg bg-slate-50/90 p-1.5 sm:gap-2 sm:p-2"
+          class="mt-1.5 grid flex-1 grid-cols-3 gap-1.5 rounded-lg border border-white/5 bg-slate-800/50 p-1.5 sm:gap-2 sm:p-2"
         >
           <div class="min-w-0 text-center sm:text-left">
-            <p class="text-[9px] font-medium leading-tight text-amber-900/85 sm:text-[10px]">
+            <p class="text-[9px] font-medium leading-tight text-amber-200/90 sm:text-[10px]">
               总课时数
             </p>
             <p
-              class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-amber-950 sm:text-2xl"
+              class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-amber-200 sm:text-2xl"
             >
               {{ regionOpeningLessonStats.totalLessonHours }}
-              <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">课时</span>
+              <span class="align-baseline text-[10px] font-medium text-amber-400/70 sm:text-[11px]">课时</span>
             </p>
           </div>
           <div
-            class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+            class="min-w-0 border-l border-white/10 pl-1.5 text-center sm:pl-2 sm:text-left"
           >
-            <p class="text-[9px] font-medium leading-tight text-teal-900/85 sm:text-[10px]">
+            <p class="text-[9px] font-medium leading-tight text-teal-200/90 sm:text-[10px]">
               已完成课时数
             </p>
             <p
-              class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-teal-950 sm:text-2xl"
+              class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-teal-200 sm:text-2xl"
             >
               {{ regionOpeningLessonStats.completedLessonHours }}
-              <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">课时</span>
+              <span class="align-baseline text-[10px] font-medium text-teal-400/70 sm:text-[11px]">课时</span>
             </p>
           </div>
           <div
-            class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+            class="min-w-0 border-l border-white/10 pl-1.5 text-center sm:pl-2 sm:text-left"
           >
-            <p class="text-[9px] font-medium leading-tight text-rose-900/80 sm:text-[10px]">
+            <p class="text-[9px] font-medium leading-tight text-rose-200/90 sm:text-[10px]">
               完成率
             </p>
             <p
-              class="mt-0.5 text-xl font-bold tabular-nums leading-none text-rose-950 sm:text-2xl"
+              class="mt-0.5 text-xl font-bold tabular-nums leading-none text-rose-200 sm:text-2xl"
             >
               {{ regionOpeningLessonStats.lessonHoursCompletionPct }}%
             </p>
@@ -727,90 +727,90 @@ onUnmounted(() => {
       </section>
 
       <section
-        class="flex min-h-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-sm sm:p-3"
+        class="flex min-h-0 flex-col rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-2.5 shadow-lg shadow-cyan-500/10 backdrop-blur-sm sm:p-3"
       >
-        <h3 class="text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm">
+        <h3 class="text-[13px] font-semibold leading-tight text-slate-100 sm:text-sm">
           实验情况统计（学生）
         </h3>
-        <p class="mt-0.5 text-[11px] leading-snug text-slate-500">
+        <p class="mt-0.5 text-[11px] leading-snug text-slate-400">
           筛选范围内 · 每人各 {{ EXPERIMENTS_PER_STUDENT }} 个实验与测验
         </p>
         <div
-          class="mt-1.5 space-y-1 rounded-lg bg-slate-50/90 p-1.5 sm:p-2"
+          class="mt-1.5 space-y-1 rounded-lg border border-white/5 bg-slate-800/50 p-1.5 sm:p-2"
         >
           <div class="grid grid-cols-3 gap-1.5 sm:gap-2">
             <div class="min-w-0 text-center sm:text-left">
-              <p class="text-[9px] font-medium leading-tight text-indigo-900/85 sm:text-[10px]">
+              <p class="text-[9px] font-medium leading-tight text-indigo-200/90 sm:text-[10px]">
                 总实验数
               </p>
               <p
-                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-indigo-950 sm:text-2xl"
+                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-indigo-200 sm:text-2xl"
               >
                 {{ kpi.experimentTotalCount }}
-                <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">个</span>
+                <span class="align-baseline text-[10px] font-medium text-indigo-400/70 sm:text-[11px]">个</span>
               </p>
             </div>
             <div
-              class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+              class="min-w-0 border-l border-white/10 pl-1.5 text-center sm:pl-2 sm:text-left"
             >
-              <p class="text-[9px] font-medium leading-tight text-cyan-900/85 sm:text-[10px]">
+              <p class="text-[9px] font-medium leading-tight text-cyan-200/90 sm:text-[10px]">
                 已完成实验数
               </p>
               <p
-                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-cyan-950 sm:text-2xl"
+                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-cyan-200 sm:text-2xl"
               >
                 {{ kpi.experimentCompletedCount }}
-                <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">个</span>
+                <span class="align-baseline text-[10px] font-medium text-cyan-400/70 sm:text-[11px]">个</span>
               </p>
             </div>
             <div
-              class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+              class="min-w-0 border-l border-white/10 pl-1.5 text-center sm:pl-2 sm:text-left"
             >
-              <p class="text-[9px] font-medium leading-tight text-fuchsia-900/80 sm:text-[10px]">
+              <p class="text-[9px] font-medium leading-tight text-fuchsia-200/90 sm:text-[10px]">
                 实验完成率
               </p>
               <p
-                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-fuchsia-950 sm:text-2xl"
+                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-fuchsia-200 sm:text-2xl"
               >
                 {{ kpi.experimentCompletionPct }}%
               </p>
             </div>
           </div>
           <div
-            class="grid grid-cols-3 gap-1.5 border-t border-slate-200/70 pt-1 sm:gap-2"
+            class="grid grid-cols-3 gap-1.5 border-t border-white/10 pt-1 sm:gap-2"
           >
             <div class="min-w-0 text-center sm:text-left">
-              <p class="text-[9px] font-medium leading-tight text-orange-900/85 sm:text-[10px]">
+              <p class="text-[9px] font-medium leading-tight text-orange-200/90 sm:text-[10px]">
                 测验数
               </p>
               <p
-                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-orange-950 sm:text-2xl"
+                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-orange-200 sm:text-2xl"
               >
                 {{ kpi.quizTotalCount }}
-                <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">个</span>
+                <span class="align-baseline text-[10px] font-medium text-orange-400/70 sm:text-[11px]">个</span>
               </p>
             </div>
             <div
-              class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+              class="min-w-0 border-l border-white/10 pl-1.5 text-center sm:pl-2 sm:text-left"
             >
-              <p class="text-[9px] font-medium leading-tight text-amber-900/85 sm:text-[10px]">
+              <p class="text-[9px] font-medium leading-tight text-amber-200/90 sm:text-[10px]">
                 测验完成数
               </p>
               <p
-                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-amber-950 sm:text-2xl"
+                class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-amber-200 sm:text-2xl"
               >
                 {{ kpi.quizCompletedCount }}
-                <span class="align-baseline text-[10px] font-medium text-slate-400 sm:text-[11px]">个</span>
+                <span class="align-baseline text-[10px] font-medium text-amber-400/70 sm:text-[11px]">个</span>
               </p>
             </div>
             <div
-              class="min-w-0 border-l border-slate-200/80 pl-1.5 text-center sm:pl-2 sm:text-left"
+              class="min-w-0 border-l border-white/10 pl-1.5 text-center sm:pl-2 sm:text-left"
             >
-              <p class="text-[9px] font-medium leading-tight text-violet-900/85 sm:text-[10px]">
+              <p class="text-[9px] font-medium leading-tight text-violet-200/90 sm:text-[10px]">
                 测验完成率
               </p>
               <p
-                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-violet-950 sm:text-2xl"
+                class="mt-0.5 text-xl font-bold tabular-nums leading-none text-violet-200 sm:text-2xl"
               >
                 {{ kpi.quizCompletionPct }}%
               </p>
@@ -824,10 +824,10 @@ onUnmounted(() => {
     <section>
       <div class="mb-3 flex items-start justify-between gap-3">
         <div class="min-w-0">
-          <h3 class="text-[15px] font-semibold text-slate-900">
+          <h3 class="text-[15px] font-semibold text-slate-100">
             数据视图
           </h3>
-          <p class="mt-0.5 text-[12px] text-slate-500">
+          <p class="mt-0.5 text-[12px] text-slate-400">
             左：各校（班）开课课时最近 14 天走势；右：实验与测验全完成人数最近 14 天走势
           </p>
         </div>
@@ -844,10 +844,10 @@ onUnmounted(() => {
     <section>
       <div class="mb-3 flex items-start justify-between gap-3">
         <div class="min-w-0">
-          <h3 class="text-[15px] font-semibold text-slate-900">
+          <h3 class="text-[15px] font-semibold text-slate-100">
             辖区{{ schoolId ? "班级" : "学校" }}统计进度
           </h3>
-          <p class="mt-0.5 text-[12px] text-slate-500">
+          <p class="mt-0.5 text-[12px] text-slate-400">
             {{ schoolId ? "当前学校下各班级" : "按学校汇总" }} · 卡片：开课课时（班）、实验与测验（学生）；上方数据视图为最近 14 天折线
           </p>
         </div>
@@ -858,26 +858,26 @@ onUnmounted(() => {
         <li
           v-for="(row, i) in progressTiles"
           :key="i"
-          class="flex max-w-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50/90 shadow-sm ring-1 ring-slate-900/[0.03] transition-shadow duration-200 hover:border-slate-300/80 hover:shadow-md"
+          class="flex max-w-full flex-col overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-slate-800/90 to-slate-950/95 shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-500/5 transition-shadow duration-200 hover:border-cyan-400/30 hover:shadow-cyan-500/20"
         >
           <div
-            class="border-b border-slate-100/90 bg-white/80 px-4 pb-3 pt-4 sm:px-5 sm:pb-3.5 sm:pt-5"
+            class="border-b border-white/5 bg-slate-800/40 px-4 pb-3 pt-4 sm:px-5 sm:pb-3.5 sm:pt-5"
           >
             <p
-              class="line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-slate-900 sm:text-base"
+              class="line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-slate-100 sm:text-base"
               :title="row.label"
             >
               {{ row.label }}
             </p>
             <div class="mt-2.5 flex flex-wrap items-center gap-2">
               <span
-                class="inline-flex items-center rounded-full bg-slate-100/90 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 tabular-nums"
+                class="inline-flex items-center rounded-full bg-slate-700/50 px-2.5 py-0.5 text-[11px] font-medium text-slate-300 tabular-nums ring-1 ring-white/5"
               >
                 {{ row.n }} 人
               </span>
               <span
                 v-if="!schoolId"
-                class="inline-flex items-center rounded-full bg-sky-50 px-2.5 py-0.5 text-[11px] font-medium text-sky-700/90 tabular-nums ring-1 ring-sky-100"
+                class="inline-flex items-center rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-[11px] font-medium text-cyan-200 tabular-nums ring-1 ring-cyan-500/25"
               >
                 {{ row.classCountForLessons }} 个班
               </span>
@@ -886,37 +886,37 @@ onUnmounted(() => {
 
           <div class="flex flex-1 flex-col gap-2.5 p-3 sm:gap-3 sm:p-4">
             <div
-              class="rounded-xl border border-sky-100/80 bg-sky-50/35 p-2.5 ring-1 ring-sky-900/[0.04] sm:p-3"
+              class="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2.5 ring-1 ring-cyan-500/10 sm:p-3"
             >
               <div class="mb-1.5 flex items-center gap-2">
                 <span
-                  class="size-1.5 shrink-0 rounded-full bg-sky-500 shadow-sm shadow-sky-200"
+                  class="size-1.5 shrink-0 rounded-full bg-cyan-400 shadow-sm shadow-cyan-500/40"
                   aria-hidden="true"
                 />
-                <p class="text-[11px] font-semibold text-slate-700">
+                <p class="text-[11px] font-semibold text-cyan-200/90">
                   开课课时（班）
                 </p>
               </div>
               <div
                 class="grid grid-cols-3 gap-1.5 tabular-nums sm:gap-2"
               >
-                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
                   <p class="text-[10px] leading-none text-slate-500">总</p>
                   <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
-                    <span class="text-[13px] font-semibold text-slate-900 sm:text-sm">{{ row.totalLessonHours }}</span>
-                    <span class="text-[10px] font-normal text-slate-400">课时</span>
+                    <span class="text-[13px] font-semibold text-slate-100 sm:text-sm">{{ row.totalLessonHours }}</span>
+                    <span class="text-[10px] font-normal text-slate-500">课时</span>
                   </p>
                 </div>
-                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
                   <p class="text-[10px] leading-none text-slate-500">已完</p>
                   <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
-                    <span class="text-[13px] font-semibold text-sky-800 sm:text-sm">{{ row.completedLessonHours }}</span>
-                    <span class="text-[10px] font-normal text-slate-400">课时</span>
+                    <span class="text-[13px] font-semibold text-cyan-300 sm:text-sm">{{ row.completedLessonHours }}</span>
+                    <span class="text-[10px] font-normal text-slate-500">课时</span>
                   </p>
                 </div>
-                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
                   <p class="text-[10px] leading-none text-slate-500">完成率</p>
-                  <p class="mt-1 text-[13px] font-semibold leading-none text-sky-700 sm:text-sm">
+                  <p class="mt-1 text-[13px] font-semibold leading-none text-cyan-200 sm:text-sm">
                     {{ row.lessonHoursCompletionPct }}%
                   </p>
                 </div>
@@ -924,37 +924,37 @@ onUnmounted(() => {
             </div>
 
             <div
-              class="rounded-xl border border-violet-100/80 bg-violet-50/30 p-2.5 ring-1 ring-violet-900/[0.04] sm:p-3"
+              class="rounded-xl border border-violet-500/20 bg-violet-500/5 p-2.5 ring-1 ring-violet-500/10 sm:p-3"
             >
               <div class="mb-1.5 flex items-center gap-2">
                 <span
-                  class="size-1.5 shrink-0 rounded-full bg-violet-500 shadow-sm shadow-violet-200"
+                  class="size-1.5 shrink-0 rounded-full bg-violet-400 shadow-sm shadow-violet-500/30"
                   aria-hidden="true"
                 />
-                <p class="text-[11px] font-semibold text-slate-700">
+                <p class="text-[11px] font-semibold text-violet-200/90">
                   实验（学生）
                 </p>
               </div>
               <div
                 class="grid grid-cols-3 gap-1.5 tabular-nums sm:gap-2"
               >
-                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
                   <p class="text-[10px] leading-none text-slate-500">总</p>
                   <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
-                    <span class="text-[13px] font-semibold text-slate-900 sm:text-sm">{{ row.experimentTotalCount }}</span>
-                    <span class="text-[10px] font-normal text-slate-400">个</span>
+                    <span class="text-[13px] font-semibold text-slate-100 sm:text-sm">{{ row.experimentTotalCount }}</span>
+                    <span class="text-[10px] font-normal text-slate-500">个</span>
                   </p>
                 </div>
-                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
                   <p class="text-[10px] leading-none text-slate-500">已完</p>
                   <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
-                    <span class="text-[13px] font-semibold text-violet-800 sm:text-sm">{{ row.experimentCompletedCount }}</span>
-                    <span class="text-[10px] font-normal text-slate-400">个</span>
+                    <span class="text-[13px] font-semibold text-violet-300 sm:text-sm">{{ row.experimentCompletedCount }}</span>
+                    <span class="text-[10px] font-normal text-slate-500">个</span>
                   </p>
                 </div>
-                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
                   <p class="text-[10px] leading-none text-slate-500">完成率</p>
-                  <p class="mt-1 text-[13px] font-semibold leading-none text-violet-700 sm:text-sm">
+                  <p class="mt-1 text-[13px] font-semibold leading-none text-violet-200 sm:text-sm">
                     {{ row.experimentCompletionPct }}%
                   </p>
                 </div>
@@ -962,37 +962,37 @@ onUnmounted(() => {
             </div>
 
             <div
-              class="rounded-xl border border-emerald-100/80 bg-emerald-50/30 p-2.5 ring-1 ring-emerald-900/[0.04] sm:p-3"
+              class="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2.5 ring-1 ring-emerald-500/10 sm:p-3"
             >
               <div class="mb-1.5 flex items-center gap-2">
                 <span
-                  class="size-1.5 shrink-0 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200"
+                  class="size-1.5 shrink-0 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/30"
                   aria-hidden="true"
                 />
-                <p class="text-[11px] font-semibold text-slate-700">
+                <p class="text-[11px] font-semibold text-emerald-200/90">
                   测验（学生）
                 </p>
               </div>
               <div
                 class="grid grid-cols-3 gap-1.5 tabular-nums sm:gap-2"
               >
-                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
                   <p class="text-[10px] leading-none text-slate-500">总</p>
                   <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
-                    <span class="text-[13px] font-semibold text-slate-900 sm:text-sm">{{ row.quizTotalCount }}</span>
-                    <span class="text-[10px] font-normal text-slate-400">个</span>
+                    <span class="text-[13px] font-semibold text-slate-100 sm:text-sm">{{ row.quizTotalCount }}</span>
+                    <span class="text-[10px] font-normal text-slate-500">个</span>
                   </p>
                 </div>
-                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
                   <p class="text-[10px] leading-none text-slate-500">已完</p>
                   <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
-                    <span class="text-[13px] font-semibold text-emerald-800 sm:text-sm">{{ row.quizCompletedCount }}</span>
-                    <span class="text-[10px] font-normal text-slate-400">个</span>
+                    <span class="text-[13px] font-semibold text-emerald-300 sm:text-sm">{{ row.quizCompletedCount }}</span>
+                    <span class="text-[10px] font-normal text-slate-500">个</span>
                   </p>
                 </div>
-                <div class="rounded-lg bg-white/70 px-1 py-1.5 text-center shadow-sm ring-1 ring-slate-900/[0.03] sm:px-1.5">
+                <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
                   <p class="text-[10px] leading-none text-slate-500">完成率</p>
-                  <p class="mt-1 text-[13px] font-semibold leading-none text-emerald-700 sm:text-sm">
+                  <p class="mt-1 text-[13px] font-semibold leading-none text-emerald-200 sm:text-sm">
                     {{ row.quizCompletionPct }}%
                   </p>
                 </div>

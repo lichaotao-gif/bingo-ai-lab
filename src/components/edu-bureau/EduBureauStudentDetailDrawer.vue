@@ -50,25 +50,25 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
         class="fixed inset-0 z-[400] flex justify-end"
       >
         <div
-          class="absolute inset-0 bg-slate-900/30 backdrop-blur-[1px]"
+          class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
           aria-hidden="true"
           @click="close"
         />
         <aside
-          class="relative flex h-full w-full max-w-lg flex-col border-l border-slate-200 bg-white shadow-2xl"
+          class="relative flex h-full w-full max-w-lg flex-col border-l border-cyan-500/20 bg-slate-950 shadow-2xl ring-1 ring-cyan-500/10"
           role="dialog"
           aria-modal="true"
           aria-labelledby="stu-detail-title"
           @click.stop
         >
           <header
-            class="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-5 py-4"
+            class="flex shrink-0 items-start justify-between gap-3 border-b border-white/10 bg-slate-900/30 px-5 py-4"
           >
             <div class="min-w-0">
-              <p class="text-[12px] text-slate-500">学生档案</p>
+              <p class="text-[12px] text-slate-400">学生档案</p>
               <h2
                 id="stu-detail-title"
-                class="mt-0.5 truncate text-lg font-semibold text-slate-900"
+                class="mt-0.5 truncate text-lg font-semibold text-slate-100"
               >
                 {{ titleName }}
               </h2>
@@ -78,7 +78,7 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
             </div>
             <button
               type="button"
-              class="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              class="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-white/10 hover:text-cyan-200"
               aria-label="关闭"
               @click="close"
             >
@@ -88,7 +88,7 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
 
           <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
             <section>
-              <h3 class="mb-3 text-[13px] font-semibold text-slate-800">
+              <h3 class="mb-3 text-[13px] font-semibold text-slate-100">
                 已关联实验包
               </h3>
               <ul class="space-y-2">
@@ -97,14 +97,14 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
                   :key="bundle.id"
                 >
                   <details
-                    class="group rounded-xl border border-slate-200 bg-slate-50/50 open:bg-white open:shadow-md"
+                    class="group rounded-xl border border-cyan-500/20 bg-slate-900/40 open:border-cyan-500/30 open:bg-slate-900/60 open:shadow-lg open:shadow-cyan-500/5"
                     :open="i === 0"
                   >
                     <summary
-                      class="edu-pkg-summary flex cursor-pointer list-none items-center gap-3 rounded-xl p-3 transition hover:bg-white/80"
+                      class="edu-pkg-summary flex cursor-pointer list-none items-center gap-3 rounded-xl p-3 transition hover:bg-slate-800/50"
                     >
                       <div
-                        class="size-11 shrink-0 overflow-hidden rounded-lg bg-white ring-1 ring-black/[0.06]"
+                        class="size-11 shrink-0 overflow-hidden rounded-lg bg-slate-800 ring-1 ring-white/10"
                       >
                         <img
                           :src="bundle.cover"
@@ -114,10 +114,10 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
                         />
                       </div>
                       <div class="min-w-0 flex-1 text-left">
-                        <p class="text-[14px] font-medium leading-snug text-slate-900">
+                        <p class="text-[14px] font-medium leading-snug text-slate-100">
                           {{ bundle.title }}
                         </p>
-                        <p class="mt-0.5 text-[12px] text-slate-500">
+                        <p class="mt-0.5 text-[12px] text-slate-400">
                           {{ bundle.gradeLabel }} ·
                           {{ bundle.experimentStats.length }} 个实验
                         </p>
@@ -143,17 +143,17 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
                     </summary>
 
                     <div
-                      class="space-y-4 border-t border-slate-100 px-3 pb-4 pt-3"
+                      class="space-y-4 border-t border-white/5 px-3 pb-4 pt-3"
                     >
                       <!-- 该包：实验完成情况 -->
                       <div>
-                        <h4 class="mb-2 text-[12px] font-semibold text-slate-700">
+                        <h4 class="mb-2 text-[12px] font-semibold text-cyan-200/90">
                           实验完成情况
                         </h4>
-                        <div class="overflow-x-auto rounded-lg border border-slate-100 bg-white">
+                        <div class="overflow-x-auto rounded-lg border border-white/10 bg-slate-950/50">
                           <table class="w-full min-w-[280px] text-left text-[11px]">
                             <thead>
-                              <tr class="border-b border-slate-100 bg-slate-50 text-slate-500">
+                              <tr class="border-b border-white/10 bg-slate-800/50 text-slate-400">
                                 <th class="px-2 py-1.5 font-medium">实验</th>
                                 <th class="px-2 py-1.5 font-medium tabular-nums">
                                   完成
@@ -169,15 +169,15 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
                               <tr
                                 v-for="ex in bundle.experimentStats"
                                 :key="ex.id"
-                                class="border-b border-slate-50 last:border-0"
+                                class="border-b border-white/5 last:border-0"
                               >
-                                <td class="px-2 py-1.5 text-slate-800">
+                                <td class="px-2 py-1.5 text-slate-200">
                                   {{ ex.title }}
                                 </td>
-                                <td class="px-2 py-1.5 tabular-nums text-sky-700">
+                                <td class="px-2 py-1.5 tabular-nums text-cyan-300">
                                   {{ ex.experimentPct }}%
                                 </td>
-                                <td class="px-2 py-1.5 tabular-nums text-violet-700">
+                                <td class="px-2 py-1.5 tabular-nums text-violet-300">
                                   {{ ex.quizPct }}%
                                 </td>
                                 <td class="px-2 py-1.5">
@@ -185,8 +185,8 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
                                     class="rounded px-1 py-0.5 text-[10px]"
                                     :class="
                                       ex.quizSubmitted
-                                        ? 'bg-emerald-50 text-emerald-800'
-                                        : 'bg-slate-100 text-slate-500'
+                                        ? 'bg-emerald-500/15 text-emerald-300'
+                                        : 'bg-slate-800 text-slate-500'
                                     "
                                   >{{ ex.quizSubmitted ? "已交" : "未交" }}</span>
                                 </td>
@@ -195,8 +195,8 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
                                     class="rounded px-1 py-0.5 text-[10px]"
                                     :class="
                                       ex.resultSubmitted
-                                        ? 'bg-emerald-50 text-emerald-800'
-                                        : 'bg-slate-100 text-slate-500'
+                                        ? 'bg-emerald-500/15 text-emerald-300'
+                                        : 'bg-slate-800 text-slate-500'
                                     "
                                   >{{ ex.resultSubmitted ? "已交" : "未交" }}</span>
                                 </td>
@@ -208,7 +208,7 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
 
                       <!-- 该包：测验报告 -->
                       <div>
-                        <h4 class="mb-2 text-[12px] font-semibold text-slate-700">
+                        <h4 class="mb-2 text-[12px] font-semibold text-cyan-200/90">
                           测验报告
                         </h4>
                         <ul
@@ -218,30 +218,30 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
                           <li
                             v-for="(r, ri) in bundle.quizReports"
                             :key="ri"
-                            class="rounded-lg border border-slate-100 bg-white p-2.5 shadow-sm"
+                            class="rounded-lg border border-white/10 bg-slate-900/50 p-2.5 shadow-sm"
                           >
                             <div
                               class="flex flex-wrap items-baseline justify-between gap-1"
                             >
-                              <span class="text-[12px] font-medium text-slate-900">{{
+                              <span class="text-[12px] font-medium text-slate-100">{{
                                 r.experimentTitle
                               }}</span>
                               <span
-                                class="text-[11px] font-semibold tabular-nums text-indigo-700"
+                                class="text-[11px] font-semibold tabular-nums text-indigo-300"
                               >正确率 {{ quizRatePct(r) }}%</span>
                             </div>
                             <p class="mt-0.5 text-[10px] text-slate-500">
                               {{ formatDetailTime(r.submittedAt) }}
                             </p>
-                            <p class="mt-1.5 text-[11px] leading-relaxed text-slate-600">
-                              <span class="font-medium text-slate-700">AI 点评：</span
+                            <p class="mt-1.5 text-[11px] leading-relaxed text-slate-400">
+                              <span class="font-medium text-slate-300">AI 点评：</span
                               >{{ r.aiComment }}
                             </p>
                           </li>
                         </ul>
                         <p
                           v-else
-                          class="rounded-lg bg-slate-100/80 px-2.5 py-2 text-[11px] text-slate-500"
+                          class="rounded-lg bg-slate-800/60 px-2.5 py-2 text-[11px] text-slate-500"
                         >
                           该包下暂无测验报告
                         </p>
@@ -249,7 +249,7 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
 
                       <!-- 该包：实验结果提交 -->
                       <div>
-                        <h4 class="mb-2 text-[12px] font-semibold text-slate-700">
+                        <h4 class="mb-2 text-[12px] font-semibold text-cyan-200/90">
                           实验结果提交
                         </h4>
                         <ul
@@ -259,19 +259,19 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
                           <li
                             v-for="(s, si) in bundle.submissions"
                             :key="si"
-                            class="rounded-lg border border-slate-100 bg-slate-50/80 p-2.5"
+                            class="rounded-lg border border-white/10 bg-slate-900/40 p-2.5"
                           >
                             <div
                               class="flex flex-wrap items-baseline justify-between gap-1"
                             >
-                              <span class="text-[12px] font-medium text-slate-900">{{
+                              <span class="text-[12px] font-medium text-slate-100">{{
                                 s.experimentTitle
                               }}</span>
                               <span class="text-[10px] text-slate-500">{{
                                 formatDetailTime(s.submittedAt)
                               }}</span>
                             </div>
-                            <p class="mt-1 text-[11px] leading-relaxed text-slate-700">
+                            <p class="mt-1 text-[11px] leading-relaxed text-slate-300">
                               {{ s.text }}
                             </p>
                             <p class="mt-1 text-[10px] text-slate-500">
@@ -285,7 +285,7 @@ function quizRatePct(r: { totalScore: number; maxScore: number }) {
                         </ul>
                         <p
                           v-else
-                          class="rounded-lg bg-slate-100/80 px-2.5 py-2 text-[11px] text-slate-500"
+                          class="rounded-lg bg-slate-800/60 px-2.5 py-2 text-[11px] text-slate-500"
                         >
                           该包下暂无实验结果提交
                         </p>
