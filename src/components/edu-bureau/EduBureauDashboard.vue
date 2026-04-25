@@ -299,6 +299,30 @@ const progressTiles = computed(() => {
   });
 });
 
+/**
+ * 数据视图默认仅展示排行前 5（学校维度），避免学校过多时曲线拥挤不可读。
+ * 排序依据：已完成课时数（主）→ 课时完成率（次）→ 总课时数（再次）。
+ */
+const chartProgressTiles = computed(() => {
+  if (schoolId.value) {
+    return progressTiles.value;
+  }
+  return [...progressTiles.value]
+    .sort((a, b) => {
+      if (b.completedLessonHours !== a.completedLessonHours) {
+        return b.completedLessonHours - a.completedLessonHours;
+      }
+      if (b.lessonHoursCompletionPct !== a.lessonHoursCompletionPct) {
+        return b.lessonHoursCompletionPct - a.lessonHoursCompletionPct;
+      }
+      if (b.totalLessonHours !== a.totalLessonHours) {
+        return b.totalLessonHours - a.totalLessonHours;
+      }
+      return a.label.localeCompare(b.label, "zh-Hans-CN");
+    })
+    .slice(0, 5);
+});
+
 /** 数据视图时间轴：最近 14 天（每日一个点） */
 const DATA_VIEW_DAY_COUNT = 14;
 
@@ -353,7 +377,7 @@ const quizStudentTrendPoints = computed(() =>
 );
 
 const schoolLessonDailyRows = computed(() =>
-  progressTiles.value.map((row) => ({
+  chartProgressTiles.value.map((row) => ({
     label: row.label,
     completionPct: row.lessonHoursCompletionPct,
     series: buildDailyLessonHours(
@@ -681,9 +705,6 @@ onUnmounted(() => {
         <h3 class="text-[13px] font-semibold leading-tight text-slate-100 sm:text-sm">
           开课情况统计（班）
         </h3>
-        <p class="mt-0.5 text-[11px] leading-snug text-slate-400">
-          筛选范围内 · 每班 {{ LESSON_HOURS_PER_CLASS }} 课时
-        </p>
         <div
           class="mt-1.5 grid flex-1 grid-cols-3 gap-1.5 rounded-lg border border-white/5 bg-slate-800/50 p-1.5 sm:gap-2 sm:p-2"
         >
@@ -732,9 +753,6 @@ onUnmounted(() => {
         <h3 class="text-[13px] font-semibold leading-tight text-slate-100 sm:text-sm">
           实验情况统计（学生）
         </h3>
-        <p class="mt-0.5 text-[11px] leading-snug text-slate-400">
-          筛选范围内 · 每人各 {{ EXPERIMENTS_PER_STUDENT }} 个实验与测验
-        </p>
         <div
           class="mt-1.5 space-y-1 rounded-lg border border-white/5 bg-slate-800/50 p-1.5 sm:p-2"
         >
@@ -828,7 +846,7 @@ onUnmounted(() => {
             数据视图
           </h3>
           <p class="mt-0.5 text-[12px] text-slate-400">
-            左：各校（班）开课课时最近 14 天走势；右：实验与测验全完成人数最近 14 天走势
+            左：各校（班）开课课时最近 14 天走势（学校维度默认展示排行前 5）；右：实验与测验全完成人数最近 14 天走势
           </p>
         </div>
       </div>
@@ -1022,10 +1040,10 @@ onUnmounted(() => {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgb(148 163 184 / 0.06) 1px, transparent 1px),
-    linear-gradient(rgb(148 163 184 / 0.04) 1px, transparent 1px);
-  background-size: 26px 26px;
-  mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.9));
+    linear-gradient(90deg, rgb(148 163 184 / 0.025) 1px, transparent 1px),
+    linear-gradient(rgb(148 163 184 / 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.55));
 }
 .command-panel::after,
 .command-tile::after {
@@ -1034,31 +1052,12 @@ onUnmounted(() => {
   inset: -1px;
   pointer-events: none;
   background: linear-gradient(
-    110deg,
-    transparent 0%,
-    transparent 8%,
-    rgb(34 211 238 / 0.38) 44%,
-    rgb(45 212 191 / 0.18) 52%,
-    transparent 62%,
-    transparent 100%
+    90deg,
+    rgb(34 211 238 / 0.06),
+    transparent 32%,
+    transparent 68%,
+    rgb(34 211 238 / 0.06)
   );
-  filter: blur(0.2px);
-  mix-blend-mode: screen;
-  transform: translateX(-125%);
-  animation: command-scan 7s ease-in-out infinite;
-}
-.command-tile:nth-child(2n)::after {
-  animation-duration: 8.5s;
-}
-.command-tile:nth-child(3n)::after {
-  animation-duration: 10s;
-}
-@keyframes command-scan {
-  0% {
-    transform: translateX(-130%);
-  }
-  100% {
-    transform: translateX(130%);
-  }
+  opacity: 0.65;
 }
 </style>

@@ -40,18 +40,9 @@ function logout() {
       aria-hidden="true"
     />
     <div
-      class="pointer-events-none absolute inset-0 z-0 opacity-[0.5] [background-size:32px_32px] [background-image:linear-gradient(rgba(148,163,184,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.06)_1px,transparent_1px)]"
+      class="pointer-events-none absolute inset-0 z-0 opacity-[0.2] [background-size:40px_40px] [background-image:linear-gradient(rgba(148,163,184,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.03)_1px,transparent_1px)]"
       aria-hidden="true"
     />
-    <div
-      class="pointer-events-none absolute inset-0 z-[1] overflow-hidden"
-      aria-hidden="true"
-    >
-      <div
-        class="edu-hud-sweep h-full w-[200%] -translate-x-1/4 will-change-transform [background:linear-gradient(100deg,transparent_35%,rgb(34_211_238/0.22)_50%,rgb(99_102_241/0.1)_55%,transparent_70%)]"
-        aria-hidden="true"
-      />
-    </div>
     <div
       class="pointer-events-none absolute inset-0 z-[1] [background:radial-gradient(65%_50%_at_50%_0%,rgb(6_182_212/0.2),transparent_60%)]"
       aria-hidden="true"
@@ -68,18 +59,6 @@ function logout() {
         >
           人工智能教育综合看板
         </h1>
-        <span
-          class="hidden h-6 max-w-full shrink-0 items-center gap-1.5 rounded border border-cyan-400/45 bg-cyan-500/15 px-2.5 text-[10px] font-bold uppercase leading-none text-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.35)] sm:inline-flex"
-          title="本页已启用 Neo Command Center 皮肤"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-sm shadow-cyan-400" />
-          指挥中心
-        </span>
-        <span
-          class="shrink-0 select-none items-center justify-center gap-0.5 rounded border border-cyan-400/40 bg-slate-950/60 px-1.5 py-0.5 text-[8px] font-extrabold text-cyan-200 sm:hidden"
-        >
-          NOC
-        </span>
       </RouterLink>
       <div
         v-if="session"
@@ -143,9 +122,6 @@ function logout() {
 .edu-login-fade-leave-to {
   opacity: 0;
 }
-.edu-hud-sweep {
-  animation: edu-hud-sweep 10s ease-in-out infinite;
-}
 .edu-command-header::after {
   content: "";
   position: absolute;
@@ -162,16 +138,5 @@ function logout() {
     transparent 100%
   );
   box-shadow: 0 0 24px rgb(34 211 238 / 0.2);
-}
-@keyframes edu-hud-sweep {
-  0% {
-    transform: translateX(-35%) skewX(-5deg);
-  }
-  50% {
-    transform: translateX(5%) skewX(1deg);
-  }
-  100% {
-    transform: translateX(40%) skewX(4deg);
-  }
 }
 </style>

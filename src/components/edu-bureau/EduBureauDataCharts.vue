@@ -24,6 +24,15 @@ type SchoolLessonTooltip = {
   color: string;
 };
 
+type DualTrendTooltip = {
+  x: number;
+  y: number;
+  dayText: string;
+  label: string;
+  value: number;
+  color: string;
+};
+
 const props = defineProps<{
   experimentTrendPoints: BureauTrendPoint[];
   quizTrendPoints: BureauTrendPoint[];
@@ -58,6 +67,18 @@ const TOTAL_STROKE_PALETTE = [
 ];
 
 const schoolLessonTooltip = ref<SchoolLessonTooltip | null>(null);
+const dualTrendTooltip = ref<DualTrendTooltip | null>(null);
+const expTrendLatestValue = computed(
+  () => props.experimentTrendPoints.at(-1)?.value ?? 0,
+);
+const quizTrendLatestValue = computed(
+  () => props.quizTrendPoints.at(-1)?.value ?? 0,
+);
+const isSchoolTopRankingView = computed(
+  () =>
+    props.schoolLessonTitle.includes("学校") &&
+    props.schoolLessonDailyRows.length > 0,
+);
 
 function showSchoolLessonTooltip(
   event: MouseEvent,
@@ -79,6 +100,28 @@ function showSchoolLessonTooltip(
 
 function hideSchoolLessonTooltip() {
   schoolLessonTooltip.value = null;
+}
+
+function showDualTrendTooltip(
+  event: MouseEvent,
+  payload: Omit<DualTrendTooltip, "x" | "y">,
+) {
+  const target = event.currentTarget as SVGElement | null;
+  const svg = target?.ownerSVGElement;
+  const wrapper = svg?.parentElement;
+  const rect = wrapper?.getBoundingClientRect();
+  if (!rect) {
+    return;
+  }
+  dualTrendTooltip.value = {
+    ...payload,
+    x: Math.min(rect.width - 12, Math.max(12, event.clientX - rect.left + 12)),
+    y: Math.min(rect.height - 12, Math.max(12, event.clientY - rect.top + 12)),
+  };
+}
+
+function hideDualTrendTooltip() {
+  dualTrendTooltip.value = null;
 }
 
 /** 与 schoolLessonDailyChart 画布高度、上下留白一致，左右两图比例对齐 */
@@ -247,13 +290,34 @@ const schoolLessonDailyChart = computed(() => {
 </script>
 
 <template>
-  <section class="grid gap-4 lg:grid-cols-2 lg:items-stretch">
+  <section class="flex flex-col gap-3">
+    <div
+      v-if="isSchoolTopRankingView"
+      class="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-300"
+    >
+      <span
+        class="mr-0.5 rounded border border-cyan-500/35 bg-cyan-500/10 px-2 py-0.5 font-semibold text-cyan-200"
+      >
+        仅展示 TOP{{ schoolLessonDailyRows.length }} 学校
+      </span>
+      <span
+        v-for="(row, i) in schoolLessonDailyRows"
+        :key="`top-school-${i}-${row.label}`"
+        class="inline-flex items-center gap-1 rounded border border-white/10 bg-slate-800/65 px-2 py-0.5"
+      >
+        <span class="font-semibold text-cyan-300">#{{ i + 1 }}</span>
+        <span class="max-w-[120px] truncate">{{ row.label }}</span>
+      </span>
+    </div>
+    <div
+      class="grid min-w-0 gap-4 lg:grid-cols-2 lg:items-stretch"
+    >
     <!-- 左：各校开课 14 天 -->
     <div
       class="chart-command-shell flex h-full min-h-0 flex-col rounded-2xl border border-cyan-500/30 bg-slate-900/50 p-4 shadow-[inset_5px_0_0_0_rgb(6_182_212/0.6),0_0_0_1px_rgb(6_182_212/0.2)] shadow-cyan-500/5 ring-1 ring-cyan-500/20 backdrop-blur-sm sm:p-5"
     >
       <div
-        class="mb-3 flex min-h-[6.75rem] shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
+        class="mb-3 flex min-h-[5.5rem] shrink-0 flex-col gap-2 sm:min-h-[4.5rem] sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
       >
         <h3 class="shrink-0 text-[14px] font-semibold text-slate-100">
           {{ schoolLessonTitle }}
@@ -319,8 +383,8 @@ const schoolLessonDailyChart = computed(() => {
             @mouseleave="hideSchoolLessonTooltip"
           >
           <defs>
-            <pattern id="chartGridA" width="22" height="22" patternUnits="userSpaceOnUse">
-              <path d="M 22 0 L 0 0 0 22" fill="none" stroke="rgb(148 163 184 / 0.12)" stroke-width="0.65" />
+            <pattern id="chartGridA" width="28" height="28" patternUnits="userSpaceOnUse">
+              <path d="M 28 0 L 0 0 0 28" fill="none" stroke="rgb(148 163 184 / 0.04)" stroke-width="0.5" />
             </pattern>
           </defs>
           <rect
@@ -329,7 +393,7 @@ const schoolLessonDailyChart = computed(() => {
             :width="schoolLessonDailyChart.plotRight - schoolLessonDailyChart.padL"
             :height="schoolLessonDailyChart.innerH"
             fill="url(#chartGridA)"
-            opacity="0.6"
+            opacity="0.22"
           />
           <line
             :x1="schoolLessonDailyChart.padL"
@@ -536,33 +600,33 @@ const schoolLessonDailyChart = computed(() => {
       class="chart-command-shell flex h-full min-h-0 flex-col rounded-2xl border border-cyan-500/30 bg-slate-900/50 p-4 shadow-[inset_5px_0_0_0_rgb(6_182_212/0.6),0_0_0_1px_rgb(6_182_212/0.2)] shadow-cyan-500/5 ring-1 ring-cyan-500/20 backdrop-blur-sm sm:p-5"
     >
       <div
-        class="mb-3 flex min-h-[6.75rem] shrink-0 flex-col gap-2"
+        class="mb-3 flex min-h-[5.5rem] shrink-0 flex-col gap-2 sm:min-h-[4.5rem] sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
       >
-        <div
-          class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
-        >
-          <h3 class="text-[14px] font-semibold text-slate-100">
-            学生实验与测验完成人数
-          </h3>
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-300">
+        <h3 class="shrink-0 text-[14px] font-semibold text-slate-100">
+          学生实验与测验完成人数
+        </h3>
+        <p class="min-w-0 flex-1 text-[11px] leading-snug text-slate-400">
+          <span
+            class="mb-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-slate-300"
+            aria-label="图例"
+          >
             <span class="inline-flex items-center gap-1.5">
               <span
                 class="size-2 shrink-0 rounded-full bg-[rgb(14,165,233)]"
                 aria-hidden="true"
               />
-              实验全完成人数
+              实验全完成
             </span>
             <span class="inline-flex items-center gap-1.5">
               <span
                 class="size-2 shrink-0 rounded-full bg-[rgb(251,146,60)]"
                 aria-hidden="true"
               />
-              测验全完成人数
+              测验全完成
             </span>
-          </div>
-        </div>
-        <p class="text-[11px] leading-snug text-slate-500">
-          最近 14 天、每日一点；折线终点为当前筛选下实验、测验分别「全完成」人数
+          </span>
+          最近 14 天、每日一点；折线终点为当前筛选下实验、测验分别「全完成」人数。
+          <span class="text-cyan-300/80"> 悬停折线或节点可查看该日人数。</span>
         </p>
       </div>
       <div
@@ -576,15 +640,44 @@ const schoolLessonDailyChart = computed(() => {
         class="flex min-h-0 flex-1 flex-col"
       >
         <div class="chart-viewbox-slot w-full shrink-0">
+          <div
+            v-if="dualTrendTooltip"
+            class="pointer-events-none absolute z-10 max-w-[220px] rounded-xl border border-cyan-500/25 bg-slate-900/95 px-3 py-2 text-[11px] text-slate-200 shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-500/20 backdrop-blur"
+            :style="{
+              left: `${dualTrendTooltip.x}px`,
+              top: `${dualTrendTooltip.y}px`,
+              transform:
+                dualTrendTooltip.x > 260
+                  ? 'translate(-100%, -50%)'
+                  : 'translate(0, -50%)',
+            }"
+          >
+            <div class="mb-1 flex items-center gap-1.5">
+              <span
+                class="size-2 shrink-0 rounded-full"
+                :style="{ backgroundColor: dualTrendTooltip.color }"
+                aria-hidden="true"
+              />
+              <p class="truncate font-semibold text-slate-100">
+                {{ dualTrendTooltip.label }}
+              </p>
+            </div>
+            <p class="tabular-nums text-slate-400">
+              {{ dualTrendTooltip.dayText }} ·
+              <span class="font-semibold text-cyan-200">{{ dualTrendTooltip.value }}</span>
+              人
+            </p>
+          </div>
           <svg
             class="h-full w-full text-slate-300"
             :viewBox="`0 0 ${dualTrend.W} ${dualTrend.H}`"
             preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
+            @mouseleave="hideDualTrendTooltip"
           >
           <defs>
-            <pattern id="chartGridB" width="22" height="22" patternUnits="userSpaceOnUse">
-              <path d="M 22 0 L 0 0 0 22" fill="none" stroke="rgb(148 163 184 / 0.12)" stroke-width="0.65" />
+            <pattern id="chartGridB" width="28" height="28" patternUnits="userSpaceOnUse">
+              <path d="M 28 0 L 0 0 0 28" fill="none" stroke="rgb(148 163 184 / 0.04)" stroke-width="0.5" />
             </pattern>
           </defs>
           <rect
@@ -593,7 +686,7 @@ const schoolLessonDailyChart = computed(() => {
             :width="dualTrend.W - dualTrend.padL - 12"
             :height="dualTrend.innerH"
             fill="url(#chartGridB)"
-            opacity="0.6"
+            opacity="0.22"
           />
           <line
             :x1="dualTrend.padL"
@@ -657,6 +750,56 @@ const schoolLessonDailyChart = computed(() => {
             stroke-linecap="round"
             stroke-linejoin="round"
           />
+          <path
+            :d="dualTrend.expLineD"
+            fill="none"
+            stroke="transparent"
+            stroke-width="14"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            pointer-events="stroke"
+            @mouseenter="
+              showDualTrendTooltip($event, {
+                dayText: '最近 14 天趋势',
+                label: '实验全完成人数',
+                value: expTrendLatestValue,
+                color: 'rgb(14 165 233)',
+              })
+            "
+            @mousemove="
+              showDualTrendTooltip($event, {
+                dayText: '最近 14 天趋势',
+                label: '实验全完成人数',
+                value: expTrendLatestValue,
+                color: 'rgb(14 165 233)',
+              })
+            "
+          />
+          <path
+            :d="dualTrend.quizLineD"
+            fill="none"
+            stroke="transparent"
+            stroke-width="14"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            pointer-events="stroke"
+            @mouseenter="
+              showDualTrendTooltip($event, {
+                dayText: '最近 14 天趋势',
+                label: '测验全完成人数',
+                value: quizTrendLatestValue,
+                color: 'rgb(251 146 60)',
+              })
+            "
+            @mousemove="
+              showDualTrendTooltip($event, {
+                dayText: '最近 14 天趋势',
+                label: '测验全完成人数',
+                value: quizTrendLatestValue,
+                color: 'rgb(251 146 60)',
+              })
+            "
+          />
           <circle
             v-for="(c, i) in dualTrend.expCoords"
             :key="`e-${i}`"
@@ -666,6 +809,22 @@ const schoolLessonDailyChart = computed(() => {
             fill="rgb(15 23 42)"
             stroke="rgb(14 165 233)"
             stroke-width="1.75"
+            @mouseenter="
+              showDualTrendTooltip($event, {
+                dayText: dualTrend.xHints[i] ?? `第 ${i + 1} 天`,
+                label: '实验全完成人数',
+                value: experimentTrendPoints[i]?.value ?? 0,
+                color: 'rgb(14 165 233)',
+              })
+            "
+            @mousemove="
+              showDualTrendTooltip($event, {
+                dayText: dualTrend.xHints[i] ?? `第 ${i + 1} 天`,
+                label: '实验全完成人数',
+                value: experimentTrendPoints[i]?.value ?? 0,
+                color: 'rgb(14 165 233)',
+              })
+            "
           >
             <title>{{ dualTrend.xHints[i] }} · 实验全完成 {{ experimentTrendPoints[i]?.value ?? 0 }} 人</title>
           </circle>
@@ -678,6 +837,22 @@ const schoolLessonDailyChart = computed(() => {
             fill="rgb(15 23 42)"
             stroke="rgb(251 146 60)"
             stroke-width="1.75"
+            @mouseenter="
+              showDualTrendTooltip($event, {
+                dayText: dualTrend.xHints[i] ?? `第 ${i + 1} 天`,
+                label: '测验全完成人数',
+                value: quizTrendPoints[i]?.value ?? 0,
+                color: 'rgb(251 146 60)',
+              })
+            "
+            @mousemove="
+              showDualTrendTooltip($event, {
+                dayText: dualTrend.xHints[i] ?? `第 ${i + 1} 天`,
+                label: '测验全完成人数',
+                value: quizTrendPoints[i]?.value ?? 0,
+                color: 'rgb(251 146 60)',
+              })
+            "
           >
             <title>{{ dualTrend.xHints[i] }} · 测验全完成 {{ quizTrendPoints[i]?.value }} 人</title>
           </circle>
@@ -695,6 +870,7 @@ const schoolLessonDailyChart = computed(() => {
           >
         </div>
       </div>
+    </div>
     </div>
   </section>
 </template>
@@ -731,24 +907,12 @@ const schoolLessonDailyChart = computed(() => {
   inset: 0;
   pointer-events: none;
   background: linear-gradient(
-    110deg,
-    transparent 0%,
-    transparent 4%,
-    rgb(34 211 238 / 0.35) 47%,
-    rgb(99 102 241 / 0.16) 54%,
-    transparent 64%,
-    transparent 100%
+    180deg,
+    rgb(34 211 238 / 0.08) 0%,
+    transparent 26%,
+    transparent 74%,
+    rgb(99 102 241 / 0.06) 100%
   );
-  mix-blend-mode: screen;
-  transform: translateX(-130%);
-  animation: chart-scan 6.5s ease-in-out infinite;
-}
-@keyframes chart-scan {
-  0% {
-    transform: translateX(-130%);
-  }
-  100% {
-    transform: translateX(130%);
-  }
+  opacity: 0.8;
 }
 </style>
