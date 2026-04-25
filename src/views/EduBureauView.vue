@@ -36,25 +36,50 @@ function logout() {
     class="edu-page relative flex h-full min-h-0 flex-col overflow-hidden bg-[#020617] text-slate-200"
   >
     <div
-      class="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_55%_at_50%_-5%,rgba(6,182,212,0.12),transparent_60%),radial-gradient(50%_40%_at_100%_0%,rgba(59,130,246,0.1),transparent_55%)]"
+      class="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(80%_55%_at_50%_-5%,rgba(6,182,212,0.12),transparent_60%),radial-gradient(50%_40%_at_100%_0%,rgba(59,130,246,0.1),transparent_55%)]"
       aria-hidden="true"
     />
     <div
-      class="pointer-events-none absolute inset-0 opacity-[0.5] [background-size:32px_32px] [background-image:linear-gradient(rgba(148,163,184,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.06)_1px,transparent_1px)]"
+      class="pointer-events-none absolute inset-0 z-0 opacity-[0.5] [background-size:32px_32px] [background-image:linear-gradient(rgba(148,163,184,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.06)_1px,transparent_1px)]"
+      aria-hidden="true"
+    />
+    <div
+      class="pointer-events-none absolute inset-0 z-[1] overflow-hidden"
+      aria-hidden="true"
+    >
+      <div
+        class="edu-hud-sweep h-full w-[200%] -translate-x-1/4 will-change-transform [background:linear-gradient(100deg,transparent_35%,rgb(34_211_238/0.22)_50%,rgb(99_102_241/0.1)_55%,transparent_70%)]"
+        aria-hidden="true"
+      />
+    </div>
+    <div
+      class="pointer-events-none absolute inset-0 z-[1] [background:radial-gradient(65%_50%_at_50%_0%,rgb(6_182_212/0.2),transparent_60%)]"
       aria-hidden="true"
     />
     <header
-      class="relative z-20 flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-slate-900/50 px-4 py-3 shadow-lg shadow-cyan-500/5 backdrop-blur-xl sm:px-6"
+      class="edu-command-header relative z-20 flex shrink-0 items-center justify-between gap-3 border-b border-cyan-500/25 bg-slate-900/60 px-4 py-3 shadow-[0_0_0_1px_rgb(6_182_212/0.2),0_8px_40px_-8px_rgb(0_0_0/0.5)] shadow-cyan-500/5 backdrop-blur-xl sm:px-6"
     >
       <RouterLink
         to="/"
-        class="group flex min-w-0 flex-1 items-center rounded-lg outline-none ring-cyan-500/30 focus-visible:ring-2"
+        class="group flex min-w-0 flex-1 items-center gap-2 rounded-lg outline-none ring-cyan-500/30 focus-visible:ring-2 sm:gap-3"
       >
         <h1
-          class="truncate bg-gradient-to-r from-cyan-100 via-cyan-50 to-slate-200 bg-clip-text text-[15px] font-semibold tracking-tight text-transparent sm:text-[16px]"
+          class="min-w-0 flex-1 truncate bg-gradient-to-r from-cyan-200 via-cyan-50 to-slate-200 bg-clip-text text-[15px] font-semibold tracking-tight text-transparent sm:text-[16px]"
         >
           人工智能教育综合看板
         </h1>
+        <span
+          class="hidden h-6 max-w-full shrink-0 items-center gap-1.5 rounded border border-cyan-400/45 bg-cyan-500/15 px-2.5 text-[10px] font-bold uppercase leading-none text-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.35)] sm:inline-flex"
+          title="本页已启用 Neo Command Center 皮肤"
+        >
+          <span class="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-sm shadow-cyan-400" />
+          指挥中心
+        </span>
+        <span
+          class="shrink-0 select-none items-center justify-center gap-0.5 rounded border border-cyan-400/40 bg-slate-950/60 px-1.5 py-0.5 text-[8px] font-extrabold text-cyan-200 sm:hidden"
+        >
+          NOC
+        </span>
       </RouterLink>
       <div
         v-if="session"
@@ -79,7 +104,7 @@ function logout() {
     </header>
 
     <div
-      class="relative z-0 min-h-0 flex-1 overflow-hidden"
+      class="relative z-10 min-h-0 flex-1 overflow-hidden"
     >
       <!-- 未登录：顶栏下遮罩 + 登录卡片 -->
       <Transition name="edu-login-fade">
@@ -117,5 +142,36 @@ function logout() {
 .edu-login-fade-enter-from,
 .edu-login-fade-leave-to {
   opacity: 0;
+}
+.edu-hud-sweep {
+  animation: edu-hud-sweep 10s ease-in-out infinite;
+}
+.edu-command-header::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(34 211 238 / 0.55) 18%,
+    rgb(56 189 248 / 0.7) 50%,
+    rgb(34 211 238 / 0.55) 82%,
+    transparent 100%
+  );
+  box-shadow: 0 0 24px rgb(34 211 238 / 0.2);
+}
+@keyframes edu-hud-sweep {
+  0% {
+    transform: translateX(-35%) skewX(-5deg);
+  }
+  50% {
+    transform: translateX(5%) skewX(1deg);
+  }
+  100% {
+    transform: translateX(40%) skewX(4deg);
+  }
 }
 </style>

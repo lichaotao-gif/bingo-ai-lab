@@ -250,7 +250,7 @@ const schoolLessonDailyChart = computed(() => {
   <section class="grid gap-4 lg:grid-cols-2 lg:items-stretch">
     <!-- 左：各校开课 14 天 -->
     <div
-      class="flex h-full min-h-0 flex-col rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-4 shadow-lg shadow-cyan-500/5 ring-1 ring-cyan-500/10 backdrop-blur-sm sm:p-5"
+      class="chart-command-shell flex h-full min-h-0 flex-col rounded-2xl border border-cyan-500/30 bg-slate-900/50 p-4 shadow-[inset_5px_0_0_0_rgb(6_182_212/0.6),0_0_0_1px_rgb(6_182_212/0.2)] shadow-cyan-500/5 ring-1 ring-cyan-500/20 backdrop-blur-sm sm:p-5"
     >
       <div
         class="mb-3 flex min-h-[6.75rem] shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
@@ -318,6 +318,44 @@ const schoolLessonDailyChart = computed(() => {
             :aria-label="schoolLessonTitle + '，最近 14 天，鼠标悬停折线显示学校数据'"
             @mouseleave="hideSchoolLessonTooltip"
           >
+          <defs>
+            <pattern id="chartGridA" width="22" height="22" patternUnits="userSpaceOnUse">
+              <path d="M 22 0 L 0 0 0 22" fill="none" stroke="rgb(148 163 184 / 0.12)" stroke-width="0.65" />
+            </pattern>
+          </defs>
+          <rect
+            :x="schoolLessonDailyChart.padL"
+            :y="schoolLessonDailyChart.padT"
+            :width="schoolLessonDailyChart.plotRight - schoolLessonDailyChart.padL"
+            :height="schoolLessonDailyChart.innerH"
+            fill="url(#chartGridA)"
+            opacity="0.6"
+          />
+          <line
+            :x1="schoolLessonDailyChart.padL"
+            :x2="schoolLessonDailyChart.plotRight"
+            :y1="schoolLessonDailyChart.padT"
+            :y2="schoolLessonDailyChart.padT"
+            stroke="rgb(34 211 238 / 0.2)"
+            stroke-width="1"
+          />
+          <line
+            :x1="schoolLessonDailyChart.padL"
+            :x2="schoolLessonDailyChart.plotRight"
+            :y1="schoolLessonDailyChart.padT + schoolLessonDailyChart.innerH / 2"
+            :y2="schoolLessonDailyChart.padT + schoolLessonDailyChart.innerH / 2"
+            stroke="rgb(71 85 105 / 0.5)"
+            stroke-width="1"
+            stroke-dasharray="4 6"
+          />
+          <line
+            :x1="schoolLessonDailyChart.padL"
+            :x2="schoolLessonDailyChart.plotRight"
+            :y1="schoolLessonDailyChart.padT + schoolLessonDailyChart.innerH"
+            :y2="schoolLessonDailyChart.padT + schoolLessonDailyChart.innerH"
+            stroke="rgb(71 85 105 / 0.55)"
+            stroke-width="1"
+          />
           <text
             :x="schoolLessonDailyChart.padL - 6"
             :y="schoolLessonDailyChart.padT + 4"
@@ -495,7 +533,7 @@ const schoolLessonDailyChart = computed(() => {
 
     <!-- 右：实验 / 测验 14 天 -->
     <div
-      class="flex h-full min-h-0 flex-col rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-4 shadow-lg shadow-cyan-500/5 ring-1 ring-cyan-500/10 backdrop-blur-sm sm:p-5"
+      class="chart-command-shell flex h-full min-h-0 flex-col rounded-2xl border border-cyan-500/30 bg-slate-900/50 p-4 shadow-[inset_5px_0_0_0_rgb(6_182_212/0.6),0_0_0_1px_rgb(6_182_212/0.2)] shadow-cyan-500/5 ring-1 ring-cyan-500/20 backdrop-blur-sm sm:p-5"
     >
       <div
         class="mb-3 flex min-h-[6.75rem] shrink-0 flex-col gap-2"
@@ -544,6 +582,44 @@ const schoolLessonDailyChart = computed(() => {
             preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
           >
+          <defs>
+            <pattern id="chartGridB" width="22" height="22" patternUnits="userSpaceOnUse">
+              <path d="M 22 0 L 0 0 0 22" fill="none" stroke="rgb(148 163 184 / 0.12)" stroke-width="0.65" />
+            </pattern>
+          </defs>
+          <rect
+            :x="dualTrend.padL"
+            :y="dualTrend.padT"
+            :width="dualTrend.W - dualTrend.padL - 12"
+            :height="dualTrend.innerH"
+            fill="url(#chartGridB)"
+            opacity="0.6"
+          />
+          <line
+            :x1="dualTrend.padL"
+            :x2="dualTrend.W - 12"
+            :y1="dualTrend.padT"
+            :y2="dualTrend.padT"
+            stroke="rgb(34 211 238 / 0.2)"
+            stroke-width="1"
+          />
+          <line
+            :x1="dualTrend.padL"
+            :x2="dualTrend.W - 12"
+            :y1="dualTrend.padT + dualTrend.innerH / 2"
+            :y2="dualTrend.padT + dualTrend.innerH / 2"
+            stroke="rgb(71 85 105 / 0.5)"
+            stroke-width="1"
+            stroke-dasharray="4 6"
+          />
+          <line
+            :x1="dualTrend.padL"
+            :x2="dualTrend.W - 12"
+            :y1="dualTrend.padT + dualTrend.innerH"
+            :y2="dualTrend.padT + dualTrend.innerH"
+            stroke="rgb(71 85 105 / 0.55)"
+            stroke-width="1"
+          />
           <text
             :x="dualTrend.padL - 6"
             :y="dualTrend.padT + 4"
@@ -631,5 +707,48 @@ const schoolLessonDailyChart = computed(() => {
 }
 .chart-panel-skeleton {
   aspect-ratio: 440 / 196;
+}
+.chart-command-shell {
+  position: relative;
+  overflow: hidden;
+}
+.chart-command-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgb(34 211 238 / 0.04) 0%,
+    transparent 22%,
+    transparent 75%,
+    rgb(56 189 248 / 0.03) 100%
+  );
+}
+.chart-command-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    transparent 4%,
+    rgb(34 211 238 / 0.35) 47%,
+    rgb(99 102 241 / 0.16) 54%,
+    transparent 64%,
+    transparent 100%
+  );
+  mix-blend-mode: screen;
+  transform: translateX(-130%);
+  animation: chart-scan 6.5s ease-in-out infinite;
+}
+@keyframes chart-scan {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
 }
 </style>

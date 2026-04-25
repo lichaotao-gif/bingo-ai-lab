@@ -424,7 +424,7 @@ onUnmounted(() => {
   <div class="edu-viz flex min-h-0 flex-col gap-5 pb-6 text-slate-200">
     <!-- 筛选：省市区 + 学期 + 学校 -->
     <div
-      class="rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-4 shadow-lg shadow-cyan-500/10 backdrop-blur-sm"
+      class="command-panel rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-4 shadow-lg shadow-cyan-500/10 backdrop-blur-sm"
     >
       <p class="mb-2 text-[12px] font-medium text-slate-400">筛选范围</p>
       <div
@@ -628,7 +628,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-3 shadow-lg shadow-cyan-500/10 backdrop-blur-sm sm:p-4">
+    <div class="command-panel rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-3 shadow-lg shadow-cyan-500/10 backdrop-blur-sm sm:p-4">
       <p class="mb-2 text-[12px] font-medium text-slate-400">
         管辖范围概览
       </p>
@@ -676,7 +676,7 @@ onUnmounted(() => {
     <!-- 开课 + 实验/测验统计（md+ 同一行、紧凑） -->
     <div class="grid gap-2 md:grid-cols-2 md:items-stretch md:gap-3">
       <section
-        class="flex min-h-0 flex-col rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-2.5 shadow-lg shadow-cyan-500/10 backdrop-blur-sm sm:p-3"
+        class="command-panel flex min-h-0 flex-col rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-2.5 shadow-lg shadow-cyan-500/10 backdrop-blur-sm sm:p-3"
       >
         <h3 class="text-[13px] font-semibold leading-tight text-slate-100 sm:text-sm">
           开课情况统计（班）
@@ -727,7 +727,7 @@ onUnmounted(() => {
       </section>
 
       <section
-        class="flex min-h-0 flex-col rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-2.5 shadow-lg shadow-cyan-500/10 backdrop-blur-sm sm:p-3"
+        class="command-panel flex min-h-0 flex-col rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-2.5 shadow-lg shadow-cyan-500/10 backdrop-blur-sm sm:p-3"
       >
         <h3 class="text-[13px] font-semibold leading-tight text-slate-100 sm:text-sm">
           实验情况统计（学生）
@@ -858,7 +858,7 @@ onUnmounted(() => {
         <li
           v-for="(row, i) in progressTiles"
           :key="i"
-          class="flex max-w-full flex-col overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-slate-800/90 to-slate-950/95 shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-500/5 transition-shadow duration-200 hover:border-cyan-400/30 hover:shadow-cyan-500/20"
+          class="command-tile flex max-w-full flex-col overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-slate-800/90 to-slate-950/95 shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-500/5 transition-shadow duration-200 hover:border-cyan-400/30 hover:shadow-cyan-500/20"
         >
           <div
             class="border-b border-white/5 bg-slate-800/40 px-4 pb-3 pt-4 sm:px-5 sm:pb-3.5 sm:pt-5"
@@ -1008,5 +1008,57 @@ onUnmounted(() => {
 <style scoped>
 .edu-viz {
   font-feature-settings: "tnum" 1;
+}
+.command-panel,
+.command-tile {
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 5px 0 0 0 rgb(6 182 212 / 0.55);
+}
+.command-panel::before,
+.command-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgb(148 163 184 / 0.06) 1px, transparent 1px),
+    linear-gradient(rgb(148 163 184 / 0.04) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.9));
+}
+.command-panel::after,
+.command-tile::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    transparent 8%,
+    rgb(34 211 238 / 0.38) 44%,
+    rgb(45 212 191 / 0.18) 52%,
+    transparent 62%,
+    transparent 100%
+  );
+  filter: blur(0.2px);
+  mix-blend-mode: screen;
+  transform: translateX(-125%);
+  animation: command-scan 7s ease-in-out infinite;
+}
+.command-tile:nth-child(2n)::after {
+  animation-duration: 8.5s;
+}
+.command-tile:nth-child(3n)::after {
+  animation-duration: 10s;
+}
+@keyframes command-scan {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
 }
 </style>
