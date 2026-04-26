@@ -1045,19 +1045,4 @@ onUnmounted(() => {
   background-size: 32px 32px;
   mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.55));
 }
-.command-panel::after,
-.command-tile::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    rgb(34 211 238 / 0.06),
-    transparent 32%,
-    transparent 68%,
-    rgb(34 211 238 / 0.06)
-  );
-  opacity: 0.65;
-}
 </style>

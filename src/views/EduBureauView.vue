@@ -43,12 +43,8 @@ function logout() {
       class="pointer-events-none absolute inset-0 z-0 opacity-[0.2] [background-size:40px_40px] [background-image:linear-gradient(rgba(148,163,184,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.03)_1px,transparent_1px)]"
       aria-hidden="true"
     />
-    <div
-      class="pointer-events-none absolute inset-0 z-[1] [background:radial-gradient(65%_50%_at_50%_0%,rgb(6_182_212/0.2),transparent_60%)]"
-      aria-hidden="true"
-    />
     <header
-      class="edu-command-header relative z-20 flex shrink-0 items-center justify-between gap-3 border-b border-cyan-500/25 bg-slate-900/60 px-4 py-3 shadow-[0_0_0_1px_rgb(6_182_212/0.2),0_8px_40px_-8px_rgb(0_0_0/0.5)] shadow-cyan-500/5 backdrop-blur-xl sm:px-6"
+      class="relative z-20 flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-slate-900/60 px-4 py-3 backdrop-blur-xl sm:px-6"
     >
       <RouterLink
         to="/"
@@ -121,22 +117,5 @@ function logout() {
 .edu-login-fade-enter-from,
 .edu-login-fade-leave-to {
   opacity: 0;
-}
-.edu-command-header::after {
-  content: "";
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: -1px;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgb(34 211 238 / 0.55) 18%,
-    rgb(56 189 248 / 0.7) 50%,
-    rgb(34 211 238 / 0.55) 82%,
-    transparent 100%
-  );
-  box-shadow: 0 0 24px rgb(34 211 238 / 0.2);
 }
 </style>

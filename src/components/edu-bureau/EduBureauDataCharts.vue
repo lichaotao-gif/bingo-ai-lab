@@ -80,6 +80,11 @@ const isSchoolTopRankingView = computed(
     props.schoolLessonDailyRows.length > 0,
 );
 
+/** 与图表中各校「已完课时」折线颜色一致（与 schoolLessonDailyChart 中 si 顺序对应） */
+function schoolDoneLineColor(index: number): string {
+  return DONE_STROKE_PALETTE[index % DONE_STROKE_PALETTE.length]!;
+}
+
 function showSchoolLessonTooltip(
   event: MouseEvent,
   payload: Omit<SchoolLessonTooltip, "x" | "y">,
@@ -128,14 +133,18 @@ function hideDualTrendTooltip() {
 const CHART_VIEW_H = 196;
 const CHART_PAD_T = 16;
 const CHART_PAD_B = 36;
+/** 左右两图统一坐标区左右边距，避免并排时绘图区错位 */
+const CHART_W = 440;
+const CHART_PAD_L = 46;
+const CHART_PAD_R = 16;
 
 const dualTrend = computed(() => {
   const exp = props.experimentTrendPoints;
   const quiz = props.quizTrendPoints;
-  const W = 440;
+  const W = CHART_W;
   const H = CHART_VIEW_H;
-  const padL = 42;
-  const padR = 12;
+  const padL = CHART_PAD_L;
+  const padR = CHART_PAD_R;
   const padT = CHART_PAD_T;
   const padB = CHART_PAD_B;
   if (!exp.length || !quiz.length || exp.length !== quiz.length) {
@@ -147,6 +156,7 @@ const dualTrend = computed(() => {
   }
   const maxY = Math.max(1, ...exp.map((p) => p.value), ...quiz.map((p) => p.value));
   const innerW = W - padL - padR;
+  const plotRight = padL + innerW;
   const innerH = H - padT - padB;
   const n = exp.length;
   function toCoords(pts: BureauTrendPoint[]) {
@@ -167,6 +177,8 @@ const dualTrend = computed(() => {
     W,
     H,
     padL,
+    padR,
+    plotRight,
     padT,
     innerH,
     expLineD: lineD(expCoords),
@@ -182,12 +194,12 @@ const dualTrend = computed(() => {
 const schoolLessonDailyChart = computed(() => {
   const rows = props.schoolLessonDailyRows;
   const D = rows[0]?.series.length ?? 0;
-  const padL = 46;
-  const padR = 16;
+  const padL = CHART_PAD_L;
+  const padR = CHART_PAD_R;
   const padT = CHART_PAD_T;
   const padB = CHART_PAD_B;
   const H = CHART_VIEW_H;
-  const W = 440;
+  const W = CHART_W;
   if (!rows.length || D === 0) {
     return { kind: "empty" as const, W, H: CHART_VIEW_H };
   }
@@ -303,10 +315,21 @@ const schoolLessonDailyChart = computed(() => {
       <span
         v-for="(row, i) in schoolLessonDailyRows"
         :key="`top-school-${i}-${row.label}`"
-        class="inline-flex items-center gap-1 rounded border border-white/10 bg-slate-800/65 px-2 py-0.5"
+        class="inline-flex items-center gap-1.5 rounded border border-white/10 bg-slate-800/65 px-2 py-0.5"
       >
-        <span class="font-semibold text-cyan-300">#{{ i + 1 }}</span>
-        <span class="max-w-[120px] truncate">{{ row.label }}</span>
+        <span class="shrink-0 font-semibold text-cyan-300">#{{ i + 1 }}</span>
+        <span class="inline-flex min-w-0 items-center gap-1">
+          <span
+            class="size-2.5 shrink-0 rounded-full border-2 border-white/35 shadow-sm"
+            :style="{
+              backgroundColor: schoolDoneLineColor(i),
+              borderColor: schoolDoneLineColor(i),
+              boxShadow: `0 0 0 1px rgb(15 23 42 / 0.5), 0 0 8px ${schoolDoneLineColor(i)}`,
+            }"
+            aria-hidden="true"
+          />
+          <span class="max-w-[120px] truncate text-slate-200">{{ row.label }}</span>
+        </span>
       </span>
     </div>
     <div
@@ -317,7 +340,7 @@ const schoolLessonDailyChart = computed(() => {
       class="chart-command-shell flex h-full min-h-0 flex-col rounded-2xl border border-cyan-500/30 bg-slate-900/50 p-4 shadow-[inset_5px_0_0_0_rgb(6_182_212/0.6),0_0_0_1px_rgb(6_182_212/0.2)] shadow-cyan-500/5 ring-1 ring-cyan-500/20 backdrop-blur-sm sm:p-5"
     >
       <div
-        class="mb-3 flex min-h-[5.5rem] shrink-0 flex-col gap-2 sm:min-h-[4.5rem] sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
+        class="chart-card-header mb-3 flex min-h-[6.75rem] shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
       >
         <h3 class="shrink-0 text-[14px] font-semibold text-slate-100">
           {{ schoolLessonTitle }}
@@ -600,7 +623,7 @@ const schoolLessonDailyChart = computed(() => {
       class="chart-command-shell flex h-full min-h-0 flex-col rounded-2xl border border-cyan-500/30 bg-slate-900/50 p-4 shadow-[inset_5px_0_0_0_rgb(6_182_212/0.6),0_0_0_1px_rgb(6_182_212/0.2)] shadow-cyan-500/5 ring-1 ring-cyan-500/20 backdrop-blur-sm sm:p-5"
     >
       <div
-        class="mb-3 flex min-h-[5.5rem] shrink-0 flex-col gap-2 sm:min-h-[4.5rem] sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
+        class="chart-card-header mb-3 flex min-h-[6.75rem] shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
       >
         <h3 class="shrink-0 text-[14px] font-semibold text-slate-100">
           学生实验与测验完成人数
@@ -683,14 +706,14 @@ const schoolLessonDailyChart = computed(() => {
           <rect
             :x="dualTrend.padL"
             :y="dualTrend.padT"
-            :width="dualTrend.W - dualTrend.padL - 12"
+            :width="dualTrend.plotRight - dualTrend.padL"
             :height="dualTrend.innerH"
             fill="url(#chartGridB)"
             opacity="0.22"
           />
           <line
             :x1="dualTrend.padL"
-            :x2="dualTrend.W - 12"
+            :x2="dualTrend.plotRight"
             :y1="dualTrend.padT"
             :y2="dualTrend.padT"
             stroke="rgb(34 211 238 / 0.2)"
@@ -698,7 +721,7 @@ const schoolLessonDailyChart = computed(() => {
           />
           <line
             :x1="dualTrend.padL"
-            :x2="dualTrend.W - 12"
+            :x2="dualTrend.plotRight"
             :y1="dualTrend.padT + dualTrend.innerH / 2"
             :y2="dualTrend.padT + dualTrend.innerH / 2"
             stroke="rgb(71 85 105 / 0.5)"
@@ -707,7 +730,7 @@ const schoolLessonDailyChart = computed(() => {
           />
           <line
             :x1="dualTrend.padL"
-            :x2="dualTrend.W - 12"
+            :x2="dualTrend.plotRight"
             :y1="dualTrend.padT + dualTrend.innerH"
             :y2="dualTrend.padT + dualTrend.innerH"
             stroke="rgb(71 85 105 / 0.55)"
@@ -887,32 +910,5 @@ const schoolLessonDailyChart = computed(() => {
 .chart-command-shell {
   position: relative;
   overflow: hidden;
-}
-.chart-command-shell::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgb(34 211 238 / 0.04) 0%,
-    transparent 22%,
-    transparent 75%,
-    rgb(56 189 248 / 0.03) 100%
-  );
-}
-.chart-command-shell::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgb(34 211 238 / 0.08) 0%,
-    transparent 26%,
-    transparent 74%,
-    rgb(99 102 241 / 0.06) 100%
-  );
-  opacity: 0.8;
 }
 </style>
