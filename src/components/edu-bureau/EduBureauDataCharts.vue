@@ -45,16 +45,8 @@ const props = defineProps<{
   schoolLessonTitle: string;
 }>();
 
-/** 已完课时折线 */
-const DONE_STROKE_PALETTE = [
-  "rgb(2 132 199)",
-  "rgb(16 185 129)",
-  "rgb(245 158 11)",
-  "rgb(168 85 247)",
-  "rgb(236 72 153)",
-  "rgb(249 115 22)",
-  "rgb(99 102 241)",
-];
+/** 开课已完课时增长曲线：高饱和粉玫色，深色底上更醒目 */
+const SCHOOL_LESSON_GROWTH_STROKE = "rgb(244 63 131)";
 
 const schoolLessonTooltip = ref<SchoolLessonTooltip | null>(null);
 const dualTrendTooltip = ref<DualTrendTooltip | null>(null);
@@ -216,7 +208,7 @@ const schoolLessonDailyChart = computed(() => {
     hoverTitleDone: string;
     lastCompleted: number;
   };
-  const schools: Sch[] = rows.map((row, si) => {
+  const schools: Sch[] = rows.map((row) => {
     const doneCoords = row.series.map((p, i) => ({
       x: toX(i),
       y: toY(p.completed),
@@ -237,7 +229,7 @@ const schoolLessonDailyChart = computed(() => {
     return {
       label: row.label,
       doneLineD: lineD(doneCoords),
-      strokeDone: DONE_STROKE_PALETTE[si % DONE_STROKE_PALETTE.length]!,
+      strokeDone: SCHOOL_LESSON_GROWTH_STROKE,
       donePoints,
       hoverTitleDone,
       lastCompleted: lastPt.completed,
@@ -294,7 +286,7 @@ const schoolLessonDailyChart = computed(() => {
         <div class="chart-viewbox-slot w-full shrink-0">
           <div
             v-if="schoolLessonTooltip"
-            class="pointer-events-none absolute z-10 max-w-[220px] rounded-xl border border-cyan-500/25 bg-slate-900/95 px-3 py-2 text-[11px] text-slate-200 shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-500/20 backdrop-blur"
+            class="pointer-events-none absolute z-10 max-w-[220px] rounded-xl border border-fuchsia-500/30 bg-slate-900/95 px-3 py-2 text-[11px] text-slate-200 shadow-lg shadow-fuchsia-500/15 ring-1 ring-fuchsia-500/25 backdrop-blur"
             :style="{
               left: `${schoolLessonTooltip.x}px`,
               top: `${schoolLessonTooltip.y}px`,
@@ -328,7 +320,7 @@ const schoolLessonDailyChart = computed(() => {
               class="mt-1 tabular-nums text-slate-400"
             >
               {{ schoolLessonTooltip.dayText }} · 已完
-              <span class="font-semibold text-cyan-200">{{ schoolLessonTooltip.completed }}</span>
+              <span class="font-semibold text-pink-200">{{ schoolLessonTooltip.completed }}</span>
               课时
             </p>
           </div>
@@ -400,7 +392,7 @@ const schoolLessonDailyChart = computed(() => {
               :d="sch.doneLineD"
               fill="none"
               :stroke="sch.strokeDone"
-              stroke-width="2.25"
+              stroke-width="3"
               stroke-linecap="round"
               stroke-linejoin="round"
               pointer-events="none"
@@ -454,7 +446,7 @@ const schoolLessonDailyChart = computed(() => {
               r="3.25"
               fill="rgb(15 23 42)"
               :stroke="sch.strokeDone"
-              stroke-width="1.75"
+              stroke-width="2"
               pointer-events="auto"
               @mouseenter="
                 showSchoolLessonTooltip($event, {
