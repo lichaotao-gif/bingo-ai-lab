@@ -299,30 +299,6 @@ const progressTiles = computed(() => {
   });
 });
 
-/**
- * 数据视图默认仅展示排行前 5（学校维度），避免学校过多时曲线拥挤不可读。
- * 排序依据：已完成课时数（主）→ 课时完成率（次）→ 总课时数（再次）。
- */
-const chartProgressTiles = computed(() => {
-  if (schoolId.value) {
-    return progressTiles.value;
-  }
-  return [...progressTiles.value]
-    .sort((a, b) => {
-      if (b.completedLessonHours !== a.completedLessonHours) {
-        return b.completedLessonHours - a.completedLessonHours;
-      }
-      if (b.lessonHoursCompletionPct !== a.lessonHoursCompletionPct) {
-        return b.lessonHoursCompletionPct - a.lessonHoursCompletionPct;
-      }
-      if (b.totalLessonHours !== a.totalLessonHours) {
-        return b.totalLessonHours - a.totalLessonHours;
-      }
-      return a.label.localeCompare(b.label, "zh-Hans-CN");
-    })
-    .slice(0, 5);
-});
-
 /** 数据视图时间轴：最近 14 天（每日一个点） */
 const DATA_VIEW_DAY_COUNT = 14;
 
@@ -348,7 +324,7 @@ function buildDailySmoothTrend(
   return out;
 }
 
-/** 各校（班）14 天内已完 / 应开课时演示曲线（末日与辖区卡片一致） */
+/** 14 天内已完课时段值序列（按日平滑至末日，与辖区卡片同末日值；total 供纵轴比例） */
 function buildDailyLessonHours(
   totalHours: number,
   completedHours: number,
@@ -376,20 +352,27 @@ const quizStudentTrendPoints = computed(() =>
   buildDailySmoothTrend(kpi.value.quizFullyDoneStudentCount),
 );
 
-const schoolLessonDailyRows = computed(() =>
-  chartProgressTiles.value.map((row) => ({
-    label: row.label,
-    completionPct: row.lessonHoursCompletionPct,
-    series: buildDailyLessonHours(
-      row.totalLessonHours,
-      row.completedLessonHours,
-      DATA_VIEW_DAY_COUNT,
-    ),
-  })),
-);
+/** 左图：当前筛选下开课已完课时 14 天增长曲线（单条，与顶部开课统计同口径） */
+const schoolLessonDailyRows = computed(() => {
+  const r = regionOpeningLessonStats.value;
+  if (r.totalLessonHours <= 0) {
+    return [];
+  }
+  return [
+    {
+      label: "当前筛选",
+      completionPct: r.lessonHoursCompletionPct,
+      series: buildDailyLessonHours(
+        r.totalLessonHours,
+        r.completedLessonHours,
+        DATA_VIEW_DAY_COUNT,
+      ),
+    },
+  ];
+});
 
-const schoolLessonChartTitle = computed(() =>
-  schoolId.value ? "各班级开课情况" : "各学校开课情况",
+const schoolLessonChartTitle = computed(
+  () => "开课已完课时增长曲线",
 );
 
 /** 省 / 市 / 区：合并为一个级联下拉 */
@@ -846,7 +829,7 @@ onUnmounted(() => {
             数据视图
           </h3>
           <p class="mt-0.5 text-[12px] text-slate-400">
-            左：各校（班）开课课时最近 14 天走势（学校维度默认展示排行前 5）；右：实验与测验全完成人数最近 14 天走势
+            左：当前筛选下开课已完课时增长曲线（最近 14 天、与上方开课统计同口径）；右：实验与测验全完成人数最近 14 天走势
           </p>
         </div>
       </div>
