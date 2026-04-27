@@ -663,7 +663,7 @@ onUnmounted(() => {
           </p>
           <p class="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-violet-200 sm:text-3xl">
             {{ kpi.classCount }}
-            <span class="align-baseline text-[11px] font-medium text-violet-400/80 sm:text-[12px]">个</span>
+            <span class="ml-0.5 align-baseline text-[11px] font-medium text-violet-400/80 sm:text-[12px]">班</span>
           </p>
         </div>
         <div class="min-w-0 text-center sm:text-left">
@@ -748,7 +748,6 @@ onUnmounted(() => {
                 class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-indigo-200 sm:text-2xl"
               >
                 {{ kpi.experimentTotalCount }}
-                <span class="align-baseline text-[10px] font-medium text-indigo-400/70 sm:text-[11px]">个</span>
               </p>
             </div>
             <div
@@ -761,7 +760,6 @@ onUnmounted(() => {
                 class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-cyan-200 sm:text-2xl"
               >
                 {{ kpi.experimentCompletedCount }}
-                <span class="align-baseline text-[10px] font-medium text-cyan-400/70 sm:text-[11px]">个</span>
               </p>
             </div>
             <div
@@ -788,7 +786,6 @@ onUnmounted(() => {
                 class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-orange-200 sm:text-2xl"
               >
                 {{ kpi.quizTotalCount }}
-                <span class="align-baseline text-[10px] font-medium text-orange-400/70 sm:text-[11px]">个</span>
               </p>
             </div>
             <div
@@ -801,7 +798,6 @@ onUnmounted(() => {
                 class="mt-0.5 whitespace-nowrap text-xl font-bold tabular-nums leading-none text-amber-200 sm:text-2xl"
               >
                 {{ kpi.quizCompletedCount }}
-                <span class="align-baseline text-[10px] font-medium text-amber-400/70 sm:text-[11px]">个</span>
               </p>
             </div>
             <div
@@ -943,14 +939,14 @@ onUnmounted(() => {
                   <p class="text-[10px] leading-none text-slate-500">总</p>
                   <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
                     <span class="text-[13px] font-semibold text-slate-100 sm:text-sm">{{ row.experimentTotalCount }}</span>
-                    <span class="text-[10px] font-normal text-slate-500">个</span>
+                    <span class="ml-0.5 text-[10px] font-normal text-slate-500">项</span>
                   </p>
                 </div>
                 <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
                   <p class="text-[10px] leading-none text-slate-500">已完</p>
                   <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
                     <span class="text-[13px] font-semibold text-violet-300 sm:text-sm">{{ row.experimentCompletedCount }}</span>
-                    <span class="text-[10px] font-normal text-slate-500">个</span>
+                    <span class="ml-0.5 text-[10px] font-normal text-slate-500">项</span>
                   </p>
                 </div>
                 <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
@@ -981,14 +977,14 @@ onUnmounted(() => {
                   <p class="text-[10px] leading-none text-slate-500">总</p>
                   <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
                     <span class="text-[13px] font-semibold text-slate-100 sm:text-sm">{{ row.quizTotalCount }}</span>
-                    <span class="text-[10px] font-normal text-slate-500">个</span>
+                    <span class="ml-0.5 text-[10px] font-normal text-slate-500">题</span>
                   </p>
                 </div>
                 <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
                   <p class="text-[10px] leading-none text-slate-500">已完</p>
                   <p class="mt-1 flex flex-wrap items-baseline justify-center gap-0.5 leading-none">
                     <span class="text-[13px] font-semibold text-emerald-300 sm:text-sm">{{ row.quizCompletedCount }}</span>
-                    <span class="text-[10px] font-normal text-slate-500">个</span>
+                    <span class="ml-0.5 text-[10px] font-normal text-slate-500">题</span>
                   </p>
                 </div>
                 <div class="rounded-lg border border-white/5 bg-slate-900/50 px-1 py-1.5 text-center sm:px-1.5">
