@@ -1,18 +1,23 @@
 <script setup lang="ts">
 /**
- * 品牌 Logo：矢量文件见 public/logo.svg
+ * 顶栏图标：`src/assets/bingo-brand-logo.svg`（?raw 内联，避免缓存旧 Vue chunk）
  */
+import markup from "@/assets/bingo-brand-logo.svg?raw";
 </script>
 
 <template>
-  <div class="relative flex h-full w-full items-center justify-center overflow-hidden">
-    <img
-      src="/logo.svg"
-      alt="缤果AI实验室"
-      class="h-full w-full max-h-[40px] max-w-[40px] object-contain"
-      width="40"
-      height="40"
-      decoding="async"
-    />
-  </div>
+  <div
+    class="brand-logo-root h-full w-full"
+    v-html="markup"
+  />
 </template>
+
+<style scoped>
+.brand-logo-root :deep(svg) {
+  display: block;
+  height: 100%;
+  width: 100%;
+  max-height: 40px;
+  max-width: 40px;
+}
+</style>

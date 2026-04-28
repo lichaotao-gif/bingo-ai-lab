@@ -17,10 +17,10 @@ function enterDemo() {
       class="w-full max-w-[420px] rounded-panel bg-surface p-8 shadow-card"
     >
       <div class="mb-8 flex flex-col items-center gap-3">
+        <h1 class="sr-only">缤果AI实验室</h1>
         <div class="h-14 w-14 shrink-0">
           <LogoMark />
         </div>
-        <h1 class="text-xl font-semibold text-fg">缤果AI实验室</h1>
         <p class="text-center text-[14px] text-fg-muted">手机号登录（演示）</p>
       </div>
       <label class="mb-2 block text-[14px] text-fg-soft">手机号</label>

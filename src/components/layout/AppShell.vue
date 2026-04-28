@@ -88,12 +88,13 @@ function openBingoAiLab() {
       >
         <RouterLink
           to="/"
-          class="flex items-center gap-2.5 rounded-md outline-none ring-primary focus-visible:ring-2"
+          class="flex items-center gap-1 rounded-md outline-none ring-primary focus-visible:ring-2"
+          aria-label="缤果AI实验室·首页"
         >
           <div class="size-9 shrink-0">
             <LogoMark />
           </div>
-          <span class="text-[17px] font-semibold tracking-tight text-black/85">
+          <span class="text-[17px] font-semibold tracking-tight text-black">
             缤果AI实验室
           </span>
         </RouterLink>

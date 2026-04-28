@@ -9,12 +9,19 @@ export default defineConfig({
     host: "127.0.0.1",
     port: 5173,
     strictPort: true,
+    /** 减少「改了代码但浏览器仍用旧 JS」——仍需配合硬刷新 */
+    headers: {
+      "Cache-Control": "no-store",
+    },
   },
   /** npm run preview 固定端口 */
   preview: {
     host: "127.0.0.1",
     port: 4173,
     strictPort: true,
+    headers: {
+      "Cache-Control": "no-store",
+    },
   },
   resolve: {
     alias: {
