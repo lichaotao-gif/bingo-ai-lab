@@ -94,7 +94,7 @@ function openBingoAiLab() {
           <div class="size-9 shrink-0">
             <LogoMark />
           </div>
-          <span class="text-[17px] font-semibold tracking-tight text-black">
+          <span class="text-[17px] font-normal tracking-tight text-black">
             缤果AI实验室
           </span>
         </RouterLink>
