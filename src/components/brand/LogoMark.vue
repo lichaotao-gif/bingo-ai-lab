@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * 顶栏图标：`src/assets/bingo-brand-logo.svg`（?raw 内联，避免缓存旧 Vue chunk）
+ * 顶栏图标：`src/assets/bingo-brand-logo.svg`（?raw 内联）
+ * 历史蓝色水母稿见 `src/assets/bingo-brand-logo-blue.svg`（需时改回可替换引用或覆盖主文件）
  */
 import markup from "@/assets/bingo-brand-logo.svg?raw";
 </script>
